@@ -1,0 +1,7 @@
+include pyproject.toml
+
+include *.md
+include LICENSE.txt
+include setup.py
+
+recursive-include sql *
