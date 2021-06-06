@@ -21,7 +21,9 @@ setup(
     extras_require={
         'test': ['pytest'],
     },
-    data_files=[('sql', [f'sql/{file.name}' for file in sql.glob('*.sql')])],
+    package_data={
+        'sql': [f'sql/{file.name}' for file in sql.glob('*.sql')])],
+    },
     project_urls={
         'Bug Reports': 'https://github.com/dpapathanasiou/simple-graph/issues',
         'Source': 'https://github.com/dpapathanasiou/simple-graph/tree/main/python',
