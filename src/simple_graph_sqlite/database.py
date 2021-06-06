@@ -1,7 +1,5 @@
-#!/usr/bin/env python3
-
 """
-simple_graph.py
+database.py
 
 A series of functions to leverage the (node, edge) schema of 
 json-based nodes, and edges with optional json properties,
