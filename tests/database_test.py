@@ -9,7 +9,7 @@ from simple_graph_sqlite import database as db
 def database_test_file(tmp_path):
     d = tmp_path / "simplegraph"
     d.mkdir()
-    return d / "apple.sqlite"
+    return str(d / "apple.sqlite")
 
 
 @pytest.fixture()
@@ -51,8 +51,9 @@ def apple(database_test_file, nodes, edges):
 
 
 def test_initialize(database_test_file, apple):
-    assert database_test_file.exists()
-    assert database_test_file.stat().st_size == 28672
+    db_file = Path(database_test_file).resolve()
+    assert db_file.exists()
+    assert db_file.stat().st_size == 28672
 
 
 def test_bulk_operations(database_test_file, nodes, edges):
@@ -124,8 +125,9 @@ def test_traversal(database_test_file, apple):
 def test_visualization(database_test_file, apple, tmp_path):
     dot_raw = tmp_path / "apple-raw.dot"
     db.visualize(database_test_file, dot_raw, [4, 1, 5])
-    assert cmp(dot_raw, Path.cwd() / "fixtures" / "apple-raw.dot")
+    here = Path(__file__).parent.resolve()
+    assert cmp(dot_raw, here / "fixtures" / "apple-raw.dot")
     dot = tmp_path / "apple.dot"
     db.visualize(database_test_file, dot, [4, 1, 5], exclude_node_keys=[
                  'type'], hide_edge_key=True)
-    assert cmp(dot, Path.cwd() / "fixtures" / "apple.dot")
+    assert cmp(dot, here / "fixtures" / "apple.dot")
