@@ -2,7 +2,7 @@ import pytest
 import json
 from pathlib import Path
 from filecmp import cmp
-import simple_graph as db
+from simple_graph_sqlite import database as db
 
 
 @pytest.fixture()
