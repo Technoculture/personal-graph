@@ -22,7 +22,7 @@ setup(
         'test': ['pytest'],
     },
     package_data={
-        'sql': [f'sql/{file.name}' for file in sql.glob('*.sql')])],
+        'sql': [f'sql/{file.name}' for file in sql.glob('*.sql')],
     },
     project_urls={
         'Bug Reports': 'https://github.com/dpapathanasiou/simple-graph/issues',
