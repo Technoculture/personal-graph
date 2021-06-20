@@ -94,11 +94,15 @@ def remove_node(identifier):
         cursor.execute(read_sql('delete-node.sql'), (identifier,))
     return _remove_node
 
+
 def remove_nodes(identifiers):
     def _remove_node(cursor):
-        cursor.executemany(read_sql('delete-edge.sql'), [(identifier, identifier,) for identifier in identifiers])
-        cursor.executemany(read_sql('delete-node.sql'), [(identifier,) for identifier in identifiers])
+        cursor.executemany(read_sql(
+            'delete-edge.sql'), [(identifier, identifier,) for identifier in identifiers])
+        cursor.executemany(read_sql('delete-node.sql'),
+                           [(identifier,) for identifier in identifiers])
     return _remove_node
+
 
 def _parse_search_results(results, idx=0):
     return [json.loads(item[idx]) for item in results]
@@ -106,11 +110,9 @@ def _parse_search_results(results, idx=0):
 
 def find_node(identifier):
     def _find_node(cursor):
-        results = cursor.execute(
-            read_sql('search-node-by-id.sql'), (identifier,)).fetchall()
-        if len(results) == 1:
-            return _parse_search_results(results).pop()
-        return {}
+        result = cursor.execute(
+            read_sql('search-node-by-id.sql'), (identifier,)).fetchone()
+        return {} if not result else json.loads(result[0])
     return _find_node
 
 
@@ -140,28 +142,46 @@ def find_nodes(data, where_fn=_search_where, search_fn=_search_equals):
     return _find_nodes
 
 
-def find_neighbors():
-    return read_sql('traverse.sql')
+def find_neighbors(with_bodies=False):
+    return read_sql("traverse-with-bodies.sql") if with_bodies else read_sql('traverse.sql')
 
 
-def find_outbound_neighbors():
-    return read_sql('traverse-outbound.sql')
+def find_outbound_neighbors(with_bodies=False):
+    return read_sql("traverse-with-bodies-outbound.sql") if with_bodies else read_sql('traverse-outbound.sql')
 
 
-def find_inbound_neighbors():
-    return read_sql('traverse-inbound.sql')
+def find_inbound_neighbors(with_bodies=False):
+    return read_sql("traverse-with-bodies-inbound.sql") if with_bodies else read_sql('traverse-inbound.sql')
 
 
 def traverse(db_file, src, tgt=None, neighbors_fn=find_neighbors):
     def _traverse(cursor):
         path = []
         target = json.dumps(tgt)
-        for row in cursor.execute(neighbors_fn(), (json.dumps(src,))):
+        for row in cursor.execute(neighbors_fn(), (json.dumps(src),)):
             if row:
                 identifier = row[0]
                 if identifier not in path:
                     path.append(identifier)
                 if identifier == target:
+                    break
+        return path
+    return atomic(db_file, _traverse)
+
+
+def traverse_with_bodies(db_file, src, tgt=None, neighbors_fn=find_neighbors):
+    def _traverse(cursor):
+        path = []
+        target = json.dumps(tgt)
+        header = None
+        for row in cursor.execute(neighbors_fn(True), (json.dumps(src),)):
+            if not header:
+                header = row
+                continue
+            if row:
+                identifier, obj, _ = row
+                path.append(row)
+                if identifier == target and obj == '()':
                     break
         return path
     return atomic(db_file, _traverse)
@@ -204,23 +224,59 @@ def _as_dot_node(body, exclude_keys=[], hide_key_name=False, kv_separator=' '):
 def visualize(db_file, dot_file, path=[], connections=get_connections, format='png',
               exclude_node_keys=[], hide_node_key=False, node_kv=' ',
               exclude_edge_keys=[], hide_edge_key=False, edge_kv=' '):
-    def _visualize(cursor):
-        dot = Digraph()
-        nodes = []
-        edges = []
-        for i in path:
+
+    def _unpack_edge(edge):
+        return [json.loads(item) for item in edge]
+
+    ids = []
+    for i in path:
+        ids.append(i)
+        for edge in atomic(db_file, connections(i)):
+            src, tgt, _ = _unpack_edge(edge)
+            if src not in ids:
+                ids.append(src)
+            if tgt not in ids:
+                ids.append(tgt)
+
+    dot = Digraph()
+
+    visited = []
+    edges = []
+    for i in ids:
+        if i not in visited:
             node = atomic(db_file, find_node(i))
-            if node not in nodes:
-                name, label = _as_dot_node(
-                    node, exclude_node_keys, hide_node_key, node_kv)
-                dot.node(name, label=label)
-                nodes.append(node)
-                for edge in atomic(db_file, connections(i)):
-                    if edge not in edges:
-                        src, tgt, props = [json.loads(item) for item in edge]
-                        if src in path and tgt in path:
-                            dot.edge(str(src), str(tgt), label=_as_dot_label(
-                                props, exclude_edge_keys, hide_edge_key, edge_kv))
-                        edges.append(edge)
-        dot.render(dot_file, format=format)
-    return atomic(db_file, _visualize)
+            name, label = _as_dot_node(
+                node, exclude_node_keys, hide_node_key, node_kv)
+            dot.node(name, label=label)
+            for edge in atomic(db_file, connections(i)):
+                if edge not in edges:
+                    src, tgt, props = _unpack_edge(edge)
+                    dot.edge(str(src), str(tgt), label=_as_dot_label(
+                        props, exclude_edge_keys, hide_edge_key, edge_kv) if props else None)
+                    edges.append(edge)
+            visited.append(i)
+
+    dot.render(dot_file, format=format)
+
+
+def visualize_bodies(dot_file, path=[], format='png',
+                     exclude_node_keys=[], hide_node_key=False, node_kv=' ',
+                     exclude_edge_keys=[], hide_edge_key=False, edge_kv=' '):
+    dot = Digraph()
+    current_id = None
+    edges = []
+    for (identifier, obj, properties) in path:
+        body = json.loads(properties)
+        if obj == '()':
+            name, label = _as_dot_node(
+                body, exclude_node_keys, hide_node_key, node_kv)
+            dot.node(name, label=label)
+            current_id = body['id']
+        else:
+            edge = (str(current_id), str(
+                identifier), body) if obj == '->' else (str(identifier), str(current_id), body)
+            if edge not in edges:
+                dot.edge(edge[0], edge[1], label=_as_dot_label(
+                    body, exclude_edge_keys, hide_edge_key, edge_kv) if body else None)
+                edges.append(edge)
+    dot.render(dot_file, format=format)
