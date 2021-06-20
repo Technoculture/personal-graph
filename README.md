@@ -2,6 +2,35 @@
 
 This is the [PyPI](https://pypi.org/) package of the [simple-graph](https://github.com/dpapathanasiou/simple-graph/blob/main/python) implementation in [Python](https://www.python.org/), which is a simple [graph database](https://en.wikipedia.org/wiki/Graph_database) in [SQLite](https://www.sqlite.org/), inspired by "[SQLite as a document database](https://dgl.cx/2020/06/sqlite-json-support)".
 
+## Build and Test
+
+How to the [generate distribution archive](https://packaging.python.org/tutorials/packaging-projects/#generating-distribution-archives) and confirm it on [test.pypi.org](https://packaging.python.org/tutorials/packaging-projects/#uploading-the-distribution-archives):
+
+```sh
+rm dist/*
+python -m build
+python -m twine upload --repository testpypi dist/*
+```
+
+Create a virtual environment for the test package, activate it, pull from [test.pypi.org](https://test.pypi.org) (the `--extra-index-url` is necessary since the `graphviz` dependency may not be in the test archive), and confirm the package is available:
+
+```sh
+$ pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple simple-graph-sqlite graphviz==0.16
+$ python
+Python 3.6.13 |Anaconda, Inc.| (default, Jun  4 2021, 14:25:59) 
+[GCC 7.5.0] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> from simple_graph_sqlite import database as db
+```
+
+With the test package installed, run `pytest` from the root of this repository. If the tests pass, rebuild and push to [pypi.org](https://pypi.org):
+
+```sh
+rm dist/*
+python -m build
+python -m twine upload --repository pypi dist/*
+```
+
 # Structure
 
 The [schema](https://github.com/dpapathanasiou/simple-graph/tree/main/sql/schema.sql) consists of just two structures:
