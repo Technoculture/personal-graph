@@ -144,7 +144,7 @@ def test_visualization(database_test_file, apple, tmp_path):
     dot = tmp_path / "apple.dot"
     db.visualize(database_test_file, dot, [4, 1, 5], exclude_node_keys=[
                  'type'], hide_edge_key=True)
-    assert cmp(dot, here / "fixtures" / ".examples" / "apple.dot")
+    assert cmp(dot, here / "fixtures" / "apple.dot")
 
 
 def test_visualize_bodies(database_test_file, apple, tmp_path):
