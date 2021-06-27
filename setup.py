@@ -2,7 +2,6 @@ from setuptools import setup, find_packages
 import pathlib
 
 here = pathlib.Path(__file__).parent.resolve()
-sql = (here / "src" / "simple_graph_sqlite" / "sql")
 
 long_description = (here / 'README.md').read_text(encoding='utf-8')
 
@@ -15,16 +14,12 @@ setup(
     url='https://github.com/dpapathanasiou/simple-graph',
     author='Denis Papathanasiou',
     package_dir={'': 'src'},
-    packages=find_packages(where='src', include = ['sql',]),
+    packages=find_packages(where='src'),
     python_requires='>=3.6, <4',
     install_requires=['graphviz'],
     extras_require={
         'test': ['pytest'],
     },
-    package_data={
-        'sql': [f'sql/{file.name}' for file in sql.glob('*.sql')],
-    },
-    include_package_data=True,
     project_urls={
         'Bug Reports': 'https://github.com/dpapathanasiou/simple-graph/issues',
         'Source': 'https://github.com/dpapathanasiou/simple-graph/tree/main/python',

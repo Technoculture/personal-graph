@@ -1,7 +1,7 @@
 include pyproject.toml
 
 include *.md
-include LICENSE.txt
+include LICENSE
 include setup.py
 
-recursive-include sql *
+global-include *.sql
