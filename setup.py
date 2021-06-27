@@ -24,6 +24,7 @@ setup(
     package_data={
         'sql': [f'sql/{file.name}' for file in sql.glob('*.sql')],
     },
+    include_package_data=True,
     project_urls={
         'Bug Reports': 'https://github.com/dpapathanasiou/simple-graph/issues',
         'Source': 'https://github.com/dpapathanasiou/simple-graph/tree/main/python',
