@@ -8,7 +8,7 @@ long_description = (here / 'README.md').read_text(encoding='utf-8')
 
 setup(
     name='simple-graph-sqlite',
-    version='2.0.1',
+    version='2.0.2',
     description='A simple graph database in SQLite',
     long_description=long_description,
     long_description_content_type='text/markdown',
