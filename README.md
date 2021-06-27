@@ -7,7 +7,7 @@ This is the [PyPI](https://pypi.org/) package of the [simple-graph](https://gith
 How to [generate the distribution archive](https://packaging.python.org/tutorials/packaging-projects/#generating-distribution-archives) and confirm it on [test.pypi.org](https://packaging.python.org/tutorials/packaging-projects/#uploading-the-distribution-archives), also based on the [pypa/sampleproject](https://github.com/pypa/sampleproject):
 
 ```sh
-rm -rf build dist
+rm -rf build dist src/simple_graph_sqlite.egg-info
 python -m build
 python -m twine upload --repository testpypi dist/*
 ```
@@ -26,7 +26,7 @@ Type "help", "copyright", "credits" or "license" for more information.
 With the test package installed, run `pytest` from the root of this repository. If the tests pass, rebuild and push to [pypi.org](https://pypi.org):
 
 ```sh
-rm -rf build dist
+rm -rf build dist src/simple_graph_sqlite.egg-info
 python -m build
 python -m twine upload --repository pypi dist/*
 ```
