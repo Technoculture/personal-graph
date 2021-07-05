@@ -9,7 +9,7 @@ import database as db
 def database_test_file(tmp_path):
     d = tmp_path / "simplegraph"
     d.mkdir()
-    return d / "apple.sqlite"
+    return str(d / "apple.sqlite")
 
 
 @pytest.fixture()
@@ -168,19 +168,21 @@ def test_traversal_with_bodies(database_test_file, apple):
 def test_visualization(database_test_file, apple, tmp_path):
     dot_raw = tmp_path / "apple-raw.dot"
     db.visualize(database_test_file, dot_raw, [4, 1, 5])
-    assert cmp(dot_raw, Path.cwd() / ".." / ".examples" / "apple-raw.dot")
+    here = Path(__file__).parent.resolve()
+    assert cmp(dot_raw, here / "fixtures" / "apple-raw.dot")
     dot = tmp_path / "apple.dot"
     db.visualize(database_test_file, dot, [4, 1, 5], exclude_node_keys=[
                  'type'], hide_edge_key=True)
-    assert cmp(dot, Path.cwd() / ".." / ".examples" / "apple.dot")
+    assert cmp(dot, here / "fixtures" / "apple.dot")
 
 
 def test_visualize_bodies(database_test_file, apple, tmp_path):
     dot_raw = tmp_path / "apple-raw.dot"
     path_with_bodies = db.traverse_with_bodies(database_test_file, 4, 5)
     db.visualize_bodies(dot_raw, path_with_bodies)
-    assert cmp(dot_raw, Path.cwd() / ".." / ".examples" / "apple-raw.dot")
+    here = Path(__file__).parent.resolve()
+    assert cmp(dot_raw, here / "fixtures" / "apple-raw.dot")
     dot = tmp_path / "apple.dot"
     db.visualize_bodies(dot, path_with_bodies, exclude_node_keys=[
                         'type'], hide_edge_key=True)
-    assert cmp(dot, Path.cwd() / ".." / ".examples" / "apple.dot")
+    assert cmp(dot, here / "fixtures" / "apple.dot")
