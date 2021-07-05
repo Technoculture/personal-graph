@@ -2,14 +2,14 @@ import pytest
 import json
 from pathlib import Path
 from filecmp import cmp
-from simple_graph_sqlite import database as db
+import database as db
 
 
 @pytest.fixture()
 def database_test_file(tmp_path):
     d = tmp_path / "simplegraph"
     d.mkdir()
-    return str(d / "apple.sqlite")
+    return d / "apple.sqlite"
 
 
 @pytest.fixture()
@@ -51,9 +51,8 @@ def apple(database_test_file, nodes, edges):
 
 
 def test_initialize(database_test_file, apple):
-    db_file = Path(database_test_file).resolve()
-    assert db_file.exists()
-    assert db_file.stat().st_size == 28672
+    assert database_test_file.exists()
+    assert database_test_file.stat().st_size == 28672
 
 
 def test_bulk_operations(database_test_file, nodes, edges):
@@ -68,6 +67,13 @@ def test_bulk_operations(database_test_file, nodes, edges):
     db.atomic(database_test_file, db.add_nodes(bodies, ids))
     for id, node in nodes.items():
         assert db.atomic(database_test_file, db.find_node(id)) == node
+
+    # bulk upsert and confirm
+    db.atomic(database_test_file, db.upsert_nodes(bodies, ids))
+    for id, node in nodes.items():
+        assert db.atomic(database_test_file, db.find_node(id)) == node
+
+    # bulk connect and confirm
     sources = []
     targets = []
     properties = []
@@ -81,7 +87,6 @@ def test_bulk_operations(database_test_file, nodes, edges):
             else:
                 properties.append({})
 
-    # bulk connect and confirm
     db.atomic(database_test_file, db.connect_many_nodes(
         sources, targets, properties))
     for src, tgts in edges.items():
@@ -112,13 +117,37 @@ def test_search(database_test_file, apple, nodes):
 
 
 def test_traversal(database_test_file, apple):
-    assert db.traverse(database_test_file, 2, 3) == ['2', '1', '3']
-    assert db.traverse(database_test_file, 4, 5) == ['4', '1', '2', '3', '5']
+    # the traversal CTE seed type is respected, and appears in the output as-is
+    assert db.traverse(database_test_file, 2, 3) == [2, '1', '3']
+    # singly-quoted strings works as expected
+    assert db.traverse(database_test_file, '2', '3') == [
+        '2', '1', '3', '4', '5']
+    # and so do doubly-quoted values (in the prior version, these produced empty lists)
+    assert db.traverse(database_test_file, "2", "3") == [
+        '2', '1', '3', '4', '5']
+
+    # more test sets of this pattern:
+    # since int is a different type than string, it can appear twice in the output
+    assert db.traverse(database_test_file, 4, 5) == [
+        4, '1', '2', '3', '4', '5']
+    assert db.traverse(database_test_file, '4', '5') == [
+        '4', '1', '2', '3', '5']
+    assert db.traverse(database_test_file, "4", "5") == [
+        '4', '1', '2', '3', '5']
+
     assert db.traverse(database_test_file, 5,
+                       neighbors_fn=db.find_inbound_neighbors) == [5]
+    assert db.traverse(database_test_file, '5',
                        neighbors_fn=db.find_inbound_neighbors) == ['5']
     assert db.traverse(database_test_file, 5,
+                       neighbors_fn=db.find_outbound_neighbors) == [5, '1', '4']
+    assert db.traverse(database_test_file, '5',
                        neighbors_fn=db.find_outbound_neighbors) == ['5', '1', '4']
     assert db.traverse(database_test_file, 5, neighbors_fn=db.find_neighbors) == [
+        5, '1', '2', '3', '4', '5']
+    assert db.traverse(database_test_file, '5', neighbors_fn=db.find_neighbors) == [
+        '5', '1', '2', '3', '4']
+    assert db.traverse(database_test_file, "5", neighbors_fn=db.find_neighbors) == [
         '5', '1', '2', '3', '4']
 
 
@@ -139,21 +168,19 @@ def test_traversal_with_bodies(database_test_file, apple):
 def test_visualization(database_test_file, apple, tmp_path):
     dot_raw = tmp_path / "apple-raw.dot"
     db.visualize(database_test_file, dot_raw, [4, 1, 5])
-    here = Path(__file__).parent.resolve()
-    assert cmp(dot_raw, here / "fixtures" / "apple-raw.dot")
+    assert cmp(dot_raw, Path.cwd() / ".." / ".examples" / "apple-raw.dot")
     dot = tmp_path / "apple.dot"
     db.visualize(database_test_file, dot, [4, 1, 5], exclude_node_keys=[
                  'type'], hide_edge_key=True)
-    assert cmp(dot, here / "fixtures" / "apple.dot")
+    assert cmp(dot, Path.cwd() / ".." / ".examples" / "apple.dot")
 
 
 def test_visualize_bodies(database_test_file, apple, tmp_path):
     dot_raw = tmp_path / "apple-raw.dot"
     path_with_bodies = db.traverse_with_bodies(database_test_file, 4, 5)
     db.visualize_bodies(dot_raw, path_with_bodies)
-    here = Path(__file__).parent.resolve()
-    assert cmp(dot_raw, here / "fixtures" / "apple-raw.dot")
+    assert cmp(dot_raw, Path.cwd() / ".." / ".examples" / "apple-raw.dot")
     dot = tmp_path / "apple.dot"
     db.visualize_bodies(dot, path_with_bodies, exclude_node_keys=[
                         'type'], hide_edge_key=True)
-    assert cmp(dot, here / "fixtures" / "apple.dot")
+    assert cmp(dot, Path.cwd() / ".." / ".examples" / "apple.dot")
