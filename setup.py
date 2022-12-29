@@ -17,7 +17,7 @@ setup(
     package_dir={'': 'src'},
     packages=find_packages(where='src'),
     python_requires='>=3.6, <4',
-    install_requires=['graphviz'],
+    install_requires=['graphviz', 'Jinja2'],
     extras_require={
         'test': ['pytest'],
     },
