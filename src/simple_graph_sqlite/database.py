@@ -13,7 +13,7 @@ import sqlite3
 import json
 import pathlib
 from functools import lru_cache
-from graphviz import Digraph
+from jinja2 import Environment, BaseLoader, select_autoescape
 
 
 @lru_cache(maxsize=None)
@@ -22,13 +22,32 @@ def read_sql(sql_file):
         return f.read()
 
 
+class SqlTemplateLoader(BaseLoader):
+    def get_source(self, environment, template):
+        return read_sql(template), template, True
+
+
+env = Environment(
+    loader=SqlTemplateLoader(),
+    autoescape=select_autoescape()
+)
+
+clause_template = env.get_template('search-where.template')
+search_template = env.get_template('search-node.template')
+traverse_template = env.get_template('traverse.template')
+
+
 def atomic(db_file, cursor_exec_fn):
-    connection = sqlite3.connect(db_file)
-    cursor = connection.cursor()
-    cursor.execute("PRAGMA foreign_keys = TRUE;")
-    results = cursor_exec_fn(cursor)
-    connection.commit()
-    connection.close()
+    connection = None
+    try:
+        connection = sqlite3.connect(db_file)
+        cursor = connection.cursor()
+        cursor.execute("PRAGMA foreign_keys = TRUE;")
+        results = cursor_exec_fn(cursor)
+        connection.commit()
+    finally:
+        if connection:
+            connection.close()
     return results
 
 
@@ -117,85 +136,89 @@ def remove_nodes(identifiers):
     return _remove_node
 
 
-def _parse_search_results(results, idx=0):
-    return [json.loads(item[idx]) for item in results]
+def _generate_clause(key, predicate=None, joiner=None, tree=False, tree_with_key=False):
+    '''Given at minimum a key in the body json, generate a query clause
+    which can be bound to a corresponding value at point of execution'''
+
+    if predicate is None:
+        predicate = '='  # can also be 'LIKE', '>', '<'
+    if joiner is None:
+        joiner = ''  # 'AND', 'OR', 'NOT'
+
+    if tree:
+        if tree_with_key:
+            return clause_template.render(and_or=joiner, key=key, tree=tree, predicate=predicate)
+        else:
+            return clause_template.render(and_or=joiner, tree=tree, predicate=predicate)
+
+    return clause_template.render(and_or=joiner, key=key, predicate=predicate, key_value=True)
+
+
+def _generate_query(where_clauses, result_column=None, key=None, tree=False):
+    '''Generate the search query, selecting either the id or the body,
+    adding the json_tree function and optionally the key, as needed'''
+
+    if result_column is None:
+        result_column = 'body'  # can also be 'id'
+
+    if tree:
+        if key:
+            return search_template.render(result_column=result_column, tree=tree, key=key, search_clauses=where_clauses)
+        else:
+            return search_template.render(result_column=result_column, tree=tree, search_clauses=where_clauses)
+
+    return search_template.render(result_column=result_column, search_clauses=where_clauses)
 
 
 def find_node(identifier):
     def _find_node(cursor):
-        result = cursor.execute(
-            read_sql('search-node-by-id.sql'), (identifier,)).fetchone()
+        query = _generate_query([clause_template.render(id_lookup=True)])
+        result = cursor.execute(query, (identifier,)).fetchone()
         return {} if not result else json.loads(result[0])
     return _find_node
 
 
-def _search_where(properties, predicate='='):
-    return " AND ".join([f"json_extract(body, '$.{key}') {predicate} ?" for key in properties.keys()])
+def _parse_search_results(results, idx=0):
+    print(results)
+    return [json.loads(item[idx]) for item in results]
 
 
-def _search_like(properties):
-    return _search_where(properties, 'LIKE')
-
-
-def _search_equals(properties):
-    return tuple([str(v) for v in properties.values()])
-
-
-def _search_starts_with(properties):
-    return tuple([str(v)+'%' for v in properties.values()])
-
-
-def _search_contains(properties):
-    return tuple(['%'+str(v)+'%' for v in properties.values()])
-
-
-def find_nodes(data, where_fn=_search_where, search_fn=_search_equals):
+def find_nodes(where_clauses, bindings, tree_query=False, key=None):
     def _find_nodes(cursor):
-        return _parse_search_results(cursor.execute(read_sql('search-node.sql') + where_fn(data), search_fn(data)).fetchall())
+        query = _generate_query(where_clauses, key=key, tree=tree_query)
+        return _parse_search_results(cursor.execute(query, bindings).fetchall())
     return _find_nodes
 
 
 def find_neighbors(with_bodies=False):
-    return read_sql("traverse-with-bodies.sql") if with_bodies else read_sql('traverse.sql')
+    return traverse_template.render(with_bodies=with_bodies, inbound=True, outbound=True)
 
 
 def find_outbound_neighbors(with_bodies=False):
-    return read_sql("traverse-with-bodies-outbound.sql") if with_bodies else read_sql('traverse-outbound.sql')
+    return traverse_template.render(with_bodies=with_bodies, outbound=True)
 
 
 def find_inbound_neighbors(with_bodies=False):
-    return read_sql("traverse-with-bodies-inbound.sql") if with_bodies else read_sql('traverse-inbound.sql')
+    return traverse_template.render(with_bodies=with_bodies, inbound=True)
 
 
-def traverse(db_file, src, tgt=None, neighbors_fn=find_neighbors):
+def traverse(db_file, src, tgt=None, neighbors_fn=find_neighbors, with_bodies=False):
     def _traverse(cursor):
         path = []
         target = json.dumps(tgt)
-        for row in cursor.execute(neighbors_fn(), {'source': src}):
+        for row in cursor.execute(neighbors_fn(with_bodies=with_bodies), (src,)):
             if row:
-                identifier = row[0]
-                if identifier not in path:
-                    path.append(identifier)
-                if identifier == target:
-                    break
-        return path
-    return atomic(db_file, _traverse)
-
-
-def traverse_with_bodies(db_file, src, tgt=None, neighbors_fn=find_neighbors):
-    def _traverse(cursor):
-        path = []
-        target = json.dumps(tgt)
-        header = None
-        for row in cursor.execute(neighbors_fn(True), {'source': src}):
-            if not header:
-                header = row
-                continue
-            if row:
-                identifier, obj, _ = row
-                path.append(row)
-                if identifier == target and obj == '()':
-                    break
+                if with_bodies:
+                    identifier, obj, _ = row
+                    path.append(row)
+                    if identifier == target and obj == '()':
+                        break
+                else:
+                    identifier = row[0]
+                    if identifier not in path:
+                        path.append(identifier)
+                        if identifier == target:
+                            break
         return path
     return atomic(db_file, _traverse)
 
@@ -218,78 +241,3 @@ def get_connections(identifier):
     def _get_connections(cursor):
         return cursor.execute(read_sql('search-edges.sql'), (identifier, identifier,)).fetchall()
     return _get_connections
-
-
-def _as_dot_label(body, exclude_keys, hide_key_name, kv_separator):
-    keys = [k for k in body.keys() if k not in exclude_keys]
-    fstring = '\\n'.join(['{'+k+'}' for k in keys]) if hide_key_name else '\\n'.join(
-        [k+kv_separator+'{'+k+'}' for k in keys])
-    return fstring.format(**body)
-
-
-def _as_dot_node(body, exclude_keys=[], hide_key_name=False, kv_separator=' '):
-    name = body['id']
-    exclude_keys.append('id')
-    label = _as_dot_label(body, exclude_keys, hide_key_name, kv_separator)
-    return str(name), label
-
-
-def visualize(db_file, dot_file, path=[], connections=get_connections, format='png',
-              exclude_node_keys=[], hide_node_key=False, node_kv=' ',
-              exclude_edge_keys=[], hide_edge_key=False, edge_kv=' '):
-
-    def _unpack_edge(edge):
-        return [json.loads(item) for item in edge]
-
-    ids = []
-    for i in path:
-        ids.append(i)
-        for edge in atomic(db_file, connections(i)):
-            src, tgt, _ = _unpack_edge(edge)
-            if src not in ids:
-                ids.append(src)
-            if tgt not in ids:
-                ids.append(tgt)
-
-    dot = Digraph()
-
-    visited = []
-    edges = []
-    for i in ids:
-        if i not in visited:
-            node = atomic(db_file, find_node(i))
-            name, label = _as_dot_node(
-                node, exclude_node_keys, hide_node_key, node_kv)
-            dot.node(name, label=label)
-            for edge in atomic(db_file, connections(i)):
-                if edge not in edges:
-                    src, tgt, props = _unpack_edge(edge)
-                    dot.edge(str(src), str(tgt), label=_as_dot_label(
-                        props, exclude_edge_keys, hide_edge_key, edge_kv) if props else None)
-                    edges.append(edge)
-            visited.append(i)
-
-    dot.render(dot_file, format=format)
-
-
-def visualize_bodies(dot_file, path=[], format='png',
-                     exclude_node_keys=[], hide_node_key=False, node_kv=' ',
-                     exclude_edge_keys=[], hide_edge_key=False, edge_kv=' '):
-    dot = Digraph()
-    current_id = None
-    edges = []
-    for (identifier, obj, properties) in path:
-        body = json.loads(properties)
-        if obj == '()':
-            name, label = _as_dot_node(
-                body, exclude_node_keys, hide_node_key, node_kv)
-            dot.node(name, label=label)
-            current_id = body['id']
-        else:
-            edge = (str(current_id), str(
-                identifier), body) if obj == '->' else (str(identifier), str(current_id), body)
-            if edge not in edges:
-                dot.edge(edge[0], edge[1], label=_as_dot_label(
-                    body, exclude_edge_keys, hide_edge_key, edge_kv) if body else None)
-                edges.append(edge)
-    dot.render(dot_file, format=format)
