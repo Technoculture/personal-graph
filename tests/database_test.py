@@ -1,12 +1,12 @@
 import sqlite3
 import json
-import database as db
+from simple_graph_sqlite import database as db
 from test_common import database_test_file, nodes, edges, apple
 
 
 def test_initialize(database_test_file, apple):
     assert database_test_file.exists()
-    assert database_test_file.stat().st_size == 28672
+    assert database_test_file.stat().st_size == 32768
 
 
 def test_bulk_operations(database_test_file, nodes, edges):

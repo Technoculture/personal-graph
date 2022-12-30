@@ -1,12 +1,12 @@
 import pytest
-import database as db
+from simple_graph_sqlite import database as db
 
 
 @pytest.fixture()
 def database_test_file(tmp_path):
     d = tmp_path / "simplegraph"
     d.mkdir()
-    return str(d / "apple.sqlite")
+    return d / "apple.sqlite"
 
 
 @pytest.fixture()
