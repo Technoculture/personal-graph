@@ -179,7 +179,6 @@ def find_node(identifier):
 
 
 def _parse_search_results(results, idx=0):
-    print(results)
     return [json.loads(item[idx]) for item in results]
 
 
