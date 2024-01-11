@@ -1,4 +1,11 @@
-# About
+# Simple GraphDB
+- [ ] Use [Pydantic](https://github.com/pydantic/pydantic)
+- [ ] Add [Knowledge Graph abstraction](https://jxnl.github.io/instructor/examples/knowledge_graph/#defining-the-structures)
+- [ ] Use [Instructor](https://github.com/jxnl/instructor/) to provide easy LLM interaction
+
+---
+
+# Original README
 
 This is the [PyPI](https://pypi.org/) package of the [simple-graph](https://github.com/dpapathanasiou/simple-graph/blob/main/python) implementation in [Python](https://www.python.org/), which is a simple [graph database](https://en.wikipedia.org/wiki/Graph_database) in [SQLite](https://www.sqlite.org/), inspired by "[SQLite as a document database](https://dgl.cx/2020/06/sqlite-json-support)".
 
