@@ -9,10 +9,10 @@ using an atomic transaction wrapper function.
 
 """
 
-import sqlite3
 import json
 import pathlib
 from functools import lru_cache
+import libsql_experimental as libsql
 from jinja2 import Environment, BaseLoader, select_autoescape
 
 
@@ -37,24 +37,26 @@ search_template = env.get_template('search-node.template')
 traverse_template = env.get_template('traverse.template')
 
 
-def atomic(db_file, cursor_exec_fn):
+def atomic(db_url, auth_token, cursor_exec_fn):
     connection = None
     try:
-        connection = sqlite3.connect(db_file)
+        connection = libsql.connect(database=db_url, auth_token=auth_token)
         cursor = connection.cursor()
         cursor.execute("PRAGMA foreign_keys = TRUE;")
         results = cursor_exec_fn(cursor)
         connection.commit()
     finally:
         if connection:
-            connection.close()
+            pass
     return results
 
 
-def initialize(db_file, schema_file='schema.sql'):
+def initialize(db_url, auth_token, schema_file='schema.sql'):
     def _init(cursor):
-        cursor.executescript(read_sql(schema_file))
-    return atomic(db_file, _init)
+        schema_sql = read_sql(schema_file)
+        cursor.executescript(schema_sql)
+
+    return atomic(db_url, auth_token, _init)
 
 
 def _set_id(identifier, data):
@@ -96,6 +98,7 @@ def _upsert_node(cursor, identifier, data):
 def upsert_node(identifier, data):
     def _upsert(cursor):
         _upsert_node(cursor, identifier, data)
+
     return _upsert
 
 
@@ -103,6 +106,7 @@ def upsert_nodes(nodes, ids):
     def _upsert(cursor):
         for (id, node) in zip(ids, nodes):
             _upsert_node(cursor, id, node)
+
     return _upsert
 
 
@@ -110,6 +114,7 @@ def connect_nodes(source_id, target_id, properties={}):
     def _connect_nodes(cursor):
         cursor.execute(read_sql('insert-edge.sql'),
                        (source_id, target_id, json.dumps(properties),))
+
     return _connect_nodes
 
 
@@ -117,6 +122,7 @@ def connect_many_nodes(sources, targets, properties):
     def _connect_nodes(cursor):
         cursor.executemany(read_sql(
             'insert-edge.sql'), [(x[0], x[1], json.dumps(x[2]),) for x in zip(sources, targets, properties)])
+
     return _connect_nodes
 
 
@@ -175,6 +181,7 @@ def find_node(identifier):
         query = _generate_query([clause_template.render(id_lookup=True)])
         result = cursor.execute(query, (identifier,)).fetchone()
         return {} if not result else json.loads(result[0])
+
     return _find_node
 
 
@@ -201,7 +208,7 @@ def find_inbound_neighbors(with_bodies=False):
     return traverse_template.render(with_bodies=with_bodies, inbound=True)
 
 
-def traverse(db_file, src, tgt=None, neighbors_fn=find_neighbors, with_bodies=False):
+def traverse(db_url, auth_token, src, tgt=None, neighbors_fn=find_neighbors, with_bodies=False):
     def _traverse(cursor):
         path = []
         target = json.dumps(tgt)
@@ -219,7 +226,8 @@ def traverse(db_file, src, tgt=None, neighbors_fn=find_neighbors, with_bodies=Fa
                         if identifier == target:
                             break
         return path
-    return atomic(db_file, _traverse)
+
+    return atomic(db_url, auth_token, _traverse)
 
 
 def connections_in():
