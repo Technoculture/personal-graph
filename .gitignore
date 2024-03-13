@@ -7,8 +7,11 @@ dist/
 __pycache__/
 *.so
 *~
+.idea/
 
 # due to using tox and pytest
 .tox
 .cache
 .pytest_cache
+.python-version
+poetry.toml
