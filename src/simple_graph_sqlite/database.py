@@ -54,8 +54,10 @@ def atomic(db_url, auth_token, cursor_exec_fn):
 def initialize(db_url, auth_token, schema_file='schema.sql'):
     def _init(cursor):
         schema_sql = read_sql(schema_file)
-        cursor.executescript(schema_sql)
-
+        sql_commands = schema_sql.split(';')
+        for command in sql_commands:
+            if command.strip():
+                cursor.execute(command)
     return atomic(db_url, auth_token, _init)
 
 
