@@ -8,6 +8,7 @@ __pycache__/
 *.so
 *~
 .idea/
+.env
 
 # due to using tox and pytest
 .tox
