@@ -8,7 +8,7 @@ and extensible to other libraries.
 
 """
 
-from graphviz import Digraph
+from graphviz import Digraph # type: ignore
 from simple_graph_sqlite import database as db
 import json
 
