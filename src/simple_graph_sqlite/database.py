@@ -201,7 +201,6 @@ def find_nodes(where_clauses, bindings, tree_query=False, key=None):
 def find_neighbors(with_bodies=False):
     return traverse_template.render(with_bodies=with_bodies, inbound=True, outbound=True)
 
-
 def find_outbound_neighbors(with_bodies=False):
     return traverse_template.render(with_bodies=with_bodies, outbound=True)
 
@@ -214,7 +213,10 @@ def traverse(db_url, auth_token, src, tgt=None, neighbors_fn=find_neighbors, wit
     def _traverse(cursor):
         path = []
         target = json.dumps(tgt)
-        for row in cursor.execute(neighbors_fn(with_bodies=with_bodies), (src,)):
+        print(tgt)
+        rows = cursor.execute(neighbors_fn(with_bodies=with_bodies), (src,)).fetchall()
+        for row in rows:
+            print("Here", row[0])
             if row:
                 if with_bodies:
                     identifier, obj, _ = row
