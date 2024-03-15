@@ -152,6 +152,8 @@ The default options include every key/value pair (excluding the id) in the node 
 
 ```
 >>> graphviz_visualize(db_url, auth_token, 'apple.dot', [4, 1, 5], exclude_node_keys=['type'], hide_edge_key=True)
+>>> path_with_bodies = db.traverse(db_url, auth_token, source, target, with_bodies=True) 
+>>>graphviz_visualize_bodies('apple.dot', path_with_bodies)
 ```
 
 The [resulting dot file](tests/fixtures/apple.dot) can be edited further as needed; the [dot guide](https://graphviz.org/pdf/dotguide.pdf) has more options and examples.
