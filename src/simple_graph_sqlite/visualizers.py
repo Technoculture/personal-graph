@@ -27,14 +27,14 @@ def _as_dot_node(body, exclude_keys=[], hide_key_name=False, kv_separator=' '):
     return str(name), label
 
 
-def graphviz_visualize(db_file, dot_file, path=[], connections=db.get_connections, format='png',
+def graphviz_visualize(db_url, auth_token, dot_file, path=[], connections=db.get_connections, format='png',
                        exclude_node_keys=[], hide_node_key=False, node_kv=' ',
                        exclude_edge_keys=[], hide_edge_key=False, edge_kv=' '):
 
     ids = []
     for i in path:
         ids.append(str(i))
-        for edge in db.atomic(db_file, connections(i)):
+        for edge in db.atomic(db_url, auth_token, connections(i)):
             src, tgt, _ = edge
             if src not in ids:
                 ids.append(src)
@@ -47,11 +47,11 @@ def graphviz_visualize(db_file, dot_file, path=[], connections=db.get_connection
     edges = []
     for i in ids:
         if i not in visited:
-            node = db.atomic(db_file, db.find_node(i))
+            node = db.atomic(db_url, auth_token, db.find_node(i))
             name, label = _as_dot_node(
                 node, exclude_node_keys, hide_node_key, node_kv)
             dot.node(name, label=label)
-            for edge in db.atomic(db_file, connections(i)):
+            for edge in db.atomic(db_url, auth_token, connections(i)):
                 if edge not in edges:
                     src, tgt, prps = edge
                     props = json.loads(prps)
