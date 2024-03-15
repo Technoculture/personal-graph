@@ -78,7 +78,7 @@ Any single node or path of nodes can also be depicted graphically by using the `
 ### Example
 
 Dropping into a python shell, we can create, [upsert](https://en.wiktionary.org/wiki/upsert), and connect people from the early days of [Apple Computer](https://en.wikipedia.org/wiki/Apple_Inc.).
-It needs database url(db_url) and authentication token(auth_token) for connecting with the remote database:
+It needs database url(db_url) and authentication token(auth_token) to connecti with remote database:
 
 ```
 >>> from simple_graph_sqlite import database as db
