@@ -9,7 +9,7 @@ and extensible to other libraries.
 """
 
 from graphviz import Digraph  # type: ignore
-from simple_graph_libsql import database as db
+from libsql_graph_db import database as db
 import json
 
 

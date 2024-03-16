@@ -1,12 +1,12 @@
 [tool.poetry]
-name = "simple-graph-libsql"
-version = "v0.1"
-description = "A simple graph database in LibSQL"
+name = "libsql-graph-db"
+version = "0.1.0"
+description = "Graph database in LibSQL"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
 exclude = [
-    { path = "src/simple-graph.ipynb" }
+    { path = "src/libsql-graph.ipynb" }
 ]
 
 [tool.poetry.dependencies]
