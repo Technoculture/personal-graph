@@ -1,6 +1,6 @@
 # Libsql-graph-db
 
-> This repo add functionality on top of the simple graph db [simple-graph-pypi](https://github.com/dpapathanasiou/simple-graph-pypi) in order to support libsql instead of sqlite, and to AI native features.
+> This repo add functionality on top of the simple graph db [simple-graph-pypi](https://github.com/dpapathanasiou/simple-graph-pypi) in order to support libsql instead of sqlite, and to add AI native features such as similarity search and Natural language interface.
 
 1. Modern Interface
 Some amounts of JOSN validation and Context Manager/Class wrapper
