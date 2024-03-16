@@ -19,6 +19,27 @@ Some amounts of JOSN validation and Context Manager/Class wrapper
 4. Support for Machine Learning Libraries
      - Export to dict functions for Networkx/PyG etc 
 
+## Time Complexity
+
+| Scenario | Average Time Complexity | Worst Case Time Complexity |
+| -------- | ----------------------- | -------------------------- |
+| Single Node Insert | O(1) | O(1) |
+| Single Edge Insert | O(1) | O(1) |
+| Single Node Retrieval by ID | O(1) | O(1) |
+| Single Edge Retrieval by ID | O(1) | O(1) |
+| Retrieval of All Nodes | O(n) | O(n) |
+| Retrieval of All Edges | O(m) | O(m) |
+| Retrieval of All Neighbors of a Node	O(avg_degree) | O(n) |
+| Retrieval of All Edges of a Node	O(avg_degree) | O(n) | 
+| BFS/DFS Traversal | O(n + m) | O(n + m) |
+| Shortest Path (Unweighted) | O(n + m) | O(n + m) |
+| Shortest Path (Weighted) | O((n + m) log n) | O((n + m) log n) |
+| Connected Components | O(n + m) | O(n + m) |
+| Strongly Connected Components | O(n + m) | O(n + m) |
+| Minimum Spanning Tree | O(m log n) | O(m log n) |
+| Semantic Search (Approximate) | O(log n) | O(n) |
+| Natural Language Query (Approximate) | O(n) | O(n^2) |
+
 ## Usage
 
 ### Basic Functions
