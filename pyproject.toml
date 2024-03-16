@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "simple-graph-libsql"
-version = "2.1.0"
+version = "v0.1"
 description = "A simple graph database in LibSQL"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
