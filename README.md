@@ -14,7 +14,7 @@ This is the [PyPI](https://pypi.org/) package of the [simple-graph](https://gith
 How to [generate the distribution archive](https://packaging.python.org/tutorials/packaging-projects/#generating-distribution-archives) and confirm it on [test.pypi.org](https://packaging.python.org/tutorials/packaging-projects/#uploading-the-distribution-archives), also based on the [pypa/sampleproject](https://github.com/pypa/sampleproject):
 
 ```sh
-rm -rf build dist src/simple_graph_sqlite.egg-info
+rm -rf build dist src/simple_graph_libsql.egg-info
 poetry build
 poetry publish --repository testpypi
 ```
@@ -28,13 +28,13 @@ $ python
 Python 3.6.13 |Anaconda, Inc.| (default, Jun  4 2021, 14:25:59) 
 [GCC 7.5.0] on linux
 Type "help", "copyright", "credits" or "license" for more information.
->>> from simple_graph_sqlite import database as db
+>>> from simple_graph_libsql import database as db
 ```
 
 With the package installed, update `PYTHONPATH` to include `./tests` and run `pytest` from the root of this repository. If the tests pass, rebuild and push to [pypi.org](https://pypi.org):
 
 ```sh
-rm -rf build dist src/simple_graph_sqlite.egg-info
+rm -rf build dist src/simple_graph_libsql.egg-info
 poetry build
 poetry publish
 ```
@@ -71,7 +71,7 @@ There are also traversal functions as native SQLite [Common Table Expressions](h
 
 ## Basic Functions
 
-The [database script](src/simple_graph_sqlite/database.py) provides convenience functions for [atomic transactions](https://en.wikipedia.org/wiki/Atomicity_(database_systems)) to add, delete, connect, and search for nodes.
+The [database script](src/simple_graph_libsql/database.py) provides convenience functions for [atomic transactions](https://en.wikipedia.org/wiki/Atomicity_(database_systems)) to add, delete, connect, and search for nodes.
 
 Any single node or path of nodes can also be depicted graphically by using the `visualize` function within the database script to generate [dot](https://graphviz.org/doc/info/lang.html) files, which in turn can be converted to images with Graphviz.
 
@@ -81,7 +81,7 @@ Dropping into a python shell, we can create, [upsert](https://en.wiktionary.org/
 It needs database url(db_url) and authentication token(auth_token) to connecti with remote database:
 
 ```
->>> from simple_graph_sqlite import database as db
+>>> from simple_graph_libsql import database as db
 >>> db.initialize(db_url, auth_token)
 >>> db.atomic(db_url, auth_token, db.add_node({'name': 'Apple Computer Company', 'type':['company', 'start-up'], 'founded': 'April 1, 1976'}, 1))
 >>> db.atomic(db_url, auth_token, db.add_node({'name': 'Steve Wozniak', 'type':['person','engineer','founder']}, 2))
@@ -122,7 +122,7 @@ More complex queries to introspect the json body, using the [sqlite json_tree() 
 [{'name': 'Steve Wozniak', 'type': ['person', 'engineer', 'founder'], 'id': 2, 'nickname': 'Woz'}, {'name': 'Steve Jobs', 'type': ['person', 'designer', 'founder'], 'id': 3}, {'name': 'Ronald Wayne', 'type': ['person', 'administrator', 'founder'], 'id': 4}]
 ```
 
-See the `_generate_clause()` and `_generate_query()` functions in [database.py](src/simple_graph_sqlite/database.py) for usage hints.
+See the `_generate_clause()` and `_generate_query()` functions in [database.py](src/simple_graph_libsql/database.py) for usage hints.
 
 Paths through the graph can be discovered with a starting node id, and an optional ending id; the default neighbor expansion is nodes connected nodes in either direction, but that can changed by specifying either `find_outbound_neighbors` or `find_inbound_neighbors` instead:
 

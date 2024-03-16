@@ -1,10 +1,13 @@
 [tool.poetry]
-name = "simple-graph-sqlite"
+name = "simple-graph-libsql"
 version = "2.1.0"
-description = "A simple graph database in SQLite"
+description = "A simple graph database in LibSQL"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
+exclude = [
+    { path = "src/simple-graph.ipynb" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.8"
