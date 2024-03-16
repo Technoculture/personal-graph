@@ -7,7 +7,7 @@
 
 # Original README
 
-This is the [PyPI](https://pypi.org/) package of the [simple-graph](https://github.com/dpapathanasiou/simple-graph/blob/main/python) implementation in [Python](https://www.python.org/), which is a simple [graph database](https://en.wikipedia.org/wiki/Graph_database) in [libsql](https://github.com/tursodatabase/libsql).
+Credit to this README goes to [Denis Papathanasiou](https://github.com/dpapathanasiou/simple-graph-pypi).
 
 ## Build and Test
 
@@ -71,7 +71,8 @@ There are also traversal functions as native SQLite [Common Table Expressions](h
 
 ## Basic Functions
 
-The [database script](src/simple_graph_libsql/database.py) provides convenience functions for [atomic transactions](https://en.wikipedia.org/wiki/Atomicity_(database_systems)) to add, delete, connect, and search for nodes.
+The [database script](src/libsql_graph_db/database.py) provides convenience functions for [atomic transactions](https://en.wikipedia.org/wiki/Atomicity_(database_systems)) to add, delete, connect, and search for nodes.
+
 
 Any single node or path of nodes can also be depicted graphically by using the `visualize` function within the database script to generate [dot](https://graphviz.org/doc/info/lang.html) files, which in turn can be converted to images with Graphviz.
 
@@ -122,7 +123,7 @@ More complex queries to introspect the json body, using the [sqlite json_tree() 
 [{'name': 'Steve Wozniak', 'type': ['person', 'engineer', 'founder'], 'id': 2, 'nickname': 'Woz'}, {'name': 'Steve Jobs', 'type': ['person', 'designer', 'founder'], 'id': 3}, {'name': 'Ronald Wayne', 'type': ['person', 'administrator', 'founder'], 'id': 4}]
 ```
 
-See the `_generate_clause()` and `_generate_query()` functions in [database.py](src/simple_graph_libsql/database.py) for usage hints.
+See the `_generate_clause()` and `_generate_query()` functions in [database.py](src/libsql_graph_db/database.py) for usage hints.
 
 Paths through the graph can be discovered with a starting node id, and an optional ending id; the default neighbor expansion is nodes connected nodes in either direction, but that can changed by specifying either `find_outbound_neighbors` or `find_inbound_neighbors` instead:
 
