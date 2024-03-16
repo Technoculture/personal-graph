@@ -3,7 +3,7 @@
 """
 database.py
 
-A series of functions to leverage the (node, edge) schema of 
+A series of functions to leverage the (node, edge) schema of
 json-based nodes, and edges with optional json properties,
 using an atomic transaction wrapper function.
 
@@ -12,7 +12,7 @@ using an atomic transaction wrapper function.
 import json
 import pathlib
 from functools import lru_cache
-import libsql_experimental as libsql # type: ignore
+import libsql_experimental as libsql  # type: ignore
 from jinja2 import Environment, BaseLoader, select_autoescape
 
 
