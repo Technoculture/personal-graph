@@ -3,7 +3,7 @@ name: libsql graph db Workflow
 on:
    pull_request:
     branches: [main]
-    paths: ['src/simple_graph_sqlite/**']
+    paths: ['libsql_graph_db/**']
 
 jobs:
   check:
@@ -26,20 +26,20 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd src/simple_graph_sqlite
+          cd libsql_graph_db
           poetry install --no-interaction --no-root
 
       - name: Format with Ruff
         run: |
-          cd src/simple_graph_sqlite
+          cd libsql_graph_db
           poetry run ruff format --check .
 
       - name: Lint with Ruff
         run: |
-          cd src/simple_graph_sqlite/
+          cd libsql_graph_db/
           poetry run ruff check -- .
 
       - name: Type check
         run: |
-          cd src/simple_graph_sqlite
+          cd libsql_graph_db
           poetry run python -m mypy .

@@ -1,85 +1,57 @@
-# Simple GraphDB
-- [ ] Use [Pydantic](https://github.com/pydantic/pydantic)
-- [ ] Add [Knowledge Graph abstraction](https://jxnl.github.io/instructor/examples/knowledge_graph/#defining-the-structures)
-- [ ] Use [Instructor](https://github.com/jxnl/instructor/) to provide easy LLM interaction
+# Libsql-graph-db
 
----
+> This repo add functionality on top of the simple graph db [simple-graph-pypi](https://github.com/dpapathanasiou/simple-graph-pypi) in order to support libsql instead of sqlite, and to add AI native features such as similarity search and Natural language interface.
 
-# Original README
+1. Modern Interface
+Some amounts of JOSN validation and Context Manager/Class wrapper
+  ```py
+  # the interface would look like something like this
+  with lgdb.connect(url, token) as graph:
+    graph.add_node(Node(name="", id=1, attributes={...}))
+    graph.add_node(Node(name="", id=2, attributes={...}))
+    graph.connect(1, 2, relation={...})
+  ```
+2. AI Native Features
+     - Semantic Search (Sqlite-vss)
+     - Natural language interface to KGs (Instructor, Pydantic)
+3. Good Performance on reads (even with complex queries)
+     - Local replicas are supported by libsql
+4. Support for Machine Learning Libraries
+     - Export to dict functions for Networkx/PyG etc 
 
-Credit to this README goes to [Denis Papathanasiou](https://github.com/dpapathanasiou/simple-graph-pypi).
+## Time Complexity
 
-## Build and Test
+| Scenario | Average Time Complexity | Worst Case Time Complexity |
+| -------- | ----------------------- | -------------------------- |
+| Single Node Insert | O(1) | O(1) |
+| Single Edge Insert | O(1) | O(1) |
+| Single Node Retrieval by ID | O(1) | O(1) |
+| Single Edge Retrieval by ID | O(1) | O(1) |
+| Retrieval of All Nodes | O(n) | O(n) |
+| Retrieval of All Edges | O(m) | O(m) |
+| Retrieval of All Neighbors of a Node	O(avg_degree) | O(n) |
+| Retrieval of All Edges of a Node	O(avg_degree) | O(n) | 
+| BFS/DFS Traversal | O(n + m) | O(n + m) |
+| Shortest Path (Unweighted) | O(n + m) | O(n + m) |
+| Shortest Path (Weighted) | O((n + m) log n) | O((n + m) log n) |
+| Connected Components | O(n + m) | O(n + m) |
+| Strongly Connected Components | O(n + m) | O(n + m) |
+| Minimum Spanning Tree | O(m log n) | O(m log n) |
+| Semantic Search (Approximate) | O(log n) | O(n) |
+| Natural Language Query (Approximate) | O(n) | O(n^2) |
 
-How to [generate the distribution archive](https://packaging.python.org/tutorials/packaging-projects/#generating-distribution-archives) and confirm it on [test.pypi.org](https://packaging.python.org/tutorials/packaging-projects/#uploading-the-distribution-archives), also based on the [pypa/sampleproject](https://github.com/pypa/sampleproject):
+## Usage
 
-```sh
-rm -rf build dist src/simple_graph_libsql.egg-info
-poetry build
-poetry publish --repository testpypi
-```
+### Basic Functions
 
-Create a poetry environment, activate it, install all the requirements, and confirm the package is available:
-
-```sh
-$ poetry shell
-$ poetry install --no-root
-$ python
-Python 3.6.13 |Anaconda, Inc.| (default, Jun  4 2021, 14:25:59) 
-[GCC 7.5.0] on linux
-Type "help", "copyright", "credits" or "license" for more information.
->>> from simple_graph_libsql import database as db
-```
-
-With the package installed, update `PYTHONPATH` to include `./tests` and run `pytest` from the root of this repository. If the tests pass, rebuild and push to [pypi.org](https://pypi.org):
-
-```sh
-rm -rf build dist src/simple_graph_libsql.egg-info
-poetry build
-poetry publish
-```
-
-# Structure
-
-The [schema](https://github.com/dpapathanasiou/simple-graph/tree/main/sql/schema.sql) consists of just two structures:
-
-* Nodes - these are any [json](https://www.json.org/) objects, with the only constraint being that they each contain a unique `id` value
-* Edges - these are pairs of node `id` values, specifying the direction, with an optional json object as connection properties
-
-There are also traversal functions as native SQLite [Common Table Expressions](https://www.sqlite.org/lang_with.html):
-
-* [Both directions](https://github.com/dpapathanasiou/simple-graph/tree/main/sql/traverse.sql)
-* [Inbound](https://github.com/dpapathanasiou/simple-graph/tree/main/sql/traverse-inbound.sql)
-* [Outbound](https://github.com/dpapathanasiou/simple-graph/tree/main/sql/traverse-outbound.sql)
-
-# Applications
-
-* [Social networks](https://en.wikipedia.org/wiki/Social_graph)
-* [Interest maps/recommendation finders](https://en.wikipedia.org/wiki/Interest_graph)
-* [To-do / task lists](https://en.wikipedia.org/wiki/Task_list)
-* [Bug trackers](https://en.wikipedia.org/wiki/Open-source_software_development#Bug_trackers_and_task_lists)
-* [Customer relationship management (CRM)](https://en.wikipedia.org/wiki/Customer_relationship_management)
-* [Gantt chart](https://en.wikipedia.org/wiki/Gantt_chart)
-
-# Usage
-
-## Installation Requirements
-
-* [LibSQL](https://github.com/tursodatabase/libsql), version 0.0.26 or higher.
-* [Graphviz](https://graphviz.org/) for visualization ([download page](https://www.graphviz.org/download/), [installation procedure for Windows](https://forum.graphviz.org/t/new-simplified-installation-procedure-on-windows/224))
-* [Jinja2](https://pypi.org/project/Jinja2/) for the search and traversal templates
-
-## Basic Functions
-
-The [database script](src/libsql_graph_db/database.py) provides convenience functions for [atomic transactions](https://en.wikipedia.org/wiki/Atomicity_(database_systems)) to add, delete, connect, and search for nodes.
+The [database script](src/simple_graph_libsql/database.py) provides convenience functions for [atomic transactions](https://en.wikipedia.org/wiki/Atomicity_(database_systems)) to add, delete, connect, and search for nodes.
 
 
 Any single node or path of nodes can also be depicted graphically by using the `visualize` function within the database script to generate [dot](https://graphviz.org/doc/info/lang.html) files, which in turn can be converted to images with Graphviz.
 
-### Example
+#### Example
 
-Dropping into a python shell, we can create, [upsert](https://en.wiktionary.org/wiki/upsert), and connect people from the early days of [Apple Computer](https://en.wikipedia.org/wiki/Apple_Inc.).
-It needs database url(db_url) and authentication token(auth_token) to connecti with remote database:
+It needs database url(db_url) and authentication token(auth_token) to connect with a remote database:
 
 ```
 >>> from simple_graph_libsql import database as db
@@ -123,7 +95,7 @@ More complex queries to introspect the json body, using the [sqlite json_tree() 
 [{'name': 'Steve Wozniak', 'type': ['person', 'engineer', 'founder'], 'id': 2, 'nickname': 'Woz'}, {'name': 'Steve Jobs', 'type': ['person', 'designer', 'founder'], 'id': 3}, {'name': 'Ronald Wayne', 'type': ['person', 'administrator', 'founder'], 'id': 4}]
 ```
 
-See the `_generate_clause()` and `_generate_query()` functions in [database.py](src/libsql_graph_db/database.py) for usage hints.
+See the `_generate_clause()` and `_generate_query()` functions in [database.py](src/simple_graph_libsql/database.py) for usage hints.
 
 Paths through the graph can be discovered with a starting node id, and an optional ending id; the default neighbor expansion is nodes connected nodes in either direction, but that can changed by specifying either `find_outbound_neighbors` or `find_inbound_neighbors` instead:
 
@@ -158,3 +130,12 @@ The default options include every key/value pair (excluding the id) in the node 
 ```
 
 The [resulting dot file](tests/fixtures/apple.dot) can be edited further as needed; the [dot guide](https://graphviz.org/pdf/dotguide.pdf) has more options and examples.
+
+## Applications
+
+* [Social networks](https://en.wikipedia.org/wiki/Social_graph)
+* [Interest maps/recommendation finders](https://en.wikipedia.org/wiki/Interest_graph)
+* [To-do / task lists](https://en.wikipedia.org/wiki/Task_list)
+* [Bug trackers](https://en.wikipedia.org/wiki/Open-source_software_development#Bug_trackers_and_task_lists)
+* [Customer relationship management (CRM)](https://en.wikipedia.org/wiki/Customer_relationship_management)
+* [Gantt chart](https://en.wikipedia.org/wiki/Gantt_chart)
