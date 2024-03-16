@@ -1,0 +1,45 @@
+name: libsql graph db Workflow
+
+on:
+   pull_request:
+    branches: [main]
+    paths: ['src/simple_graph_sqlite/**']
+
+jobs:
+  check:
+    runs-on: ubuntu-latest # host's operating system
+    steps: # each job consists of 1+ steps
+      - name: Checkout commit # download the code from triggering commit
+        uses: actions/checkout@v4
+
+      - name: Set up Python and Poetry
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+
+      - name: Install dependencies
+        run: |
+          cd src/simple_graph_sqlite
+          poetry install --no-interaction --no-root
+
+      - name: Format with Ruff
+        run: |
+          cd src/simple_graph_sqlite
+          poetry run ruff format --check .
+
+      - name: Lint with Ruff
+        run: |
+          cd src/simple_graph_sqlite/
+          poetry run ruff check -- .
+
+      - name: Type check
+        run: |
+          cd src/simple_graph_sqlite
+          poetry run python -m mypy .
