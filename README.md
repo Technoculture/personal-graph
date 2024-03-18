@@ -3,7 +3,7 @@
 > This repo add functionality on top of the simple graph db [simple-graph-pypi](https://github.com/dpapathanasiou/simple-graph-pypi) in order to support libsql instead of sqlite, and to add AI native features such as similarity search and Natural language interface.
 
 1. Modern Interface
-Some amounts of JOSN validation and Context Manager/Class wrapper
+Some amounts of JSON validation and Context Manager/Class wrapper
   ```py
   # the interface would look like something like this
   with lgdb.connect(url, token) as graph:
@@ -44,7 +44,7 @@ Some amounts of JOSN validation and Context Manager/Class wrapper
 
 ### Basic Functions
 
-The [database script](src/simple_graph_libsql/database.py) provides convenience functions for [atomic transactions](https://en.wikipedia.org/wiki/Atomicity_(database_systems)) to add, delete, connect, and search for nodes.
+The [database script](libsql_graph_db/database.py) provides convenience functions for [atomic transactions](https://en.wikipedia.org/wiki/Atomicity_(database_systems)) to add, delete, connect, and search for nodes.
 
 
 Any single node or path of nodes can also be depicted graphically by using the `visualize` function within the database script to generate [dot](https://graphviz.org/doc/info/lang.html) files, which in turn can be converted to images with Graphviz.
@@ -54,7 +54,7 @@ Any single node or path of nodes can also be depicted graphically by using the `
 It needs database url(db_url) and authentication token(auth_token) to connect with a remote database:
 
 ```
->>> from simple_graph_libsql import database as db
+>>> from libsql_graph_db import database as db
 >>> db.initialize(db_url, auth_token)
 >>> db.atomic(db_url, auth_token, db.add_node({'name': 'Apple Computer Company', 'type':['company', 'start-up'], 'founded': 'April 1, 1976'}, 1))
 >>> db.atomic(db_url, auth_token, db.add_node({'name': 'Steve Wozniak', 'type':['person','engineer','founder']}, 2))
@@ -95,7 +95,7 @@ More complex queries to introspect the json body, using the [sqlite json_tree() 
 [{'name': 'Steve Wozniak', 'type': ['person', 'engineer', 'founder'], 'id': 2, 'nickname': 'Woz'}, {'name': 'Steve Jobs', 'type': ['person', 'designer', 'founder'], 'id': 3}, {'name': 'Ronald Wayne', 'type': ['person', 'administrator', 'founder'], 'id': 4}]
 ```
 
-See the `_generate_clause()` and `_generate_query()` functions in [database.py](src/simple_graph_libsql/database.py) for usage hints.
+See the `_generate_clause()` and `_generate_query()` functions in [database.py](libsql_graph_db/database.py) for usage hints.
 
 Paths through the graph can be discovered with a starting node id, and an optional ending id; the default neighbor expansion is nodes connected nodes in either direction, but that can changed by specifying either `find_outbound_neighbors` or `find_inbound_neighbors` instead:
 
