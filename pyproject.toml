@@ -2,7 +2,7 @@
 name = "libsql-graph-db"
 version = "0.1.0"
 description = "Graph database in LibSQL"
-authors = ["Your Name <you@example.com>"]
+authors = ["Anubhuti Bhardwaj <anubhutibhardwaj11@gmail.com>"]
 license = "MIT"
 readme = "README.md"
 exclude = [

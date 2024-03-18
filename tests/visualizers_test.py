@@ -11,8 +11,13 @@ def test_visualization(database_test_file, apple, tmp_path):
     here = Path(__file__).parent.resolve()
     assert cmp(dot_raw, here / "fixtures" / "apple-raw.dot")
     dot = tmp_path / "apple.dot"
-    viz.graphviz_visualize(database_test_file, dot, [4, 1, 5], exclude_node_keys=[
-        'type'], hide_edge_key=True)
+    viz.graphviz_visualize(
+        database_test_file,
+        dot,
+        [4, 1, 5],
+        exclude_node_keys=["type"],
+        hide_edge_key=True,
+    )
     assert cmp(dot, here / "fixtures" / "apple.dot")
 
 
@@ -23,6 +28,7 @@ def test_visualize_bodies(database_test_file, apple, tmp_path):
     here = Path(__file__).parent.resolve()
     assert cmp(dot_raw, here / "fixtures" / "apple-raw.dot")
     dot = tmp_path / "apple.dot"
-    viz.graphviz_visualize_bodies(dot, path_with_bodies, exclude_node_keys=[
-        'type'], hide_edge_key=True)
+    viz.graphviz_visualize_bodies(
+        dot, path_with_bodies, exclude_node_keys=["type"], hide_edge_key=True
+    )
     assert cmp(dot, here / "fixtures" / "apple.dot")
