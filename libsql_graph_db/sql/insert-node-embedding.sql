@@ -1,0 +1,1 @@
+INSERT INTO nodes_embedding(vector_nodes) VALUES (?);
