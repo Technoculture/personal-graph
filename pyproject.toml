@@ -6,7 +6,7 @@ authors = ["Anubhuti Bhardwaj <anubhutibhardwaj11@gmail.com>"]
 license = "MIT"
 readme = "README.md"
 exclude = [
-    { path = "src/libsql-graph.ipynb" }
+    { path = "examples/libsql-graph.ipynb" }
 ]
 
 [tool.poetry.dependencies]
