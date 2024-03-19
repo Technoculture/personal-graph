@@ -150,6 +150,18 @@ def connect_nodes(source_id, target_id, properties={}):
                 json.dumps(properties),
             ),
         )
+        edge_data = {
+            "source_id": source_id,
+            "target_id": target_id,
+            "properties": properties
+        }
+        embedding = json.dumps(model.encode([edge_data]).tolist()[0])
+        cursor.execute(
+            read_sql("insert-edge-embedding.sql"),
+            (
+               embedding, 
+            ),
+        )
 
     return _connect_nodes
 
