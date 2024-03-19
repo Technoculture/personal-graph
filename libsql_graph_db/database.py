@@ -106,11 +106,11 @@ def add_nodes(nodes, ids):
     return _add_nodes
 
 
-def _upsert_node(cursor, identifier, data):
+def _upsert_node(cursor, identifier, data, embedding):
     current_data = find_node(identifier)(cursor)
     if not current_data:
         # no prior record exists, so regular insert
-        _insert_node(cursor, identifier, data)
+        _insert_node(cursor, identifier, data, embedding)
     else:
         # merge the current and new data and update
         updated_data = {**current_data, **data}
@@ -121,11 +121,13 @@ def _upsert_node(cursor, identifier, data):
                 identifier,
             ),
         )
+        # TODO: vss0 virtual tables don't have support for UPDATE operation
 
 
 def upsert_node(identifier, data):
     def _upsert(cursor):
-        _upsert_node(cursor, identifier, data)
+        embedding = json.dumps(model.encode([data]).tolist()[0])
+        _upsert_node(cursor, identifier, data, embedding)
 
     return _upsert
 
