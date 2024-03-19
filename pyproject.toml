@@ -17,6 +17,7 @@ libsql-experimental = "0.0.28"
 python-dotenv = "^1.0.1"
 sqlite-vss = "^0.1.2"
 sqlean-py = "^3.45.1"
+sentence-transformers = "^2.5.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.1.1"
