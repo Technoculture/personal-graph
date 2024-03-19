@@ -1,1 +1,1 @@
-INSERT INTO nodes_embedding(vector_nodes) VALUES (?);
+INSERT INTO nodes_embedding(rowid, vector_nodes) VALUES (?,?);

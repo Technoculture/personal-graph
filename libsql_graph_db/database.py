@@ -14,6 +14,9 @@ import pathlib
 from functools import lru_cache
 import libsql_experimental as libsql  # type: ignore
 from jinja2 import Environment, BaseLoader, select_autoescape
+from sentence_transformers import SentenceTransformer  # type: ignore
+
+model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
 
 @lru_cache(maxsize=None)
@@ -65,15 +68,17 @@ def _set_id(identifier, data):
     return data
 
 
-def _insert_node(cursor, identifier, data):
+def _insert_node(cursor, identifier, data, embedding):
     cursor.execute(
         read_sql("insert-node.sql"), (json.dumps(_set_id(identifier, data)),)
     )
+    cursor.execute(read_sql("insert-node-embedding.sql"), (identifier, embedding))
 
 
 def add_node(data, identifier=None):
     def _add_node(cursor):
-        _insert_node(cursor, identifier, data)
+        embedding = model.encode([data]).tolist()
+        _insert_node(cursor, identifier, data, json.dumps(embedding[0]))
 
     return _add_node
 
