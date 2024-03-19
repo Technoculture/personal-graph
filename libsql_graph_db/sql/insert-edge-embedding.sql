@@ -1,0 +1,1 @@
+INSERT INTO relationship_embedding(vector_relations) VALUES(?)
