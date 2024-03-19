@@ -94,7 +94,15 @@ def add_nodes(nodes, ids):
                 )
             ],
         )
-
+        
+        cursor.executemany(
+            read_sql("insert-node-embedding.sql"),
+            [
+                (identifier, json.dumps(model.encode([node]).tolist()[0]))
+                for node, identifier in zip(nodes, ids)
+            ]
+        )
+        
     return _add_nodes
 
 
