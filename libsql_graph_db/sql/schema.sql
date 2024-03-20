@@ -1,4 +1,5 @@
 CREATE TABLE IF NOT EXISTS nodes (
+    embed_id TEXT NOT NULL UNIQUE,
     body TEXT,
     id   TEXT GENERATED ALWAYS AS (json_extract(body, '$.id')) VIRTUAL NOT NULL UNIQUE
 );
@@ -6,6 +7,7 @@ CREATE TABLE IF NOT EXISTS nodes (
 CREATE INDEX IF NOT EXISTS id_idx ON nodes(id);
 
 CREATE TABLE IF NOT EXISTS edges (
+    embed_id TEXT NOT NULL UNIQUE,
     source     TEXT,
     target     TEXT,
     properties TEXT,

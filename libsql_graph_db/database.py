@@ -71,13 +71,20 @@ def _set_id(identifier, data):
 def _insert_node(cursor, identifier, data):
     cursor.execute(read_sql("count-nodes.sql"))
     row_count = cursor.fetchone()[0]
-    
+
     set_data = _set_id(identifier, data)
-    
+
     cursor.execute(
-        read_sql("insert-node.sql"), (json.dumps(set_data),)
+        read_sql("insert-node.sql"),
+        (
+            row_count + 1,
+            json.dumps(set_data),
+        ),
     )
-    cursor.execute(read_sql("insert-node-embedding.sql"), (row_count+1, json.dumps(model.encode([set_data]).tolist()[0])))
+    cursor.execute(
+        read_sql("insert-node-embedding.sql"),
+        (row_count + 1, json.dumps(model.encode([set_data]).tolist()[0])),
+    )
 
 
 def add_node(data, identifier=None):
@@ -90,26 +97,34 @@ def add_node(data, identifier=None):
 def add_nodes(nodes, ids):
     def _add_nodes(cursor):
         cursor.execute(read_sql("count-nodes.sql"))
-        row_count = cursor.fetchone()[0]
-        
+        row_count = cursor.fetchone()[0] + 2
+
         cursor.executemany(
             read_sql("insert-node.sql"),
             [
-                (x,)
-                for x in map(
-                    lambda node: json.dumps(_set_id(node[0], node[1])), zip(ids, nodes)
+                (row_count + i, x)
+                for i, x in enumerate(
+                    map(
+                        lambda node: json.dumps(_set_id(node[0], node[1])),
+                        zip(ids, nodes),
+                    )
                 )
             ],
         )
-        
+
         cursor.executemany(
             read_sql("insert-node-embedding.sql"),
             [
-                (row_count+i+1, x)
-                for i,x in enumerate(map(
-                    lambda node: json.dumps(model.encode([_set_id(node[0], node[1])]).tolist()[0]), zip(ids, nodes)
-                ))
-            ]
+                (row_count + i, x)
+                for i, x in enumerate(
+                    map(
+                        lambda node: json.dumps(
+                            model.encode([_set_id(node[0], node[1])]).tolist()[0]
+                        ),
+                        zip(ids, nodes),
+                    )
+                )
+            ],
         )
 
     return _add_nodes
@@ -156,6 +171,7 @@ def connect_nodes(source_id, target_id, properties={}):
         cursor.execute(
             read_sql("insert-edge.sql"),
             (
+                row_count + 1,
                 source_id,
                 target_id,
                 json.dumps(properties),
@@ -185,11 +201,12 @@ def connect_many_nodes(sources, targets, properties):
             read_sql("insert-edge.sql"),
             [
                 (
+                    row_count + i + 1,
                     x[0],
                     x[1],
                     json.dumps(x[2]),
                 )
-                for x in zip(sources, targets, properties)
+                for i, x in enumerate(zip(sources, targets, properties))
             ],
         )
 
@@ -219,6 +236,16 @@ def connect_many_nodes(sources, targets, properties):
 
 def remove_node(identifier):
     def _remove_node(cursor):
+        rows = cursor.execute(
+            "SELECT edge_rowid FROM edges WHERE source=?", (identifier,)
+        ).fetchall()
+        edge_ids = [i[0] for i in rows]
+
+        node = cursor.execute(
+            "SELECT node_rowid FROM nodes WHERE id=?", (identifier,)
+        ).fetchone()[0]
+        print(node)
+
         cursor.execute(
             read_sql("delete-edge.sql"),
             (
@@ -226,7 +253,13 @@ def remove_node(identifier):
                 identifier,
             ),
         )
+
+        for id in edge_ids:
+            cursor.execute(read_sql("delete-edge-embedding.sql"), (id,))
+
         cursor.execute(read_sql("delete-node.sql"), (identifier,))
+
+        cursor.execute(read_sql("delete-node-embedding.sql"), (node,))
 
     return _remove_node
 
