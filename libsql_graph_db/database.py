@@ -68,23 +68,30 @@ def _set_id(identifier, data):
     return data
 
 
-def _insert_node(cursor, identifier, data, embedding):
+def _insert_node(cursor, identifier, data):
+    cursor.execute(read_sql("count-nodes.sql"))
+    row_count = cursor.fetchone()[0]
+    
+    set_data = _set_id(identifier, data)
+    
     cursor.execute(
-        read_sql("insert-node.sql"), (json.dumps(_set_id(identifier, data)),)
+        read_sql("insert-node.sql"), (json.dumps(set_data),)
     )
-    cursor.execute(read_sql("insert-node-embedding.sql"), (identifier, embedding))
+    cursor.execute(read_sql("insert-node-embedding.sql"), (row_count+1, json.dumps(model.encode([set_data]).tolist()[0])))
 
 
 def add_node(data, identifier=None):
     def _add_node(cursor):
-        embedding = model.encode([data]).tolist()
-        _insert_node(cursor, identifier, data, json.dumps(embedding[0]))
+        _insert_node(cursor, identifier, data)
 
     return _add_node
 
 
 def add_nodes(nodes, ids):
     def _add_nodes(cursor):
+        cursor.execute(read_sql("count-nodes.sql"))
+        row_count = cursor.fetchone()[0]
+        
         cursor.executemany(
             read_sql("insert-node.sql"),
             [
@@ -94,23 +101,25 @@ def add_nodes(nodes, ids):
                 )
             ],
         )
-
+        
         cursor.executemany(
             read_sql("insert-node-embedding.sql"),
             [
-                (identifier, json.dumps(model.encode([node]).tolist()[0]))
-                for node, identifier in zip(nodes, ids)
-            ],
+                (row_count+i+1, x)
+                for i,x in enumerate(map(
+                    lambda node: json.dumps(model.encode([_set_id(node[0], node[1])]).tolist()[0]), zip(ids, nodes)
+                ))
+            ]
         )
 
     return _add_nodes
 
 
-def _upsert_node(cursor, identifier, data, embedding):
+def _upsert_node(cursor, identifier, data):
     current_data = find_node(identifier)(cursor)
     if not current_data:
         # no prior record exists, so regular insert
-        _insert_node(cursor, identifier, data, embedding)
+        _insert_node(cursor, identifier, data)
     else:
         # merge the current and new data and update
         updated_data = {**current_data, **data}
@@ -126,8 +135,7 @@ def _upsert_node(cursor, identifier, data, embedding):
 
 def upsert_node(identifier, data):
     def _upsert(cursor):
-        embedding = json.dumps(model.encode([data]).tolist()[0])
-        _upsert_node(cursor, identifier, data, embedding)
+        _upsert_node(cursor, identifier, data)
 
     return _upsert
 
