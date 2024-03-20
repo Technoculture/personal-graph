@@ -189,7 +189,7 @@ def connect_many_nodes(sources, targets, properties):
             read_sql("insert-edge-embedding.sql"),
             [
                 (
-                    row_count + 1,
+                    row_count + i + 1,
                     json.dumps(
                         model.encode(
                             [
@@ -202,7 +202,7 @@ def connect_many_nodes(sources, targets, properties):
                         ).tolist()[0]
                     ),
                 )
-                for x in zip(sources, targets, properties)
+                for i, x in enumerate(zip(sources, targets, properties))
             ],
         )
 
