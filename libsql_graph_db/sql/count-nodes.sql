@@ -1,0 +1,1 @@
+SELECT count(*) from nodes_embedding
