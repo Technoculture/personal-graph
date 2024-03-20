@@ -150,7 +150,7 @@ def upsert_nodes(nodes, ids):
 
 def connect_nodes(source_id, target_id, properties={}):
     def _connect_nodes(cursor):
-        cursor.execute(read_sql("count_rows.sql"))
+        cursor.execute(read_sql("count-edges.sql"))
         row_count = cursor.fetchone()[0]
 
         cursor.execute(
@@ -178,7 +178,7 @@ def connect_nodes(source_id, target_id, properties={}):
 
 def connect_many_nodes(sources, targets, properties):
     def _connect_nodes(cursor):
-        cursor.execute(read_sql("count_rows.sql"))
+        cursor.execute(read_sql("count-edges.sql"))
         row_count = cursor.fetchone()[0]
 
         cursor.executemany(
