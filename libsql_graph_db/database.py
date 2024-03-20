@@ -144,7 +144,7 @@ def connect_nodes(source_id, target_id, properties={}):
     def _connect_nodes(cursor):
         cursor.execute(read_sql("count_rows.sql"))
         row_count = cursor.fetchone()[0]
-        
+
         cursor.execute(
             read_sql("insert-edge.sql"),
             (
@@ -153,7 +153,7 @@ def connect_nodes(source_id, target_id, properties={}):
                 json.dumps(properties),
             ),
         )
-        
+
         edge_data = {
             "source_id": source_id,
             "target_id": target_id,
@@ -162,7 +162,7 @@ def connect_nodes(source_id, target_id, properties={}):
         embedding = json.dumps(model.encode([edge_data]).tolist()[0])
         cursor.execute(
             read_sql("insert-edge-embedding.sql"),
-            (row_count+1, embedding),
+            (row_count + 1, embedding),
         )
 
     return _connect_nodes
@@ -172,7 +172,7 @@ def connect_many_nodes(sources, targets, properties):
     def _connect_nodes(cursor):
         cursor.execute(read_sql("count_rows.sql"))
         row_count = cursor.fetchone()[0]
-        
+
         cursor.executemany(
             read_sql("insert-edge.sql"),
             [
@@ -189,7 +189,7 @@ def connect_many_nodes(sources, targets, properties):
             read_sql("insert-edge-embedding.sql"),
             [
                 (
-                    row_count+1,
+                    row_count + 1,
                     json.dumps(
                         model.encode(
                             [
