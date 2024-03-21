@@ -1,1 +1,0 @@
-SELECT count(*) from relationship_embedding
