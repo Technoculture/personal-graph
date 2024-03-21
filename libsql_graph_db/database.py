@@ -176,7 +176,14 @@ def connect_nodes(source_id, target_id, properties={}):
             (source_id, target_id, json.dumps(properties)),
         ).fetchone()
 
-        if existing_edge:
+        existing_source_node = cursor.execute(
+            read_sql("existing-node.sql"), (source_id,)
+        ).fetchone()
+        existing_target_node = cursor.execute(
+            read_sql("existing-node.sql"), (target_id,)
+        ).fetchone()
+
+        if existing_edge or not existing_source_node or not existing_target_node:
             return
 
         count = (
@@ -222,7 +229,14 @@ def connect_many_nodes(sources, targets, properties):
                 (x[0], x[1], json.dumps(x[2])),
             ).fetchone()
 
-            if existing_edge:
+            existing_source_node = cursor.execute(
+                read_sql("existing-node.sql"), (x[0],)
+            ).fetchone()
+            existing_target_node = cursor.execute(
+                read_sql("existing-node.sql"), (x[1],)
+            ).fetchone()
+
+            if existing_edge or not existing_source_node or not existing_target_node:
                 count -= 1
                 continue
 
