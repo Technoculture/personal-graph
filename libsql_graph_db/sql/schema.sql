@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS nodes (
 CREATE INDEX IF NOT EXISTS id_idx ON nodes(id);
 
 CREATE TABLE IF NOT EXISTS edges (
-    embed_id INT NOT NULL UNIQUE,
+    embed_id INTEGER NOT NULL UNIQUE,
     source     TEXT,
     target     TEXT,
     properties TEXT,

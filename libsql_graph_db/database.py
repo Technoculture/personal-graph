@@ -69,13 +69,16 @@ def _set_id(identifier, data):
 
 
 def _insert_node(cursor, identifier, data):
-    cursor.execute("SELECT MAX(embed_id) from nodes;")
-    count = cursor.fetchone()[0]
+    existing_node = cursor.execute(
+        read_sql("existing-node.sql"), (identifier,)
+    ).fetchone()
 
-    if count is None:
-        count = 1
-    else:
-        count = count + 1
+    if existing_node:
+        return
+
+    count = (
+        cursor.execute("SELECT COALESCE(MAX(embed_id), 0) FROM nodes").fetchone()[0] + 1
+    )
 
     set_data = _set_id(identifier, data)
 
@@ -101,41 +104,35 @@ def add_node(data, identifier=None):
 
 def add_nodes(nodes, ids):
     def _add_nodes(cursor):
-        cursor.execute("SELECT MAX(embed_id) from nodes;")
-        count = cursor.fetchone()[0]
-
-        if count is None:
-            count = 1
-        else:
-            count = count + 1
-
-        cursor.executemany(
-            read_sql("insert-node.sql"),
-            [
-                (count + i, x)
-                for i, x in enumerate(
-                    map(
-                        lambda node: json.dumps(_set_id(node[0], node[1])),
-                        zip(ids, nodes),
-                    )
-                )
-            ],
+        count = (
+            cursor.execute("SELECT COALESCE(MAX(embed_id), 0) FROM nodes").fetchone()[0]
+            + 1
         )
 
-        cursor.executemany(
-            read_sql("insert-node-embedding.sql"),
-            [
-                (count + i, x)
-                for i, x in enumerate(
-                    map(
-                        lambda node: json.dumps(
-                            model.encode([_set_id(node[0], node[1])]).tolist()[0]
-                        ),
-                        zip(ids, nodes),
-                    )
-                )
-            ],
-        )
+        for i, x in enumerate(zip(ids, nodes)):
+            existing_node = cursor.execute(
+                read_sql("existing-node.sql"), (x[0],)
+            ).fetchone()
+
+            if existing_node:
+                count -= 1
+                continue
+
+            cursor.execute(
+                read_sql("insert-node.sql"),
+                (
+                    count + i,
+                    json.dumps(_set_id(x[0], x[1])),
+                ),
+            )
+
+            cursor.execute(
+                read_sql("insert-node-embedding.sql"),
+                (
+                    count + i,
+                    json.dumps(model.encode([_set_id(x[0], x[1])]).tolist()[0]),
+                ),
+            )
 
     return _add_nodes
 
@@ -174,13 +171,18 @@ def upsert_nodes(nodes, ids):
 
 def connect_nodes(source_id, target_id, properties={}):
     def _connect_nodes(cursor):
-        cursor.execute("SELECT MAX(embed_id) from edges;")
-        count = cursor.fetchone()[0]
+        existing_edge = cursor.execute(
+            read_sql("existing-edge.sql"),
+            (source_id, target_id, json.dumps(properties)),
+        ).fetchone()
 
-        if count is None:
-            count = 1
-        else:
-            count = count + 1
+        if existing_edge:
+            return
+
+        count = (
+            cursor.execute("SELECT COALESCE(MAX(embed_id), 0) FROM edges").fetchone()[0]
+            + 1
+        )
 
         cursor.execute(
             read_sql("insert-edge.sql"),
@@ -198,6 +200,7 @@ def connect_nodes(source_id, target_id, properties={}):
             "properties": properties,
         }
         embedding = json.dumps(model.encode([edge_data]).tolist()[0])
+
         cursor.execute(
             read_sql("insert-edge-embedding.sql"),
             (count, embedding),
@@ -208,47 +211,46 @@ def connect_nodes(source_id, target_id, properties={}):
 
 def connect_many_nodes(sources, targets, properties):
     def _connect_nodes(cursor):
-        cursor.execute("SELECT MAX(embed_id) from edges;")
-        count = cursor.fetchone()[0]
+        count = (
+            cursor.execute("SELECT COALESCE(MAX(embed_id), 0) FROM edges").fetchone()[0]
+            + 1
+        )
 
-        if count is None:
-            count = 1
-        else:
-            count = count + 1
+        for i, x in enumerate(zip(sources, targets, properties)):
+            existing_edge = cursor.execute(
+                read_sql("existing-edge.sql"),
+                (x[0], x[1], json.dumps(x[2])),
+            ).fetchone()
 
-        cursor.executemany(
-            read_sql("insert-edge.sql"),
-            [
+            if existing_edge:
+                count -= 1
+                continue
+
+            cursor.execute(
+                read_sql("insert-edge.sql"),
                 (
                     count + i,
                     x[0],
                     x[1],
                     json.dumps(x[2]),
-                )
-                for i, x in enumerate(zip(sources, targets, properties))
-            ],
-        )
+                ),
+            )
 
-        cursor.executemany(
-            read_sql("insert-edge-embedding.sql"),
-            [
-                (
-                    count + i,
-                    json.dumps(
-                        model.encode(
-                            [
-                                (
-                                    x[0],
-                                    x[1],
-                                    json.dumps(x[2]),
-                                )
-                            ]
-                        ).tolist()[0]
-                    ),
-                )
-                for i, x in enumerate(zip(sources, targets, properties))
-            ],
-        )
+            embedding = json.dumps(
+                model.encode(
+                    [
+                        (
+                            x[0],
+                            x[1],
+                            json.dumps(x[2]),
+                        )
+                    ]
+                ).tolist()[0]
+            )
+            cursor.execute(
+                read_sql("insert-edge-embedding.sql"),
+                (count + i, embedding),
+            )
 
     return _connect_nodes
 
@@ -260,12 +262,10 @@ def remove_node(identifier):
             (identifier, identifier),
         ).fetchall()
         edge_ids = [i[0] for i in rows]
-        print(edge_ids)
 
         node = cursor.execute(
             "SELECT embed_id FROM nodes WHERE id=?", (identifier,)
         ).fetchone()[0]
-        print(node)
 
         cursor.execute(
             read_sql("delete-edge.sql"),
@@ -287,19 +287,31 @@ def remove_node(identifier):
 
 def remove_nodes(identifiers):
     def _remove_node(cursor):
-        cursor.executemany(
-            read_sql("delete-edge.sql"),
-            [
+        for identifier in identifiers:
+            rows = cursor.execute(
+                "SELECT embed_id FROM edges WHERE source=? OR target=?",
+                (identifier, identifier),
+            ).fetchall()
+            edge_ids = [i[0] for i in rows]
+
+            node = cursor.execute(
+                "SELECT embed_id FROM nodes WHERE id=?", (identifier,)
+            ).fetchone()[0]
+
+            cursor.execute(
+                read_sql("delete-edge.sql"),
                 (
                     identifier,
                     identifier,
-                )
-                for identifier in identifiers
-            ],
-        )
-        cursor.executemany(
-            read_sql("delete-node.sql"), [(identifier,) for identifier in identifiers]
-        )
+                ),
+            )
+
+            for id in edge_ids:
+                cursor.execute(read_sql("delete-edge-embedding.sql"), (id,))
+
+            cursor.execute(read_sql("delete-node.sql"), (identifier,))
+
+            cursor.execute(read_sql("delete-node-embedding.sql"), (node,))
 
     return _remove_node
 
