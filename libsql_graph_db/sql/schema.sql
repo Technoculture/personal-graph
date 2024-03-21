@@ -12,8 +12,8 @@ CREATE TABLE IF NOT EXISTS edges (
     target     TEXT,
     properties TEXT,
     UNIQUE(source, target, properties) ON CONFLICT REPLACE,
-    FOREIGN KEY(source) REFERENCES nodes(id),
-    FOREIGN KEY(target) REFERENCES nodes(id)
+    FOREIGN KEY(source) REFERENCES nodes(id) ON DELETE CASCADE,
+    FOREIGN KEY(target) REFERENCES nodes(id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS source_idx ON edges(source);

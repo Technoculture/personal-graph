@@ -97,7 +97,7 @@ def add_node(data, identifier=None):
 def add_nodes(nodes, ids):
     def _add_nodes(cursor):
         cursor.execute(read_sql("count-nodes.sql"))
-        row_count = cursor.fetchone()[0] + 2
+        row_count = cursor.fetchone()[0] + 1
 
         cursor.executemany(
             read_sql("insert-node.sql"),
@@ -237,14 +237,14 @@ def connect_many_nodes(sources, targets, properties):
 def remove_node(identifier):
     def _remove_node(cursor):
         rows = cursor.execute(
-            "SELECT edge_rowid FROM edges WHERE source=?", (identifier,)
+            "SELECT embed_id FROM edges WHERE source=? OR target=?",
+            (identifier, identifier),
         ).fetchall()
         edge_ids = [i[0] for i in rows]
 
         node = cursor.execute(
-            "SELECT node_rowid FROM nodes WHERE id=?", (identifier,)
+            "SELECT embed_id FROM nodes WHERE id=?", (identifier,)
         ).fetchone()[0]
-        print(node)
 
         cursor.execute(
             read_sql("delete-edge.sql"),
