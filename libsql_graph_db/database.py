@@ -69,27 +69,26 @@ def _set_id(identifier, data):
 
 
 def _insert_node(cursor, identifier, data):
-    cursor.execute("SELECT embed_id from nodes ORDER BY embed_id DESC")
-    count = cursor.fetchone()
-    print(count)
-    
+    cursor.execute("SELECT MAX(embed_id) from nodes;")
+    count = cursor.fetchone()[0]
+
     if count is None:
         count = 1
     else:
-        count = count[0] + 1
+        count = count + 1
 
     set_data = _set_id(identifier, data)
 
     cursor.execute(
         read_sql("insert-node.sql"),
         (
-            count + 1,
+            count,
             json.dumps(set_data),
         ),
     )
     cursor.execute(
         read_sql("insert-node-embedding.sql"),
-        (count + 1, json.dumps(model.encode([set_data]).tolist()[0])),
+        (count, json.dumps(model.encode([set_data]).tolist()[0])),
     )
 
 
@@ -102,14 +101,13 @@ def add_node(data, identifier=None):
 
 def add_nodes(nodes, ids):
     def _add_nodes(cursor):
-        cursor.execute("SELECT embed_id from nodes ORDER BY embed_id DESC")
-        count = cursor.fetchone()
-        print(count)
-        
+        cursor.execute("SELECT MAX(embed_id) from nodes;")
+        count = cursor.fetchone()[0]
+
         if count is None:
             count = 1
         else:
-            count = count[0] + 1
+            count = count + 1
 
         cursor.executemany(
             read_sql("insert-node.sql"),
@@ -157,7 +155,6 @@ def _upsert_node(cursor, identifier, data):
                 identifier,
             ),
         )
-        # TODO: vss0 virtual tables don't have support for UPDATE operation
 
 
 def upsert_node(identifier, data):
@@ -177,14 +174,13 @@ def upsert_nodes(nodes, ids):
 
 def connect_nodes(source_id, target_id, properties={}):
     def _connect_nodes(cursor):
-        cursor.execute("SELECT embed_id from edges ORDER BY embed_id DESC")
-        count = cursor.fetchone()
-        print(count)
-        
+        cursor.execute("SELECT MAX(embed_id) from edges;")
+        count = cursor.fetchone()[0]
+
         if count is None:
             count = 1
         else:
-            count = count[0] + 1
+            count = count + 1
 
         cursor.execute(
             read_sql("insert-edge.sql"),
@@ -212,14 +208,13 @@ def connect_nodes(source_id, target_id, properties={}):
 
 def connect_many_nodes(sources, targets, properties):
     def _connect_nodes(cursor):
-        cursor.execute("SELECT embed_id from edges ORDER BY embed_id DESC")
-        count = cursor.fetchone()
-        
+        cursor.execute("SELECT MAX(embed_id) from edges;")
+        count = cursor.fetchone()[0]
+
         if count is None:
             count = 1
         else:
-            count = count[0] + 1
-        
+            count = count + 1
 
         cursor.executemany(
             read_sql("insert-edge.sql"),
