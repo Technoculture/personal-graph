@@ -9,14 +9,23 @@ using an atomic transaction wrapper function.
 
 """
 
+import os
 import json
 import pathlib
 from functools import lru_cache
 import libsql_experimental as libsql  # type: ignore
 from jinja2 import Environment, BaseLoader, select_autoescape
-from sentence_transformers import SentenceTransformer  # type: ignore
+from openai import OpenAI  # type: ignore
+from dotenv import load_dotenv
 
-model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+load_dotenv()
+
+client = OpenAI(api_key=os.getenv("OPEN_API_KEY"))
+
+
+def get_embedding(text, model="text-embedding-ada-002"):
+    text = text.replace("\n", " ")
+    return client.embeddings.create(input=[text], model=model).data[0].embedding
 
 
 @lru_cache(maxsize=None)
@@ -89,9 +98,10 @@ def _insert_node(cursor, identifier, data):
             json.dumps(set_data),
         ),
     )
+
     cursor.execute(
         read_sql("insert-node-embedding.sql"),
-        (count, json.dumps(model.encode([set_data]).tolist()[0])),
+        (count, json.dumps(get_embedding(json.dumps(set_data)))),
     )
 
 
@@ -130,7 +140,7 @@ def add_nodes(nodes, ids):
                 read_sql("insert-node-embedding.sql"),
                 (
                     count + i,
-                    json.dumps(model.encode([_set_id(x[0], x[1])]).tolist()[0]),
+                    json.dumps(get_embedding(json.dumps(_set_id(x[0], x[1])))),
                 ),
             )
 
@@ -206,7 +216,7 @@ def connect_nodes(source_id, target_id, properties={}):
             "target_id": target_id,
             "properties": properties,
         }
-        embedding = json.dumps(model.encode([edge_data]).tolist()[0])
+        embedding = json.dumps(get_embedding(json.dumps(edge_data)))
 
         cursor.execute(
             read_sql("insert-edge-embedding.sql"),
@@ -251,15 +261,15 @@ def connect_many_nodes(sources, targets, properties):
             )
 
             embedding = json.dumps(
-                model.encode(
-                    [
+                get_embedding(
+                    json.dumps(
                         (
                             x[0],
                             x[1],
                             json.dumps(x[2]),
                         )
-                    ]
-                ).tolist()[0]
+                    )
+                )
             )
             cursor.execute(
                 read_sql("insert-edge-embedding.sql"),
