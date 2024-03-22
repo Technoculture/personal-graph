@@ -15,23 +15,10 @@ import pathlib
 from functools import lru_cache
 import libsql_experimental as libsql  # type: ignore
 from jinja2 import Environment, BaseLoader, select_autoescape
-from openai import OpenAI  # type: ignore
 from dotenv import load_dotenv
+from libsql_graph_db.embeddings import EmbeddingsModel
 
 load_dotenv()
-
-client = OpenAI(api_key=os.getenv("OPEN_API_KEY"))
-
-
-def get_embedding(text, model="text-embedding-3-small"):
-    text = text.replace("\n", " ")
-    return (
-        client.embeddings.create(
-            input=[text], model=model, dimensions=384, encoding_format="float"
-        )
-        .data[0]
-        .embedding
-    )
 
 
 @lru_cache(maxsize=None)
