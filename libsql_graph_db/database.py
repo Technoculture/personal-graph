@@ -150,7 +150,7 @@ def add_nodes(nodes, ids):
 
 
 def _upsert_node(cursor, connection, identifier, data):
-    current_data = find_node(identifier)(cursor)
+    current_data = find_node(identifier)(cursor, connection)
     if not current_data:
         # no prior record exists, so regular insert
         _insert_node(cursor, connection, identifier, data)
@@ -218,11 +218,10 @@ def connect_nodes(source_id, target_id, properties={}):
             "target_id": target_id,
             "properties": properties,
         }
-        embedding = json.dumps(get_embedding(json.dumps(edge_data)))
 
         cursor.execute(
             read_sql("insert-edge-embedding.sql"),
-            (count, embedding),
+            (count, json.dumps(get_embedding(json.dumps(edge_data)))),
         )
 
     return _connect_nodes
@@ -262,20 +261,22 @@ def connect_many_nodes(sources, targets, properties):
                 ),
             )
 
-            embedding = json.dumps(
-                get_embedding(
-                    json.dumps(
-                        (
-                            x[0],
-                            x[1],
-                            json.dumps(x[2]),
-                        )
-                    )
-                )
-            )
             cursor.execute(
                 read_sql("insert-edge-embedding.sql"),
-                (count + i, embedding),
+                (
+                    count + i,
+                    json.dumps(
+                        get_embedding(
+                            json.dumps(
+                                (
+                                    x[0],
+                                    x[1],
+                                    json.dumps(x[2]),
+                                )
+                            )
+                        )
+                    ),
+                ),
             )
 
     return _connect_nodes
