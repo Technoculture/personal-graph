@@ -33,8 +33,12 @@ def read_sql(sql_file: str) -> str:
 class SqlTemplateLoader(BaseLoader):
     def get_source(
         self, environment: Environment, template: str
-    ) -> Tuple[str, str, bool]:
-        return read_sql(template), template, True
+    ) -> Tuple[str, str, Callable[[], bool]]:
+        def uptodate() -> bool:
+            return True
+
+        # Return the source code, the template name, and the uptodate function
+        return read_sql(template), template, uptodate
 
 
 env = Environment(loader=SqlTemplateLoader(), autoescape=select_autoescape())
@@ -368,8 +372,8 @@ def remove_nodes(identifiers: List[Any]) -> CursorExecFunction:
 
 def _generate_clause(
     key: str,
-    predicate: str = None,
-    joiner: str = None,
+    predicate: str | None = None,
+    joiner: str | None = None,
     tree: bool = False,
     tree_with_key: bool = False,
 ) -> str:
@@ -396,8 +400,8 @@ def _generate_clause(
 
 def _generate_query(
     where_clauses: List[str],
-    result_column: str = None,
-    key: str = None,
+    result_column: str | None = None,
+    key: str | None = None,
     tree: bool = False,
 ) -> str:
     """Generate the search query, selecting either the id or the body,
@@ -438,7 +442,10 @@ def _parse_search_results(results: List[Tuple], idx: int = 0) -> List[Dict]:
 
 
 def find_nodes(
-    where_clauses: List[str], bindings: Tuple, tree_query: bool = False, key: str = None
+    where_clauses: List[str],
+    bindings: Tuple,
+    tree_query: bool = False,
+    key: str | None = None,
 ) -> CursorExecFunction:
     def _find_nodes(cursor, connection):
         query = _generate_query(where_clauses, key=key, tree=tree_query)

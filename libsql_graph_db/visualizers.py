@@ -11,7 +11,7 @@ and extensible to other libraries.
 import json
 from graphviz import Digraph  # type: ignore
 from libsql_graph_db import database as db
-from typing import Callable, List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple
 
 
 def _as_dot_label(
@@ -46,7 +46,7 @@ def graphviz_visualize(
     auth_token: str,
     dot_file: str,
     path: List[Any] = [],
-    connections: Callable[[Any], List[Tuple[Any, Any, Any, str]]] = db.get_connections,
+    connections: Any = db.get_connections,
     format: str = "png",
     exclude_node_keys: List[str] = [],
     hide_node_key: bool = False,
