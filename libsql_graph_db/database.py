@@ -70,6 +70,7 @@ def _insert_node(cursor, connection, identifier, data):
     existing_node = cursor.execute(
         read_sql("existing-node.sql"), (identifier,)
     ).fetchone()
+    print(existing_node)
 
     if existing_node:
         return
@@ -77,8 +78,10 @@ def _insert_node(cursor, connection, identifier, data):
     count = (
         cursor.execute("SELECT COALESCE(MAX(embed_id), 0) FROM nodes").fetchone()[0] + 1
     )
+    print(count)
 
     set_data = _set_id(identifier, data)
+    print(set_data)
 
     cursor.execute(
         read_sql("insert-node.sql"),
@@ -144,12 +147,27 @@ def _upsert_node(cursor, connection, identifier, data):
         # no prior record exists, so regular insert
         _insert_node(cursor, connection, identifier, data)
     else:
-        # merge the current and new data and update
+        current_id = current_data["id"]
+        id_to_be_updated = cursor.execute(
+            "SELECT embed_id from nodes where id=?", (current_id,)
+        ).fetchone()[0]
         updated_data = {**current_data, **data}
+
+        cursor.execute(read_sql("delete-node-embedding.sql"), (id_to_be_updated,))
+        count = (
+            cursor.execute("SELECT COALESCE(MAX(embed_id), 0) FROM nodes").fetchone()[0]
+            + 1
+        )
+
+        cursor.execute(
+            read_sql("insert-node-embedding.sql"),
+            (count, json.dumps(embed_obj.get_embedding(json.dumps(updated_data)))),
+        )
         cursor.execute(
             read_sql("update-node.sql"),
             (
                 json.dumps(_set_id(identifier, updated_data)),
+                count,
                 identifier,
             ),
         )
