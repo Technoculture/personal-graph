@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "libsql-graph-db"
-version = "0.1.0"
+version = "0.1.1"
 description = "Graph database in LibSQL"
 authors = ["Anubhuti Bhardwaj <anubhutibhardwaj11@gmail.com>"]
 license = "MIT"
