@@ -9,16 +9,16 @@ using an atomic transaction wrapper function.
 
 """
 
-import os
 import json
 import pathlib
 from functools import lru_cache
 import libsql_experimental as libsql  # type: ignore
 from jinja2 import Environment, BaseLoader, select_autoescape
 from dotenv import load_dotenv
-from libsql_graph_db.embeddings import EmbeddingsModel
+from libsql_graph_db.embeddings import OpenAIEmbeddingsModel
 
 load_dotenv()
+embed_obj = OpenAIEmbeddingsModel()
 
 
 @lru_cache(maxsize=None)
@@ -90,7 +90,7 @@ def _insert_node(cursor, connection, identifier, data):
 
     cursor.execute(
         read_sql("insert-node-embedding.sql"),
-        (count, json.dumps(get_embedding(json.dumps(set_data)))),
+        (count, json.dumps(embed_obj.get_embedding(json.dumps(set_data)))),
     )
 
 
@@ -129,7 +129,9 @@ def add_nodes(nodes, ids):
                 read_sql("insert-node-embedding.sql"),
                 (
                     count + i,
-                    json.dumps(get_embedding(json.dumps(_set_id(x[0], x[1])))),
+                    json.dumps(
+                        embed_obj.get_embedding(json.dumps(_set_id(x[0], x[1])))
+                    ),
                 ),
             )
 
@@ -208,7 +210,7 @@ def connect_nodes(source_id, target_id, properties={}):
 
         cursor.execute(
             read_sql("insert-edge-embedding.sql"),
-            (count, json.dumps(get_embedding(json.dumps(edge_data)))),
+            (count, json.dumps(embed_obj.get_embedding(json.dumps(edge_data)))),
         )
 
     return _connect_nodes
@@ -253,7 +255,7 @@ def connect_many_nodes(sources, targets, properties):
                 (
                     count + i,
                     json.dumps(
-                        get_embedding(
+                        embed_obj.get_embedding(
                             json.dumps(
                                 (
                                     x[0],
