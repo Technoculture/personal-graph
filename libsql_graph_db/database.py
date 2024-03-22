@@ -53,26 +53,22 @@ traverse_template = env.get_template("traverse.template")
 
 
 def atomic(db_url, auth_token, cursor_exec_fn):
-    connection = None
     try:
         connection = libsql.connect(database=db_url, auth_token=auth_token)
         cursor = connection.cursor()
         cursor.execute("PRAGMA foreign_keys = TRUE;")
-        results = cursor_exec_fn(cursor)
+        results = cursor_exec_fn(cursor, connection)
         connection.commit()
     finally:
-        if connection:
-            pass
+        if cursor:
+            cursor.close()
     return results
 
 
 def initialize(db_url, auth_token, schema_file="schema.sql"):
-    def _init(cursor):
+    def _init(cursor, connection):
         schema_sql = read_sql(schema_file)
-        sql_commands = schema_sql.split(";")
-        for command in sql_commands:
-            if command.strip():
-                cursor.execute(command)
+        connection.executescript(schema_sql)
 
     return atomic(db_url, auth_token, _init)
 
@@ -83,7 +79,7 @@ def _set_id(identifier, data):
     return data
 
 
-def _insert_node(cursor, identifier, data):
+def _insert_node(cursor, connection, identifier, data):
     existing_node = cursor.execute(
         read_sql("existing-node.sql"), (identifier,)
     ).fetchone()
@@ -112,14 +108,14 @@ def _insert_node(cursor, identifier, data):
 
 
 def add_node(data, identifier=None):
-    def _add_node(cursor):
-        _insert_node(cursor, identifier, data)
+    def _add_node(cursor, connection):
+        _insert_node(cursor, connection, identifier, data)
 
     return _add_node
 
 
 def add_nodes(nodes, ids):
-    def _add_nodes(cursor):
+    def _add_nodes(cursor, connection):
         count = (
             cursor.execute("SELECT COALESCE(MAX(embed_id), 0) FROM nodes").fetchone()[0]
             + 1
@@ -153,11 +149,11 @@ def add_nodes(nodes, ids):
     return _add_nodes
 
 
-def _upsert_node(cursor, identifier, data):
+def _upsert_node(cursor, connection, identifier, data):
     current_data = find_node(identifier)(cursor)
     if not current_data:
         # no prior record exists, so regular insert
-        _insert_node(cursor, identifier, data)
+        _insert_node(cursor, connection, identifier, data)
     else:
         # merge the current and new data and update
         updated_data = {**current_data, **data}
@@ -171,22 +167,22 @@ def _upsert_node(cursor, identifier, data):
 
 
 def upsert_node(identifier, data):
-    def _upsert(cursor):
-        _upsert_node(cursor, identifier, data)
+    def _upsert(cursor, connection):
+        _upsert_node(cursor, connection, identifier, data)
 
     return _upsert
 
 
 def upsert_nodes(nodes, ids):
-    def _upsert(cursor):
+    def _upsert(cursor, connection):
         for id, node in zip(ids, nodes):
-            _upsert_node(cursor, id, node)
+            _upsert_node(cursor,connection, id, node)
 
     return _upsert
 
 
 def connect_nodes(source_id, target_id, properties={}):
-    def _connect_nodes(cursor):
+    def _connect_nodes(cursor, connection):
         existing_edge = cursor.execute(
             read_sql("existing-edge.sql"),
             (source_id, target_id, json.dumps(properties)),
@@ -233,7 +229,7 @@ def connect_nodes(source_id, target_id, properties={}):
 
 
 def connect_many_nodes(sources, targets, properties):
-    def _connect_nodes(cursor):
+    def _connect_nodes(cursor, connection):
         count = (
             cursor.execute("SELECT COALESCE(MAX(embed_id), 0) FROM edges").fetchone()[0]
             + 1
@@ -286,7 +282,7 @@ def connect_many_nodes(sources, targets, properties):
 
 
 def remove_node(identifier):
-    def _remove_node(cursor):
+    def _remove_node(cursor, connection):
         node = cursor.execute(
             "SELECT embed_id FROM nodes WHERE id=?", (identifier,)
         ).fetchone()
@@ -319,7 +315,7 @@ def remove_node(identifier):
 
 
 def remove_nodes(identifiers):
-    def _remove_node(cursor):
+    def _remove_node(cursor, connection):
         for identifier in identifiers:
             
             node = cursor.execute(
@@ -403,7 +399,7 @@ def _generate_query(where_clauses, result_column=None, key=None, tree=False):
 
 
 def find_node(identifier):
-    def _find_node(cursor):
+    def _find_node(cursor, connection):
         query = _generate_query([clause_template.render(id_lookup=True)])
         result = cursor.execute(query, (identifier,)).fetchone()
         return {} if not result else json.loads(result[0])
@@ -416,7 +412,7 @@ def _parse_search_results(results, idx=0):
 
 
 def find_nodes(where_clauses, bindings, tree_query=False, key=None):
-    def _find_nodes(cursor):
+    def _find_nodes(cursor, connection):
         query = _generate_query(where_clauses, key=key, tree=tree_query)
         return _parse_search_results(cursor.execute(query, bindings).fetchall())
 
@@ -440,7 +436,7 @@ def find_inbound_neighbors(with_bodies=False):
 def traverse(
     db_url, auth_token, src, tgt=None, neighbors_fn=find_neighbors, with_bodies=False
 ):
-    def _traverse(cursor):
+    def _traverse(cursor, connection):
         path = []
         target = json.dumps(tgt)
         rows = cursor.execute(neighbors_fn(with_bodies=with_bodies), (src,)).fetchall()
@@ -471,14 +467,14 @@ def connections_out():
 
 
 def get_connections_one_way(identifier, direction=connections_in):
-    def _get_connections(cursor):
+    def _get_connections(cursor, connection):
         return cursor.execute(direction(), (identifier,)).fetchall()
 
     return _get_connections
 
 
 def get_connections(identifier):
-    def _get_connections(cursor):
+    def _get_connections(cursor, connection):
         return cursor.execute(
             read_sql("search-edges.sql"),
             (
