@@ -1193,45 +1193,6 @@ files = [
 ]
 
 [[package]]
-name = "sqlean-py"
-version = "3.45.1"
-description = "sqlite3 with extensions"
-optional = false
-python-versions = "*"
-files = [
-    {file = "sqlean.py-3.45.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:24f01e1aaec8db4b6e9d05aeb28701fd30666ad8b388c276006e0e7b5f1db236"},
-    {file = "sqlean.py-3.45.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:7be7d2b2a0a6909c2621160208578450a569518324e7e174337066cf4922e4b3"},
-    {file = "sqlean.py-3.45.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:bfa709b6be8bef0f98290f48326622d99f6f816824dc9d93ec33a387857609e5"},
-    {file = "sqlean.py-3.45.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:779e6b09979e90ee1efb1ff6bfb148318332c763584725dddc48d590cdb583d2"},
-    {file = "sqlean.py-3.45.1-cp310-cp310-win_amd64.whl", hash = "sha256:d053f2550cf2d1a140e0fc9adf6a4349c8e5579c3e377d44c20be90082805f85"},
-    {file = "sqlean.py-3.45.1-cp310-cp310-win_arm64.whl", hash = "sha256:b1caf8ab0a70fb17895f75acc2600b12cb476511f3b15cee70247178003a7f2c"},
-    {file = "sqlean.py-3.45.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:39d737475a18ecf7ed2226bd111311b5c36208aef961b590f52ded3cdb21ee6b"},
-    {file = "sqlean.py-3.45.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:4bf57ae5b16bbad14064683a7934c32c361f13e4f2336bc261ac464cc279ae2a"},
-    {file = "sqlean.py-3.45.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:6a1e79990ed800a91db2eb3880fd18bba78e633418bab51f76117e2416664b0e"},
-    {file = "sqlean.py-3.45.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0b0deb276d66c5e9377f70c1f8f4fad8fdf4957f632e73a248bd88479f0a8cb5"},
-    {file = "sqlean.py-3.45.1-cp311-cp311-win_amd64.whl", hash = "sha256:7cec2b75b5abcfd015b9497a064eb8084499f40a3df68b649fdc99998f9349d9"},
-    {file = "sqlean.py-3.45.1-cp311-cp311-win_arm64.whl", hash = "sha256:960e2a0abf52a377b7c9397c58ef532407691990a3315a86480b1a2cf8c357e6"},
-    {file = "sqlean.py-3.45.1-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:1c137e6e27c184e1ecf6ca64a02a4ebf65b2c49c91e276da0af01662ef2066b2"},
-    {file = "sqlean.py-3.45.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:5382245b65c985163fadeb71e9acd0ea91c943a66822a3d29613da35ed9696d0"},
-    {file = "sqlean.py-3.45.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:1d6ed2cb09fd3412c29e8be0fa30fea4adc592e20cb78685bdf1022db2e7cb19"},
-    {file = "sqlean.py-3.45.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8a0f6dab515db60bac3cebd3a570e1139584ee5013bc2195c1ff035fa4579647"},
-    {file = "sqlean.py-3.45.1-cp312-cp312-win_amd64.whl", hash = "sha256:eb4efe1676bd12562d103afdccd38c25a61fabdd7e6848a6c7c3a3539892d1c6"},
-    {file = "sqlean.py-3.45.1-cp312-cp312-win_arm64.whl", hash = "sha256:f1caeb418399cd9ed4bcf3a43b1a191e4e9a91591efee14f915c54f21d845a28"},
-    {file = "sqlean.py-3.45.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:c2cb3a7e732551d95a7bb58e52f70b7f0db2b1614d1446b6991ef0580c92c401"},
-    {file = "sqlean.py-3.45.1-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:892fbd9bdcbeb7f4b755304d87efbde91c1a181b4614d6ef145a1aa932d08ebf"},
-    {file = "sqlean.py-3.45.1-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:3e9bb153f818f4639e6c4a3905dfd26d6c5d8f2c9e7828a91ef2c17a22dd11c1"},
-    {file = "sqlean.py-3.45.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5599b61db1f2775d28ce1ea47a9bc8a3f7205536fae9a54d51aa55421f9368e0"},
-    {file = "sqlean.py-3.45.1-cp38-cp38-win_amd64.whl", hash = "sha256:cdd57c080a55fb43c93c3d6fd6a2f1c37f8338acb8d603a1d701c0d9a113c9bc"},
-    {file = "sqlean.py-3.45.1-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:ca355f1ecfc64749cbfba18c4766d02cc416e96f369eac0fdf1c982f1658e9e2"},
-    {file = "sqlean.py-3.45.1-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:9e11f9571efbde1c94177ab363ec465d005cf02be4a325b4cc21d96c15754e72"},
-    {file = "sqlean.py-3.45.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:6b80ddf0006aaaf0067a538d311840cdc79371b8fb9be313eca2a1119c62fb3a"},
-    {file = "sqlean.py-3.45.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9df116c82fdc0c17799763f7d5ddfc00e076553d6889eea3eb282974a484e8f9"},
-    {file = "sqlean.py-3.45.1-cp39-cp39-win_amd64.whl", hash = "sha256:758a1068a63ebfb940cf1667a319c21fd0f4d29c416ed515098372528a0a84d1"},
-    {file = "sqlean.py-3.45.1-cp39-cp39-win_arm64.whl", hash = "sha256:2e35e9e250fba29c934414c2319f80ee662cbf480860e79500329aaae8483f35"},
-    {file = "sqlean.py-3.45.1.tar.gz", hash = "sha256:25fbf0a111856e0384dbc412156e2e688948525c7d8609dc3803512c70130740"},
-]
-
-[[package]]
 name = "sqlite-vss"
 version = "0.1.2"
 description = ""
@@ -1345,4 +1306,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "5e8a6b0384c5e513d23bd46cae8864760f12bfa7060c3ada0e8a383a670efe87"
+content-hash = "9b60e5ab93d0824517dda678cf46045848df0186e8229722d2102561b1d45640"
