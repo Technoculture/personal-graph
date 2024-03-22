@@ -287,15 +287,18 @@ def connect_many_nodes(sources, targets, properties):
 
 def remove_node(identifier):
     def _remove_node(cursor):
+        node = cursor.execute(
+            "SELECT embed_id FROM nodes WHERE id=?", (identifier,)
+        ).fetchone()
+        
+        if node is None:
+            return
+        
         rows = cursor.execute(
             "SELECT embed_id FROM edges WHERE source=? OR target=?",
             (identifier, identifier),
         ).fetchall()
         edge_ids = [i[0] for i in rows]
-
-        node = cursor.execute(
-            "SELECT embed_id FROM nodes WHERE id=?", (identifier,)
-        ).fetchone()[0]
 
         cursor.execute(
             read_sql("delete-edge.sql"),
@@ -310,7 +313,7 @@ def remove_node(identifier):
 
         cursor.execute(read_sql("delete-node.sql"), (identifier,))
 
-        cursor.execute(read_sql("delete-node-embedding.sql"), (node,))
+        cursor.execute(read_sql("delete-node-embedding.sql"), (node[0],))
 
     return _remove_node
 
@@ -318,15 +321,21 @@ def remove_node(identifier):
 def remove_nodes(identifiers):
     def _remove_node(cursor):
         for identifier in identifiers:
+            
+            node = cursor.execute(
+                "SELECT embed_id FROM nodes WHERE id=?", (identifier,)
+            ).fetchone()
+            
+            if node is None:
+                continue
+             
             rows = cursor.execute(
                 "SELECT embed_id FROM edges WHERE source=? OR target=?",
                 (identifier, identifier),
             ).fetchall()
             edge_ids = [i[0] for i in rows]
 
-            node = cursor.execute(
-                "SELECT embed_id FROM nodes WHERE id=?", (identifier,)
-            ).fetchone()[0]
+           
 
             cursor.execute(
                 read_sql("delete-edge.sql"),
@@ -341,7 +350,7 @@ def remove_nodes(identifiers):
 
             cursor.execute(read_sql("delete-node.sql"), (identifier,))
 
-            cursor.execute(read_sql("delete-node-embedding.sql"), (node,))
+            cursor.execute(read_sql("delete-node-embedding.sql"), (node[0],))
 
     return _remove_node
 
