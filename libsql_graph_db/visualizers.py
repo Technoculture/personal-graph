@@ -8,12 +8,18 @@ and extensible to other libraries.
 
 """
 
+import json
 from graphviz import Digraph  # type: ignore
 from libsql_graph_db import database as db
-import json
+from typing import Callable, List, Dict, Any, Tuple
 
 
-def _as_dot_label(body, exclude_keys, hide_key_name, kv_separator):
+def _as_dot_label(
+    body: Dict[str, Any],
+    exclude_keys: List[str],
+    hide_key_name: bool,
+    kv_separator: str,
+) -> str:
     keys = [k for k in body.keys() if k not in exclude_keys]
     fstring = (
         "\\n".join(["{" + k + "}" for k in keys])
@@ -23,7 +29,12 @@ def _as_dot_label(body, exclude_keys, hide_key_name, kv_separator):
     return fstring.format(**body)
 
 
-def _as_dot_node(body, exclude_keys=[], hide_key_name=False, kv_separator=" "):
+def _as_dot_node(
+    body: Dict[str, Any],
+    exclude_keys: List[str] = [],
+    hide_key_name: bool = False,
+    kv_separator: str = " ",
+) -> Tuple[str, str]:
     name = body["id"]
     exclude_keys.append("id")
     label = _as_dot_label(body, exclude_keys, hide_key_name, kv_separator)
@@ -31,19 +42,19 @@ def _as_dot_node(body, exclude_keys=[], hide_key_name=False, kv_separator=" "):
 
 
 def graphviz_visualize(
-    db_url,
-    auth_token,
-    dot_file,
-    path=[],
-    connections=db.get_connections,
-    format="png",
-    exclude_node_keys=[],
-    hide_node_key=False,
-    node_kv=" ",
-    exclude_edge_keys=[],
-    hide_edge_key=False,
-    edge_kv=" ",
-):
+    db_url: str,
+    auth_token: str,
+    dot_file: str,
+    path: List[Any] = [],
+    connections: Callable[[Any], List[Tuple[Any, Any, Any, str]]] = db.get_connections,
+    format: str = "png",
+    exclude_node_keys: List[str] = [],
+    hide_node_key: bool = False,
+    node_kv: str = " ",
+    exclude_edge_keys: List[str] = [],
+    hide_edge_key: bool = False,
+    edge_kv: str = " ",
+) -> None:
     ids = []
     for i in path:
         ids.append(str(i))
@@ -84,16 +95,16 @@ def graphviz_visualize(
 
 
 def graphviz_visualize_bodies(
-    dot_file,
-    path=[],
-    format="png",
-    exclude_node_keys=[],
-    hide_node_key=False,
-    node_kv=" ",
-    exclude_edge_keys=[],
-    hide_edge_key=False,
-    edge_kv=" ",
-):
+    dot_file: str,
+    path: List[Tuple[Any, str, str]] = [],
+    format: str = "png",
+    exclude_node_keys: List[str] = [],
+    hide_node_key: bool = False,
+    node_kv: str = " ",
+    exclude_edge_keys: List[str] = [],
+    hide_edge_key: bool = False,
+    edge_kv: str = " ",
+) -> None:
     dot = Digraph()
     current_id = None
     edges = []
