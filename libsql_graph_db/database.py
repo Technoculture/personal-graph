@@ -176,7 +176,7 @@ def upsert_node(identifier, data):
 def upsert_nodes(nodes, ids):
     def _upsert(cursor, connection):
         for id, node in zip(ids, nodes):
-            _upsert_node(cursor,connection, id, node)
+            _upsert_node(cursor, connection, id, node)
 
     return _upsert
 
@@ -286,10 +286,10 @@ def remove_node(identifier):
         node = cursor.execute(
             "SELECT embed_id FROM nodes WHERE id=?", (identifier,)
         ).fetchone()
-        
+
         if node is None:
             return
-        
+
         rows = cursor.execute(
             "SELECT embed_id FROM edges WHERE source=? OR target=?",
             (identifier, identifier),
@@ -317,21 +317,18 @@ def remove_node(identifier):
 def remove_nodes(identifiers):
     def _remove_node(cursor, connection):
         for identifier in identifiers:
-            
             node = cursor.execute(
                 "SELECT embed_id FROM nodes WHERE id=?", (identifier,)
             ).fetchone()
-            
+
             if node is None:
                 continue
-             
+
             rows = cursor.execute(
                 "SELECT embed_id FROM edges WHERE source=? OR target=?",
                 (identifier, identifier),
             ).fetchall()
             edge_ids = [i[0] for i in rows]
-
-           
 
             cursor.execute(
                 read_sql("delete-edge.sql"),
