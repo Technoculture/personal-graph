@@ -1,5 +1,7 @@
 #! /usr/bin/python
 import os
+import logging
+import argparse
 from dotenv import load_dotenv
 from libsql_graph_db import database as db
 from libsql_graph_db import visualizers
@@ -9,7 +11,7 @@ def insert_single_node(db_url, auth_token, new_node, new_node_id):
     try:
         db.atomic(db_url, auth_token, db.add_node(new_node, new_node_id))
     except Exception as e:
-        assert False
+        logging.info(f"Exception: {e}")
 
 
 def bulk_insert_operations(db_url, auth_token, nodes):
@@ -73,23 +75,23 @@ def traverse_nodes(db_url, auth_token, src, tgt=None):
     return db.traverse(db_url, auth_token, src, tgt)
 
 
-def main(db_url, auth_token, file_path, path_with_bodies):
+def main(args):
     # Initialize the Database
-    db.initialize(db_url, auth_token)
+    db.initialize(args.url, args.auth_token)
 
     new_node = {"subject": "MES", "type": ["person", "Dr"]}
     new_node_id = 4
 
     # Insert a node into database
-    insert_single_node(db_url, auth_token, new_node, new_node_id)
+    insert_single_node(args.url, args.auth_token, new_node, new_node_id)
 
     new_nodes = {2: {"name": "Peri", "age": "90"}, 3: {"name": "Pema", "age": "66"}}
 
     # Bulk Insert
-    bulk_insert_operations(db_url, auth_token, new_nodes)
+    bulk_insert_operations(args.url, args.auth_token, new_nodes)
 
     # Search a node
-    find_a_node(db_url, auth_token, 4)
+    logging.info(f"Found Node: {find_a_node(args.url, args.auth_token, 4)}")
 
     nodes = {
         1: {"name": "Stanley", "age": "30"},
@@ -97,39 +99,41 @@ def main(db_url, auth_token, file_path, path_with_bodies):
     }
 
     # Bulk Update
-    bulk_upsert(db_url, auth_token, nodes)
+    bulk_upsert(args.url, args.auth_token, nodes)
 
     body = {"name": "Sheeran", "type": ["singer", "rich"]}
     id = 2
 
     # Update a single node
-    single_upsert(db_url, auth_token, body, id)
+    single_upsert(args.url, args.auth_token, body, id)
 
     edges = {2: [(3, {"wealth": "1000 Billion"}), (2, {"balance": "1000 rupees"})]}
 
     # Connect bulk nodes
-    bulk_node_connect(db_url, auth_token, edges)
+    bulk_node_connect(args.url, args.auth_token, edges)
 
     source = 3
     target = 1
     property = {"relation": "enemy"}
 
-    single_node_connect(db_url, auth_token, source, target, property)
+    single_node_connect(args.url, args.auth_token, source, target, property)
 
     # Remove nodes
-    remove_bulk_nodes(db_url, auth_token, [1, 2])
-    remove_single_node(db_url, auth_token, 4)
+    remove_bulk_nodes(args.url, args.auth_token, [1, 2])
+    remove_single_node(args.url, args.auth_token, 4)
 
-    traverse_nodes(db_url, auth_token, 3, 2)
+    logging.info(f"Traversal result: {traverse_nodes(args.url, args.auth_token, 3, 2)}")
 
     # To generate a query clause and find nodes
     kv_name_like = db._generate_clause("name", predicate="LIKE")
-    print(db.atomic(db_url, auth_token, db.find_nodes([kv_name_like], ("Pe%",))))
+    logging.info(
+        (db.atomic(args.url, args.auth_token, db.find_nodes([kv_name_like], ("Pe%",))))
+    )
 
     # Graph Visualization
-    visualizers.graphviz_visualize(db_url, auth_token, file_path, ["3"])
-    with_bodies = db.traverse(db_url, auth_token, 2, with_bodies=True)
-    visualizers.graphviz_visualize_bodies(path_with_bodies, with_bodies)
+    visualizers.graphviz_visualize(args.url, args.auth_token, args.file_path, ["3"])
+    with_bodies = db.traverse(args.url, args.auth_token, 2, with_bodies=True)
+    visualizers.graphviz_visualize_bodies(args.path_with_bodies, with_bodies)
 
 
 if __name__ == "__main__":
@@ -137,7 +141,22 @@ if __name__ == "__main__":
     db_url = os.getenv("LIBSQL_URL")
     auth_token = os.getenv("LIBSQL_AUTH_TOKEN")
 
-    path1 = "./dotfile.got"
-    path2 = "./dotfile_with_bodies.dot"
+    logging.basicConfig(
+        level=logging.DEBUG,
+        filemode="w",
+        filename="./log/low_level_api.log",
+    )
 
-    main(db_url, auth_token, path1, path2)
+    parser = argparse.ArgumentParser(
+        description="Shows simple example of low level apis."
+    )
+    parser.add_argument("--url", default=db_url, type=str)
+    parser.add_argument("--auth-token", default=auth_token, type=str)
+    parser.add_argument("--file-path", default="./dotfiles.dot", type=str)
+    parser.add_argument(
+        "--path-with-bodies", default="./path_with_bodies.dot", type=str
+    )
+
+    arguments = parser.parse_args()
+
+    main(arguments)
