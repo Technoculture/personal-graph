@@ -1,1 +1,1 @@
-UPDATE nodes SET body = json(?) WHERE id = ?
+UPDATE nodes SET body = json(?), embed_id = ? WHERE id = ?

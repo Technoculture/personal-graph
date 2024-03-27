@@ -10,7 +10,7 @@ script_dir = os.path.dirname(os.path.realpath(__file__))
 parent_dir = os.path.abspath(os.path.join(script_dir, os.pardir))
 sys.path.append(parent_dir)
 
-from libsql_graph_db import database as db
+from libsql_graph_db import database as db  # noqa: E402
 
 
 def measure_execution_time(operation_func, *args, **kwargs):
@@ -79,8 +79,7 @@ def time_complexity():
 
 if __name__ == "__main__":
     logging.basicConfig(
-        filename="scripts/operations.log",
-        level=logging.DEBUG,
+        filename="./log/operations.log", level=logging.DEBUG, filemode="w"
     )
 
     time_complexity()

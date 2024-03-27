@@ -8,12 +8,18 @@ and extensible to other libraries.
 
 """
 
+import json
 from graphviz import Digraph  # type: ignore
 from libsql_graph_db import database as db
-import json
+from typing import List, Dict, Any, Tuple, Optional
 
 
-def _as_dot_label(body, exclude_keys, hide_key_name, kv_separator):
+def _as_dot_label(
+    body: Dict[str, Any],
+    exclude_keys: List[str],
+    hide_key_name: bool,
+    kv_separator: str,
+) -> str:
     keys = [k for k in body.keys() if k not in exclude_keys]
     fstring = (
         "\\n".join(["{" + k + "}" for k in keys])
@@ -23,7 +29,12 @@ def _as_dot_label(body, exclude_keys, hide_key_name, kv_separator):
     return fstring.format(**body)
 
 
-def _as_dot_node(body, exclude_keys=[], hide_key_name=False, kv_separator=" "):
+def _as_dot_node(
+    body: Dict[str, Any],
+    exclude_keys: List[str] = [],
+    hide_key_name: bool = False,
+    kv_separator: str = " ",
+) -> Tuple[str, str]:
     name = body["id"]
     exclude_keys.append("id")
     label = _as_dot_label(body, exclude_keys, hide_key_name, kv_separator)
@@ -31,24 +42,25 @@ def _as_dot_node(body, exclude_keys=[], hide_key_name=False, kv_separator=" "):
 
 
 def graphviz_visualize(
-    db_url,
-    auth_token,
-    dot_file,
-    path=[],
-    connections=db.get_connections,
-    format="png",
-    exclude_node_keys=[],
-    hide_node_key=False,
-    node_kv=" ",
-    exclude_edge_keys=[],
-    hide_edge_key=False,
-    edge_kv=" ",
-):
+    db_url: Optional[str] = None,
+    auth_token: Optional[str] = None,
+    dot_file: Optional[str] = None,
+    path: List[Any] = [],
+    connections: Any = db.get_connections,
+    format: str = "png",
+    exclude_node_keys: List[str] = [],
+    hide_node_key: bool = False,
+    node_kv: str = " ",
+    exclude_edge_keys: List[str] = [],
+    hide_edge_key: bool = False,
+    edge_kv: str = " ",
+) -> None:
     ids = []
     for i in path:
         ids.append(str(i))
-        for edge in db.atomic(db_url, auth_token, connections(i)):
-            src, tgt, _ = edge
+        for edge in db.atomic(connections(i), db_url, auth_token):  # type: ignore
+            print("Here", edge)
+            _, src, tgt, _ = edge
             if src not in ids:
                 ids.append(src)
             if tgt not in ids:
@@ -60,12 +72,12 @@ def graphviz_visualize(
     edges = []
     for i in ids:
         if i not in visited:
-            node = db.atomic(db_url, auth_token, db.find_node(i))
+            node = db.atomic(db.find_node(i), db_url, auth_token)  # type: ignore
             name, label = _as_dot_node(node, exclude_node_keys, hide_node_key, node_kv)
             dot.node(name, label=label)
-            for edge in db.atomic(db_url, auth_token, connections(i)):
+            for edge in db.atomic(connections(i), db_url, auth_token):  # type: ignore
                 if edge not in edges:
-                    src, tgt, prps = edge
+                    _, src, tgt, prps = edge
                     props = json.loads(prps)
                     dot.edge(
                         str(src),
@@ -83,16 +95,16 @@ def graphviz_visualize(
 
 
 def graphviz_visualize_bodies(
-    dot_file,
-    path=[],
-    format="png",
-    exclude_node_keys=[],
-    hide_node_key=False,
-    node_kv=" ",
-    exclude_edge_keys=[],
-    hide_edge_key=False,
-    edge_kv=" ",
-):
+    dot_file: str,
+    path: List[Tuple[Any, str, str]] = [],
+    format: str = "png",
+    exclude_node_keys: List[str] = [],
+    hide_node_key: bool = False,
+    node_kv: str = " ",
+    exclude_edge_keys: List[str] = [],
+    hide_edge_key: bool = False,
+    edge_kv: str = " ",
+) -> None:
     dot = Digraph()
     current_id = None
     edges = []

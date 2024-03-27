@@ -1,0 +1,1 @@
+SELECT embed_id FROM nodes WHERE id = ?

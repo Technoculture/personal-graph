@@ -1,1 +1,1 @@
-INSERT INTO nodes VALUES(json(?))
+INSERT INTO nodes VALUES(?, json(?))

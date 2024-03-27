@@ -46,6 +46,7 @@ Some amounts of JSON validation and Context Manager/Class wrapper
 
 The [database script](libsql_graph_db/database.py) provides convenience functions for [atomic transactions](https://en.wikipedia.org/wiki/Atomicity_(database_systems)) to add, delete, connect, and search for nodes.
 
+
 Any single node or path of nodes can also be depicted graphically by using the `visualize` function within the database script to generate [dot](https://graphviz.org/doc/info/lang.html) files, which in turn can be converted to images with Graphviz.
 
 #### Example
@@ -118,7 +119,7 @@ Any path or list of nodes can rendered graphically by using the `visualize` func
 >>> graphviz_visualize(db_url, auth_token, 'apple.dot', [4, 1, 5])
 ```
 
-The [resulting text file](tests/fixtures/apple-raw.dot) also comes with an associated image (the default is [png](https://en.wikipedia.org/wiki/Portable_Network_Graphics), but that can be changed by supplying a different value to the `format` parameter)
+The [resulting text file](libsql_graph_db/tests/fixtures/apple-raw.dot) also comes with an associated image (the default is [png](https://en.wikipedia.org/wiki/Portable_Network_Graphics), but that can be changed by supplying a different value to the `format` parameter)
 
 The default options include every key/value pair (excluding the id) in the node and edge objects, and there are display options to help refine what is produced:
 
@@ -128,7 +129,7 @@ The default options include every key/value pair (excluding the id) in the node 
 >>>graphviz_visualize_bodies('apple.dot', path_with_bodies)
 ```
 
-The [resulting dot file](tests/fixtures/apple.dot) can be edited further as needed; the [dot guide](https://graphviz.org/pdf/dotguide.pdf) has more options and examples.
+The [resulting dot file](libsql_graph_db/tests/fixtures/apple.dot) can be edited further as needed; the [dot guide](https://graphviz.org/pdf/dotguide.pdf) has more options and examples.
 
 ## Applications
 
