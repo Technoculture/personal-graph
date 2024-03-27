@@ -108,10 +108,24 @@ def _insert_node(
             json.dumps(set_data),
         ),
     )
+
     cursor.execute(
         read_sql("insert-node-embedding.sql"),
         (count, json.dumps(embed_obj.get_embedding(json.dumps(set_data)))),
     )
+
+
+def vector_search(data: Dict, k: int):
+    def _search_node(cursor, connection):
+        embed = json.dumps(embed_obj.get_embedding(json.dumps(data)))
+        node = cursor.execute(
+            read_sql("vector-search-query.sql"), (embed, k)
+        ).fetchone()
+        print(node)
+
+        return node
+
+    return _search_node
 
 
 def add_node(data: Dict, identifier: Any = None) -> CursorExecFunction:
