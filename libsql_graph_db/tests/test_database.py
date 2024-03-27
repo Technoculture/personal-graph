@@ -9,6 +9,7 @@ from libsql_graph_db.database import (
     remove_node,
     connect_nodes,
     connect_many_nodes,
+    traverse,
 )
 
 
@@ -77,6 +78,13 @@ def test_remove_nodes(mock_atomic, mock_db_connection_and_cursor):
     mock_connection, mock_cursor = mock_db_connection_and_cursor
     remove_nodes([1, 2, 3])(mock_cursor, mock_connection)
     mock_cursor.execute.assert_called()
+
+
+def test_traverse_node(mock_db_connection_and_cursor):
+    mock_connection, mock_cursor = mock_db_connection_and_cursor
+    traverse_path = traverse(src=1, tgt=2)
+    mock_cursor.execute.assert_called()
+    assert traverse_path == []
 
 
 def test_find_node(mock_atomic, mock_db_connection_and_cursor):
