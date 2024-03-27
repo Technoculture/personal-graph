@@ -4,7 +4,7 @@ import logging
 import argparse
 from dotenv import load_dotenv
 from libsql_graph_db import database as db
-# from libsql_graph_db import visualizers
+from libsql_graph_db import visualizers
 
 
 def insert_single_node(db_url, auth_token, new_node, new_node_id):
@@ -130,10 +130,10 @@ def main(args):
         (db.atomic(db.find_nodes([kv_name_like], ("Pe%",)), args.url, args.auth_token))
     )
 
-    # Graph Visualization
-    # visualizers.graphviz_visualize(args.url, args.auth_token, args.file_path, ["3"])
-    # with_bodies = db.traverse(args.url, args.auth_token, 2, with_bodies=True)
-    # visualizers.graphviz_visualize_bodies(args.path_with_bodies, with_bodies)
+    # Graph s
+    visualizers.graphviz_visualize(args.url, args.auth_token, args.file_path, ["3"])
+    with_bodies = db.traverse(args.url, args.auth_token, 2, with_bodies=True)
+    visualizers.graphviz_visualize_bodies(args.path_with_bodies, with_bodies)
 
 
 if __name__ == "__main__":
