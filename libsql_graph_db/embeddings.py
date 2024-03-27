@@ -15,10 +15,16 @@ class EmbeddingsModel(ABC):
 
 class OpenAIEmbeddingsModel(EmbeddingsModel):
     def __init__(self) -> None:
-        self.client = OpenAI(api_key=os.getenv("OPEN_API_KEY"))
+        self.client = (
+            OpenAI(api_key=os.getenv("OPEN_API_KEY"))
+            if os.getenv("OPEN_API_KEY")
+            else None
+        )
         self.model = "text-embedding-3-small"
 
     def get_embedding(self, text: str) -> list[float]:
+        if self.client is None:
+            return []
         text = text.replace("\n", " ")
         return (
             self.client.embeddings.create(

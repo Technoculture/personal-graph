@@ -15,9 +15,10 @@ import sqlite3
 from dotenv import load_dotenv
 from functools import lru_cache
 import libsql_experimental as libsql  # type: ignore
-from typing import Callable, Tuple, Dict, List, Any
+from typing import Callable, Optional, Tuple, Dict, List, Any
 from libsql_graph_db.embeddings import OpenAIEmbeddingsModel
 from jinja2 import Environment, BaseLoader, select_autoescape
+
 
 load_dotenv()
 embed_obj = OpenAIEmbeddingsModel()
@@ -48,7 +49,12 @@ search_template = env.get_template("search-node.template")
 traverse_template = env.get_template("traverse.template")
 
 
-def atomic(db_url: str, auth_token: str, cursor_exec_fn: CursorExecFunction) -> Any:
+def atomic(
+    cursor_exec_fn: CursorExecFunction,
+    db_url: Optional[str] = None,
+    auth_token: Optional[str] = None,
+) -> Any:
+    connection = None
     try:
         connection = libsql.connect(database=db_url, auth_token=auth_token)
         cursor = connection.cursor()
@@ -56,17 +62,21 @@ def atomic(db_url: str, auth_token: str, cursor_exec_fn: CursorExecFunction) -> 
         results = cursor_exec_fn(cursor, connection)
         connection.commit()
     finally:
-        if cursor:
-            cursor.close()
+        if connection:
+            pass
     return results
 
 
-def initialize(db_url: str, auth_token: str, schema_file: str = "schema.sql") -> Any:
+def initialize(
+    db_url: Optional[str] = None,
+    auth_token: Optional[str] = None,
+    schema_file: str = "schema.sql",
+) -> Any:
     def _init(cursor, connection):
         schema_sql = read_sql(schema_file)
         connection.executescript(schema_sql)
 
-    return atomic(db_url, auth_token, _init)
+    return atomic(_init, db_url, auth_token)  # type: ignore
 
 
 def _set_id(identifier: Any, data: Dict) -> Dict:
@@ -98,7 +108,6 @@ def _insert_node(
             json.dumps(set_data),
         ),
     )
-
     cursor.execute(
         read_sql("insert-node-embedding.sql"),
         (count, json.dumps(embed_obj.get_embedding(json.dumps(set_data)))),
@@ -135,7 +144,6 @@ def add_nodes(nodes: List[Dict], ids: List[Any]) -> CursorExecFunction:
                     json.dumps(_set_id(x[0], x[1])),
                 ),
             )
-
             cursor.execute(
                 read_sql("insert-node-embedding.sql"),
                 (
@@ -432,7 +440,13 @@ def find_node(identifier: Any) -> CursorExecFunction:
     def _find_node(cursor, connection):
         query = _generate_query([clause_template.render(id_lookup=True)])
         result = cursor.execute(query, (identifier,)).fetchone()
-        return {} if not result else json.loads(result[0])
+        if result:
+            if isinstance(result[0], str):
+                return json.loads(result[0])
+            else:
+                return result[0]
+        else:
+            return {}
 
     return _find_node
 
@@ -469,9 +483,9 @@ def find_inbound_neighbors(with_bodies: bool = False) -> str:
 
 
 def traverse(
-    db_url: str,
-    auth_token: str,
-    src: Any,
+    db_url: Optional[str] = None,
+    auth_token: Optional[str] = None,
+    src: Any = None,
     tgt: Any = None,
     neighbors_fn: Callable[[bool], str] = find_neighbors,
     with_bodies: bool = False,
@@ -495,7 +509,7 @@ def traverse(
                             break
         return path
 
-    return atomic(db_url, auth_token, _traverse)
+    return atomic(_traverse, db_url, auth_token)  # type: ignore
 
 
 def connections_in() -> str:
