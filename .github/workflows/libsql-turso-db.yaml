@@ -64,9 +64,7 @@ jobs:
           installer-parallel: true
 
       - name: Install dependencies
-        run: |
-          cd tests
-          poetry install --no-interaction --no-root
+        run: poetry install --no-interaction --no-root
 
       - name: Test with pytest
         run: poetry run pytest -vvv
