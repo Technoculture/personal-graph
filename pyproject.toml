@@ -17,6 +17,8 @@ python-dotenv = "^1.0.1"
 sqlite-vss = "^0.1.2"
 openai = "^1.14.2"
 libsql-experimental = "^0.0.28"
+pytest = "^8.1.1"
+pytest-mock = "^3.14.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.1.1"
