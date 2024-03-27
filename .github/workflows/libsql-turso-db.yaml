@@ -43,3 +43,32 @@ jobs:
         run: |
           cd libsql_graph_db
           poetry run python -m mypy .
+  
+  test:
+    runs-on: ubuntu-latest
+    needs: check
+    steps: # each job consists of 1+ steps
+      - name: Checkout commit # download the code from triggering commit
+        uses: actions/checkout@v4
+
+      - name: Set up Python and Poetry
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+
+      - name: Install dependencies
+        run: |
+          cd tests
+          poetry install --no-interaction --no-root
+
+      - name: Test with pytest
+        run: |
+          cd tests
+          poetry run pytest -vvv
