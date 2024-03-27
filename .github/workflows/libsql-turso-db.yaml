@@ -64,7 +64,11 @@ jobs:
           installer-parallel: true
 
       - name: Install dependencies
-        run: poetry install --no-interaction --no-root
+        run: |
+          cd libsql_graph_db
+          poetry install --no-interaction --no-root
 
       - name: Test with pytest
-        run: poetry run pytest -vvv
+        run: |
+         cd libsql_graph_db 
+         poetry run pytest -vvv
