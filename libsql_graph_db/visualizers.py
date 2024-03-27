@@ -11,7 +11,7 @@ and extensible to other libraries.
 import json
 from graphviz import Digraph  # type: ignore
 from libsql_graph_db import database as db
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 
 
 def _as_dot_label(
@@ -42,9 +42,9 @@ def _as_dot_node(
 
 
 def graphviz_visualize(
-    db_url: str,
-    auth_token: str,
-    dot_file: str,
+    db_url: Optional[str] = None,
+    auth_token: Optional[str] = None,
+    dot_file: Optional[str] = None,
     path: List[Any] = [],
     connections: Any = db.get_connections,
     format: str = "png",
@@ -59,7 +59,7 @@ def graphviz_visualize(
     for i in path:
         ids.append(str(i))
         for edge in db.atomic(connections(i), db_url, auth_token):  # type: ignore
-            print(edge)
+            print("Here", edge)
             _, src, tgt, _ = edge
             if src not in ids:
                 ids.append(src)

@@ -32,3 +32,17 @@ def mock_embeddings_model():
         mock_get_embedding.side_effect = lambda x: fixed_embeddings.get(x, [])
 
         yield mock_get_embedding
+
+
+@pytest.fixture
+def mock_find_node():
+    with patch("libsql_graph_db.visualizers.db.find_node") as mock_find_node:
+        yield mock_find_node
+
+
+@pytest.fixture
+def mock_get_connections():
+    with patch(
+        "libsql_graph_db.visualizers.db.get_connections"
+    ) as mock_get_connections:
+        yield mock_get_connections
