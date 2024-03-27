@@ -2,7 +2,11 @@ from libsql_graph_db.visualizers import graphviz_visualize, graphviz_visualize_b
 
 
 def test_graphviz_visualize(
-    mock_atomic, mock_db_connection_and_cursor, mock_find_node, mock_get_connections
+    mock_atomic,
+    mock_db_connection_and_cursor,
+    mock_find_node,
+    mock_get_connections,
+    mock_dot_render,
 ):
     mock_find_node.return_value = {"id": 1, "name": "Alice", "age": 30}
     mock_get_connections.return_value = [
@@ -26,7 +30,11 @@ def test_graphviz_visualize(
 
 
 def test_graphviz_visualize_bodies(
-    mock_atomic, mock_db_connection_and_cursor, mock_find_node, mock_get_connections
+    mock_atomic,
+    mock_db_connection_and_cursor,
+    mock_find_node,
+    mock_get_connections,
+    mock_dot_render,
 ):
     path_data = [
         (1, "()", '{"id": 1, "name": "Alice", "age": 30}'),
@@ -35,7 +43,7 @@ def test_graphviz_visualize_bodies(
     ]
 
     graphviz_visualize_bodies(
-        dot_file="mock_dot_file",
+        dot_file="mock_file_with_bodies.dot",
         path=path_data,
         format="png",
         exclude_node_keys=[],

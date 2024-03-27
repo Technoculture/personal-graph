@@ -46,3 +46,12 @@ def mock_get_connections():
         "libsql_graph_db.visualizers.db.get_connections"
     ) as mock_get_connections:
         yield mock_get_connections
+
+
+@pytest.fixture
+def mock_dot_render():
+    with patch(
+        "libsql_graph_db.visualizers.Digraph.render",
+        new=lambda self, *args, **kwargs: None,
+    ):
+        yield
