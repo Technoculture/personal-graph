@@ -130,7 +130,7 @@ def main(args):
         (db.atomic(db.find_nodes([kv_name_like], ("Pe%",)), args.url, args.auth_token))
     )
 
-    # Graph s
+    # Graph visualization
     visualizers.graphviz_visualize(args.url, args.auth_token, args.file_path, ["3"])
     with_bodies = db.traverse(args.url, args.auth_token, 2, with_bodies=True)
     visualizers.graphviz_visualize_bodies(args.path_with_bodies, with_bodies)
