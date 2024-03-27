@@ -79,8 +79,7 @@ def time_complexity():
 
 if __name__ == "__main__":
     logging.basicConfig(
-        filename="./log/operations.log",
-        level=logging.DEBUG,
+        filename="./log/operations.log", level=logging.DEBUG, filemode="w"
     )
 
     time_complexity()
