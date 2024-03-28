@@ -1,44 +1,36 @@
 # Libsql-graph-db
 
-> This repo add functionality on top of the simple graph db [simple-graph-pypi](https://github.com/dpapathanasiou/simple-graph-pypi) in order to support libsql instead of sqlite, and to add AI native features such as similarity search and Natural language interface.
+> [!NOTE]
+> This repo adds significant functionality on top of [simple-graph-pypi](https://github.com/dpapathanasiou/simple-graph-pypi) to add AI native features such as similarity search and Natural language interface. We also migrate the project from sqlite to libsql in order to interface with [TursoDB](https://turso.tech/).
 
 1. Modern Interface
 Some amounts of JSON validation and Context Manager/Class wrapper
-  ```py
-  # the interface would look like something like this
-  with lgdb.connect(url, token) as graph:
-    graph.add_node(Node(name="", id=1, attributes={...}))
-    graph.add_node(Node(name="", id=2, attributes={...}))
-    graph.connect(1, 2, relation={...})
-  ```
+    ```py
+    # Planned API
+    with lgdb.connect(url, token) as graph:
+      graph.add_node(Node(label="sam", id=1, attributes={...}))
+      graph.add_node(Node(label="ella", id=2, attributes={...}))
+      graph.connect(from=1, to=2, label="brother", attributes={...})
+  
+      graph.merge_by_similarity(threshold=0.9)
+      graph.save()
+  
+      relatives: list[Node] = graph.find_nodes_like(label="relative", threshold=0.9)
+    ```
 2. AI Native Features
      - Semantic Search (Sqlite-vss)
      - Natural language interface to KGs (Instructor, Pydantic)
+    ```py
+    # Planned API
+    with lgdb.connect(url, token) as graph:
+      graph.insert(text="My brother is actually pretty interested in coral reefs near Sri Lanka.")
+      subgraph: KnowledgeGraph = graph.find_subgraph_like(text="Why would I be interested in ocean?")
+      print(subgraph)
+    ```
 3. Good Performance on reads (even with complex queries)
      - Local replicas are supported by libsql
 4. Support for Machine Learning Libraries
      - Export to dict functions for Networkx/PyG etc 
-
-## Time Complexity
-
-| Scenario | Average Time Complexity | Worst Case Time Complexity |
-| -------- | ----------------------- | -------------------------- |
-| Single Node Insert | O(1) | O(1) |
-| Single Edge Insert | O(1) | O(1) |
-| Single Node Retrieval by ID | O(1) | O(1) |
-| Single Edge Retrieval by ID | O(1) | O(1) |
-| Retrieval of All Nodes | O(n) | O(n) |
-| Retrieval of All Edges | O(m) | O(m) |
-| Retrieval of All Neighbors of a Node	O(avg_degree) | O(n) |
-| Retrieval of All Edges of a Node	O(avg_degree) | O(n) | 
-| BFS/DFS Traversal | O(n + m) | O(n + m) |
-| Shortest Path (Unweighted) | O(n + m) | O(n + m) |
-| Shortest Path (Weighted) | O((n + m) log n) | O((n + m) log n) |
-| Connected Components | O(n + m) | O(n + m) |
-| Strongly Connected Components | O(n + m) | O(n + m) |
-| Minimum Spanning Tree | O(m log n) | O(m log n) |
-| Semantic Search (Approximate) | O(log n) | O(n) |
-| Natural Language Query (Approximate) | O(n) | O(n^2) |
 
 ## Usage
 
@@ -130,6 +122,27 @@ The default options include every key/value pair (excluding the id) in the node 
 ```
 
 The [resulting dot file](libsql_graph_db/tests/fixtures/apple.dot) can be edited further as needed; the [dot guide](https://graphviz.org/pdf/dotguide.pdf) has more options and examples.
+
+## Time Complexity
+
+| Scenario | Average Time Complexity | Worst Case Time Complexity |
+| -------- | ----------------------- | -------------------------- |
+| Single Node Insert | O(1) | O(1) |
+| Single Edge Insert | O(1) | O(1) |
+| Single Node Retrieval by ID | O(1) | O(1) |
+| Single Edge Retrieval by ID | O(1) | O(1) |
+| Retrieval of All Nodes | O(n) | O(n) |
+| Retrieval of All Edges | O(m) | O(m) |
+| Retrieval of All Neighbors of a Node	O(avg_degree) | O(n) |
+| Retrieval of All Edges of a Node	O(avg_degree) | O(n) | 
+| BFS/DFS Traversal | O(n + m) | O(n + m) |
+| Shortest Path (Unweighted) | O(n + m) | O(n + m) |
+| Shortest Path (Weighted) | O((n + m) log n) | O((n + m) log n) |
+| Connected Components | O(n + m) | O(n + m) |
+| Strongly Connected Components | O(n + m) | O(n + m) |
+| Minimum Spanning Tree | O(m log n) | O(m log n) |
+| Semantic Search (Approximate) | O(log n) | O(n) |
+| Natural Language Query (Approximate) | O(n) | O(n^2) |
 
 ## Applications
 
