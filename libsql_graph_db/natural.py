@@ -33,6 +33,3 @@ def insert_into_graph(query: str) -> KnowledgeGraph:
         atomic(add_node({"body": node.body}, node.node_identifier), db_url, auth_token)
 
     return kg
-
-
-insert_into_graph("Tell me about quantum mechanics")
