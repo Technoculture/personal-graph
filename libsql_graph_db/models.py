@@ -7,7 +7,9 @@ from typing import Optional, List
 
 
 class Node(BaseModel):
-    id: int = Field(..., description="Unique identifier for the node.")
+    node_identifier: str = Field(
+        ..., description="Unique Identifier which defines the node."
+    )
     body: str = Field(
         ..., description="Content or information associated with the node."
     )
