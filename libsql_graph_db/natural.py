@@ -1,22 +1,19 @@
-"""
-Use models.py and Instructor to provide a natural language interface to the graph db
-"""
-
 import os
 import instructor
 from openai import OpenAI
 from dotenv import load_dotenv
-from fastapi import FastAPI
 from models import KnowledgeGraph  # type: ignore
+from database import initialize, add_node, atomic  # type: ignore
 
 load_dotenv()
 client = instructor.patch(OpenAI(api_key=os.getenv("OPEN_API_KEY")))
+db_url = os.getenv("LIBSQL_URL")
+auth_token = os.getenv("LIBSQL_AUTH_TOKEN")
 
-app = FastAPI()
 
+def insert_into_graph(query: str) -> KnowledgeGraph:
+    initialize(db_url, auth_token)
 
-@app.get("/graph/insert", response_model=KnowledgeGraph)
-async def graph_insert(query: str):
     kg = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
@@ -31,4 +28,11 @@ async def graph_insert(query: str):
         ],
         response_model=KnowledgeGraph,
     )
+
+    for node in kg.nodes:
+        atomic(add_node({"body": node.body}, node.node_identifier), db_url, auth_token)
+
     return kg
+
+
+insert_into_graph("Tell me about quantum mechanics")
