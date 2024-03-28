@@ -19,6 +19,7 @@ openai = "^1.14.2"
 libsql-experimental = "^0.0.28"
 pytest = "^8.1.1"
 pytest-mock = "^3.14.0"
+instructor = "^0.6.7"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.1.1"
