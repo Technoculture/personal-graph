@@ -23,11 +23,11 @@ class Node(BaseModel):
 
 class Edge(BaseModel):
     id: int = Field(..., description="Unique identifier for the edge.")
-    source: int = Field(
-        ..., description="ID of the source node from which the edge originates."
+    source: str = Field(
+        ..., description="identifier of the source node from which the edge originates."
     )
-    target: int = Field(
-        ..., description="ID of the target node to which the edge points."
+    target: str = Field(
+        ..., description="identifier of the target node to which the edge points."
     )
     label: str = Field(..., description="Label or property associated with the edge.")
     color: Optional[str] = Field(
