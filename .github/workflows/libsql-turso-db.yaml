@@ -25,24 +25,16 @@ jobs:
           installer-parallel: true
 
       - name: Install dependencies
-        run: |
-          cd libsql_graph_db
-          poetry install --no-interaction --no-root
+        run: poetry install --no-interaction --no-root
 
       - name: Format with Ruff
-        run: |
-          cd libsql_graph_db
-          poetry run ruff format --check .
+        run: poetry run ruff format --check .
 
       - name: Lint with Ruff
-        run: |
-          cd libsql_graph_db/
-          poetry run ruff check -- .
+        run: poetry run ruff check -- .
 
       - name: Type check
-        run: |
-          cd libsql_graph_db
-          poetry run python -m mypy .
+        run: poetry run python -m mypy .
   
   test:
     runs-on: ubuntu-latest
