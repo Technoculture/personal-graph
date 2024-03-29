@@ -7,9 +7,7 @@ from typing import List
 
 
 class Node(BaseModel):
-    node_identifier: str = Field(
-        ..., description="Unique Identifier which defines the node."
-    )
+    id: int = Field(..., description="Unique Identifier for the node.")
     body: str = Field(
         ..., description="Content or information associated with the node."
     )
@@ -17,11 +15,10 @@ class Node(BaseModel):
 
 
 class Edge(BaseModel):
-    id: int = Field(..., description="Unique identifier for the edge.")
-    source: str = Field(
+    source: int = Field(
         ..., description="identifier of the source node from which the edge originates."
     )
-    target: str = Field(
+    target: int = Field(
         ..., description="identifier of the target node to which the edge points."
     )
     label: str = Field(..., description="Label or property associated with the edge.")
