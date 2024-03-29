@@ -4,7 +4,7 @@ import uuid
 from openai import OpenAI
 from dotenv import load_dotenv
 from models import KnowledgeGraph  # type: ignore
-from database import initialize, add_node, atomic, connect_nodes  # type: ignore
+from libsql_graph_db.database import initialize, add_node, atomic, connect_nodes
 
 load_dotenv()
 client = instructor.patch(OpenAI(api_key=os.getenv("OPEN_API_KEY")))
