@@ -1,10 +1,11 @@
+import json
 import os
 import instructor
 import uuid
 from openai import OpenAI
 from dotenv import load_dotenv
-from libsql_graph_db.models import KnowledgeGraph
-from libsql_graph_db.database import add_node, atomic, connect_nodes
+from libsql_graph_db.models import Node, Edge, KnowledgeGraph
+from libsql_graph_db.database import add_node, atomic, connect_nodes, vector_search
 
 load_dotenv()
 client = instructor.patch(OpenAI(api_key=os.getenv("OPEN_API_KEY")))
@@ -54,3 +55,25 @@ def insert_into_graph(query: str) -> KnowledgeGraph:
         )
 
     return kg
+
+
+def search_from_graph(query: str) -> KnowledgeGraph:
+    kg = generate_graph(query)
+
+    nodes_list = []
+    edges_list = []
+
+    for node in kg.nodes:
+        search_result = atomic(vector_search({"body": node.body, "label": node.label}, 1), db_url, auth_token)
+        new_node = Node(**json.loads(search_result[2]))
+        nodes_list.append(new_node)
+
+    for edge in kg.edges:
+        # TODO: Needs to be changed
+        search_result = atomic(vector_search({"source_id": edge.source, "target_id": edge.target, "properties": edge.label}, 1), db_url, auth_token)
+        new_edge = Edge(**json.loads(search_result))
+        edges_list.append(new_edge)
+
+    knowledge_graph = KnowledgeGraph(nodes=nodes_list, edges=edges_list)
+
+    return knowledge_graph
