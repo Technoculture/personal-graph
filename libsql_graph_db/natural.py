@@ -1,5 +1,6 @@
 import os
 import instructor
+import uuid
 from openai import OpenAI
 from dotenv import load_dotenv
 from models import KnowledgeGraph  # type: ignore
@@ -29,12 +30,23 @@ def insert_into_graph(query: str) -> KnowledgeGraph:
         response_model=KnowledgeGraph,
     )
 
+    uuid_dict = {}
+
     for node in kg.nodes:
-        atomic(add_node({"body": node.body}, node.node_identifier), db_url, auth_token)
+        uuid_dict[node.id] = str(uuid.uuid4())
+        atomic(
+            add_node({"body": node.body, "label": node.label}, uuid_dict[node.id]),
+            db_url,
+            auth_token,
+        )
 
     for edge in kg.edges:
         atomic(
-            connect_nodes(edge.source, edge.target, {"properties": edge.label}),
+            connect_nodes(
+                uuid_dict[edge.source],
+                uuid_dict[edge.target],
+                {"properties": edge.label},
+            ),
             db_url,
             auth_token,
         )
