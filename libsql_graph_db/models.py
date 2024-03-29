@@ -3,7 +3,7 @@ Pydantic models for pythonic API to the graph db
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import List
 
 
 class Node(BaseModel):
@@ -13,12 +13,7 @@ class Node(BaseModel):
     body: str = Field(
         ..., description="Content or information associated with the node."
     )
-    label: Optional[str] = Field(
-        None, description="Label or name associated with the node."
-    )
-    color: Optional[str] = Field(
-        "gray", description="Color representation of the node."
-    )
+    label: str = Field(..., description="Label or name associated with the node.")
 
 
 class Edge(BaseModel):
@@ -30,9 +25,6 @@ class Edge(BaseModel):
         ..., description="identifier of the target node to which the edge points."
     )
     label: str = Field(..., description="Label or property associated with the edge.")
-    color: Optional[str] = Field(
-        "black", description="Color representation of the edge."
-    )
 
 
 class KnowledgeGraph(BaseModel):
