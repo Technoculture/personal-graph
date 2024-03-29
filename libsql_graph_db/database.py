@@ -118,9 +118,7 @@ def _insert_node(
 def vector_search_node(data: Dict, k: int):
     def _search_node(cursor, connection):
         embed = json.dumps(embed_obj.get_embedding(json.dumps(data)))
-        node = cursor.execute(
-            read_sql("vector-search-node.sql"), (embed, k)
-        ).fetchone()
+        node = cursor.execute(read_sql("vector-search-node.sql"), (embed, k)).fetchone()
         print(node)
 
         return node
@@ -131,9 +129,7 @@ def vector_search_node(data: Dict, k: int):
 def vector_search_edge(data: Dict, k: int):
     def _search_edge(cursor, connection):
         embed = json.dumps(embed_obj.get_embedding(json.dumps(data)))
-        edge = cursor.execute(
-            read_sql("vector-search-edge.sql"), (embed, k)
-        ).fetchone()
+        edge = cursor.execute(read_sql("vector-search-edge.sql"), (embed, k)).fetchone()
         print(edge)
 
         return edge
