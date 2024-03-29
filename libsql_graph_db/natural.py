@@ -3,7 +3,7 @@ import instructor
 import uuid
 from openai import OpenAI
 from dotenv import load_dotenv
-from models import KnowledgeGraph  # type: ignore
+from libsql_graph_db.models import KnowledgeGraph
 from libsql_graph_db.database import initialize, add_node, atomic, connect_nodes
 
 load_dotenv()
