@@ -1,7 +1,7 @@
-import json
 import os
-import instructor
+import json
 import uuid
+import instructor
 from openai import OpenAI
 from dotenv import load_dotenv
 from libsql_graph_db.models import Node, Edge, KnowledgeGraph
@@ -91,7 +91,6 @@ def search_from_graph(query: str) -> KnowledgeGraph:
             db_url,
             auth_token,
         )
-        # print("SEARCH", json.loads(search_result[2]))
         new_edge = Edge(
             source=search_result[1],
             target=search_result[2],
