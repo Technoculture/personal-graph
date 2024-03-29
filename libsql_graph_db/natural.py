@@ -4,7 +4,7 @@ import uuid
 from openai import OpenAI
 from dotenv import load_dotenv
 from libsql_graph_db.models import KnowledgeGraph
-from libsql_graph_db.database import initialize, add_node, atomic, connect_nodes
+from libsql_graph_db.database import add_node, atomic, connect_nodes
 
 load_dotenv()
 client = instructor.patch(OpenAI(api_key=os.getenv("OPEN_API_KEY")))
@@ -12,10 +12,8 @@ db_url = os.getenv("LIBSQL_URL")
 auth_token = os.getenv("LIBSQL_AUTH_TOKEN")
 
 
-def insert_into_graph(query: str) -> KnowledgeGraph:
-    initialize(db_url, auth_token)
-
-    kg = client.chat.completions.create(
+def generate_graph(query: str) -> KnowledgeGraph:
+    knowledge_graph = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {
@@ -29,8 +27,12 @@ def insert_into_graph(query: str) -> KnowledgeGraph:
         ],
         response_model=KnowledgeGraph,
     )
+    return knowledge_graph
 
+
+def insert_into_graph(query: str) -> KnowledgeGraph:
     uuid_dict = {}
+    kg = generate_graph(query)
 
     for node in kg.nodes:
         uuid_dict[node.id] = str(uuid.uuid4())
