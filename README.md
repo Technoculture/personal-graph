@@ -1,20 +1,15 @@
-# Libsql-graph-db
-
-> [!NOTE]
-> This repo adds significant functionality on top of [simple-graph-pypi](https://github.com/dpapathanasiou/simple-graph-pypi) to add AI native features such as similarity search and Natural language interface. We also migrate the project from sqlite to libsql in order to interface with [TursoDB](https://turso.tech/).
+# Personal-Graph
 
 1. Modern Interface
 Some amounts of JSON validation and Context Manager/Class wrapper
     ```py
     # Planned API
-    with lgdb.connect(url, token) as graph:
-      graph.add_node(Node(label="sam", id=1, attributes={...}))
-      graph.add_node(Node(label="ella", id=2, attributes={...}))
-      graph.connect(from=1, to=2, label="brother", attributes={...})
+    with personal_graph.connect(url, token) as graph:
+      graph.add([Node(label="sam", attributes={...}), Node(label="ella", attributes={...})])
+      graph.connect(from="sam", to="ella", label="brother", attributes={...})
   
       graph.merge_by_similarity(threshold=0.9)
-      # graph.save()
-  
+      
       relatives: list[Node] = graph.find_nodes_like(label="relative", threshold=0.9)
     ```
 2. AI Native Features
@@ -22,10 +17,10 @@ Some amounts of JSON validation and Context Manager/Class wrapper
      - Natural language interface to KGs (Instructor, Pydantic)
     ```py
     # Planned API
-    with lgdb.connect(url, token) as graph:
+    with personal_graph.connect(url, token) as graph:
       graph.insert(text="My brother is actually pretty interested in coral reefs near Sri Lanka.")
       subgraph: KnowledgeGraph = graph.find_subgraph_like(text="Why would I be interested in ocean?")
-      print(subgraph)
+      subgraph.draw()
     ```
 3. Good Performance on reads (even with complex queries)
      - Local replicas are supported by libsql
@@ -36,7 +31,7 @@ Some amounts of JSON validation and Context Manager/Class wrapper
 
 ### Basic Functions
 
-The [database script](libsql_graph_db/database.py) provides convenience functions for [atomic transactions](https://en.wikipedia.org/wiki/Atomicity_(database_systems)) to add, delete, connect, and search for nodes.
+The [database script](personal_graph/database.py) provides convenience functions for [atomic transactions](https://en.wikipedia.org/wiki/Atomicity_(database_systems)) to add, delete, connect, and search for nodes.
 
 
 Any single node or path of nodes can also be depicted graphically by using the `visualize` function within the database script to generate [dot](https://graphviz.org/doc/info/lang.html) files, which in turn can be converted to images with Graphviz.
@@ -46,7 +41,7 @@ Any single node or path of nodes can also be depicted graphically by using the `
 It needs database url(db_url) and authentication token(auth_token) to connect with a remote database:
 
 ```
->>> from libsql_graph_db import database as db
+>>> from personal_graph import database as db
 >>> db.initialize(db_url, auth_token)
 >>> db.atomic(db_url, auth_token, db.add_node({'name': 'Apple Computer Company', 'type':['company', 'start-up'], 'founded': 'April 1, 1976'}, 1))
 >>> db.atomic(db_url, auth_token, db.add_node({'name': 'Steve Wozniak', 'type':['person','engineer','founder']}, 2))
@@ -87,7 +82,7 @@ More complex queries to introspect the json body, using the [sqlite json_tree() 
 [{'name': 'Steve Wozniak', 'type': ['person', 'engineer', 'founder'], 'id': 2, 'nickname': 'Woz'}, {'name': 'Steve Jobs', 'type': ['person', 'designer', 'founder'], 'id': 3}, {'name': 'Ronald Wayne', 'type': ['person', 'administrator', 'founder'], 'id': 4}]
 ```
 
-See the `_generate_clause()` and `_generate_query()` functions in [database.py](libsql_graph_db/database.py) for usage hints.
+See the `_generate_clause()` and `_generate_query()` functions in [database.py](personal_graph/database.py) for usage hints.
 
 Paths through the graph can be discovered with a starting node id, and an optional ending id; the default neighbor expansion is nodes connected nodes in either direction, but that can changed by specifying either `find_outbound_neighbors` or `find_inbound_neighbors` instead:
 
@@ -111,7 +106,7 @@ Any path or list of nodes can rendered graphically by using the `visualize` func
 >>> graphviz_visualize(db_url, auth_token, 'apple.dot', [4, 1, 5])
 ```
 
-The [resulting text file](libsql_graph_db/tests/fixtures/apple-raw.dot) also comes with an associated image (the default is [png](https://en.wikipedia.org/wiki/Portable_Network_Graphics), but that can be changed by supplying a different value to the `format` parameter)
+The [resulting text file](personal_graph/tests/fixtures/apple-raw.dot) also comes with an associated image (the default is [png](https://en.wikipedia.org/wiki/Portable_Network_Graphics), but that can be changed by supplying a different value to the `format` parameter)
 
 The default options include every key/value pair (excluding the id) in the node and edge objects, and there are display options to help refine what is produced:
 
@@ -121,7 +116,7 @@ The default options include every key/value pair (excluding the id) in the node 
 >>>graphviz_visualize_bodies('apple.dot', path_with_bodies)
 ```
 
-The [resulting dot file](libsql_graph_db/tests/fixtures/apple.dot) can be edited further as needed; the [dot guide](https://graphviz.org/pdf/dotguide.pdf) has more options and examples.
+The [resulting dot file](personal_graph/tests/fixtures/apple.dot) can be edited further as needed; the [dot guide](https://graphviz.org/pdf/dotguide.pdf) has more options and examples.
 
 ## Time Complexity
 
@@ -152,3 +147,6 @@ The [resulting dot file](libsql_graph_db/tests/fixtures/apple.dot) can be edited
 * [Bug trackers](https://en.wikipedia.org/wiki/Open-source_software_development#Bug_trackers_and_task_lists)
 * [Customer relationship management (CRM)](https://en.wikipedia.org/wiki/Customer_relationship_management)
 * [Gantt chart](https://en.wikipedia.org/wiki/Gantt_chart)
+
+> [!NOTE]
+> This repo adds significant functionality on top of [simple-graph-pypi](https://github.com/dpapathanasiou/simple-graph-pypi) to add AI native features such as similarity search and Natural language interface. We also migrate the project from sqlite to libsql in order to interface with [TursoDB](https://turso.tech/).
