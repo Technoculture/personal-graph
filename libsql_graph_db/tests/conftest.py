@@ -1,6 +1,8 @@
 import pytest
 from unittest.mock import patch
 
+from libsql_graph_db.models import KnowledgeGraph, Node, Edge
+
 
 @pytest.fixture
 def mock_atomic():
@@ -55,3 +57,24 @@ def mock_dot_render():
         new=lambda self, *args, **kwargs: None,
     ):
         yield
+
+
+@pytest.fixture
+def mock_openai_client():
+    with patch("libsql_graph_db.natural.client") as mock_client:
+        yield mock_client
+
+
+@pytest.fixture
+def mock_generate_graph():
+    mock_knowledge_graph = KnowledgeGraph(
+        nodes=[
+            Node(id=1, body="Mock Node 1", label="Label 1"),
+            Node(id=2, body="Mock Node 2", label="Label 2"),
+        ],
+        edges=[Edge(source=1, target=2, label="Mock Edge")],
+    )
+    with patch(
+        "libsql_graph_db.natural.generate_graph", return_value=mock_knowledge_graph
+    ):
+        yield mock_knowledge_graph

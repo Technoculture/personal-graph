@@ -1,0 +1,1 @@
+with matches as (select rowid, distance from relationship_embedding where vss_search (vector_relations, vss_search_params(json(?), ?))) select rowid, edges.source, edges.target, edges.properties, matches.distance from matches join edges on edges.embed_id = matches.rowid

@@ -1,7 +1,9 @@
 CREATE TABLE IF NOT EXISTS nodes (
     embed_id INT NOT NULL UNIQUE,
     body TEXT,
-    id   TEXT GENERATED ALWAYS AS (json_extract(body, '$.id')) VIRTUAL NOT NULL UNIQUE
+    id   TEXT GENERATED ALWAYS AS (json_extract(body, '$.id')) VIRTUAL NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS id_idx ON nodes(id);
@@ -11,6 +13,8 @@ CREATE TABLE IF NOT EXISTS edges (
     source     TEXT,
     target     TEXT,
     properties TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(source, target, properties) ON CONFLICT REPLACE,
     FOREIGN KEY(source) REFERENCES nodes(id) ON DELETE CASCADE,
     FOREIGN KEY(target) REFERENCES nodes(id) ON DELETE CASCADE

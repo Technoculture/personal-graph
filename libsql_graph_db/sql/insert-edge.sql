@@ -1,1 +1,1 @@
-INSERT INTO edges VALUES(?, ?, ?, json(?))
+INSERT INTO edges (embed_id, source, target, properties) VALUES(?, ?, ?, json(?))
