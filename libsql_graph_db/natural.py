@@ -84,7 +84,9 @@ def search_from_graph(query: str) -> KnowledgeGraph:
             else {"id": 0, "body": "Mock Node Body", "label": "Mock Node Label"}
         )
         new_node = Node(**new_node_data)
-        nodes_list.append(new_node)
+
+        if new_node not in nodes_list:
+            nodes_list.append(new_node)
 
     for edge in kg.edges:
         search_result = atomic(
@@ -106,7 +108,9 @@ def search_from_graph(query: str) -> KnowledgeGraph:
             if isinstance(search_result[3], str)
             else "Sample Property",
         )
-        edges_list.append(new_edge)
+
+        if new_edge not in edges_list:
+            edges_list.append(new_edge)
 
     knowledge_graph = KnowledgeGraph(nodes=nodes_list, edges=edges_list)
 
