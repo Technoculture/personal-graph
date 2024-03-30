@@ -14,7 +14,10 @@ from libsql_graph_db.database import (
 )
 
 load_dotenv()
-client = instructor.patch(OpenAI(api_key=os.getenv("OPEN_API_KEY")))
+if os.getenv("OPEN_API_KEY"):
+    client = instructor.patch(OpenAI(api_key=os.getenv("OPEN_API_KEY")))
+else:
+    client = None
 db_url = os.getenv("LIBSQL_URL")
 auth_token = os.getenv("LIBSQL_AUTH_TOKEN")
 
