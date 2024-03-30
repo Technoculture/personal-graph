@@ -13,7 +13,7 @@ Some amounts of JSON validation and Context Manager/Class wrapper
       graph.connect(from=1, to=2, label="brother", attributes={...})
   
       graph.merge_by_similarity(threshold=0.9)
-      graph.save()
+      # graph.save()
   
       relatives: list[Node] = graph.find_nodes_like(label="relative", threshold=0.9)
     ```
