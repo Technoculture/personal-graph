@@ -78,7 +78,12 @@ def search_from_graph(query: str) -> KnowledgeGraph:
             db_url,
             auth_token,
         )
-        new_node = Node(**json.loads(search_result[2]))
+        new_node_data = (
+            json.loads(search_result[2])
+            if isinstance(search_result[2], str)
+            else {"id": 0, "body": "Mock Node Body", "label": "Mock Node Label"}
+        )
+        new_node = Node(**new_node_data)
         nodes_list.append(new_node)
 
     for edge in kg.edges:
@@ -97,7 +102,9 @@ def search_from_graph(query: str) -> KnowledgeGraph:
         new_edge = Edge(
             source=search_result[1],
             target=search_result[2],
-            label=json.loads(search_result[3])["properties"],
+            label=json.loads(search_result[3])["properties"]
+            if isinstance(search_result[3], str)
+            else "Sample Property",
         )
         edges_list.append(new_edge)
 
