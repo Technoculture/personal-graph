@@ -5,13 +5,11 @@ Some amounts of JSON validation and Context Manager/Class wrapper
     ```py
     # Planned API
     with personal_graph.connect(url, token) as graph:
-      graph.add_node(Node(label="sam", id=1, attributes={...}))
-      graph.add_node(Node(label="ella", id=2, attributes={...}))
-      graph.connect(from=1, to=2, label="brother", attributes={...})
+      graph.add([Node(label="sam", attributes={...}), Node(label="ella", attributes={...})])
+      graph.connect(from="sam", to="ella", label="brother", attributes={...})
   
       graph.merge_by_similarity(threshold=0.9)
-      # graph.save()
-  
+      
       relatives: list[Node] = graph.find_nodes_like(label="relative", threshold=0.9)
     ```
 2. AI Native Features
@@ -22,7 +20,7 @@ Some amounts of JSON validation and Context Manager/Class wrapper
     with personal_graph.connect(url, token) as graph:
       graph.insert(text="My brother is actually pretty interested in coral reefs near Sri Lanka.")
       subgraph: KnowledgeGraph = graph.find_subgraph_like(text="Why would I be interested in ocean?")
-      print(subgraph)
+      subgraph.draw()
     ```
 3. Good Performance on reads (even with complex queries)
      - Local replicas are supported by libsql
