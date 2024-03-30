@@ -11,6 +11,7 @@ parent_dir = os.path.abspath(os.path.join(script_dir, os.pardir))
 sys.path.append(parent_dir)
 
 from libsql_graph_db import database as db  # noqa: E402
+from libsql_graph_db import natural as nt  # noqa: E402
 
 
 def measure_execution_time(operation_func, *args, **kwargs):
@@ -62,6 +63,8 @@ def time_complexity():
             os.getenv("LIBSQL_AUTH_TOKEN"),
             "Student",
         ),
+        (nt.insert_into_graph, "I am feeling quite dizzy."),
+        (nt.search_from_graph, "What precautions to take in dizziness?"),
     ]
 
     results_dict = {}
