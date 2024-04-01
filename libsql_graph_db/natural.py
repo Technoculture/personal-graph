@@ -130,7 +130,3 @@ def search_from_graph(query: str) -> KnowledgeGraph:
     knowledge_graph = KnowledgeGraph(nodes=nodes_list, edges=edges_list)
 
     return knowledge_graph
-
-
-# insert_into_graph("I have a headache")
-search_from_graph("Dizziness")
