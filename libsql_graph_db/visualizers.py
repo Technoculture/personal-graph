@@ -60,7 +60,7 @@ def graphviz_visualize(
         ids.append(str(i))
         for edge in db.atomic(connections(i), db_url, auth_token):  # type: ignore
             print("Here", edge)
-            _, src, tgt, _ = edge
+            _, src, tgt, _, _, _, _ = edge
             if src not in ids:
                 ids.append(src)
             if tgt not in ids:
@@ -77,7 +77,7 @@ def graphviz_visualize(
             dot.node(name, label=label)
             for edge in db.atomic(connections(i), db_url, auth_token):  # type: ignore
                 if edge not in edges:
-                    _, src, tgt, prps = edge
+                    _, src, tgt, _, prps, _, _ = edge
                     props = json.loads(prps)
                     dot.edge(
                         str(src),

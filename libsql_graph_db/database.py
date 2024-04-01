@@ -86,7 +86,7 @@ def _set_id(identifier: Any, data: Dict) -> Dict:
 
 
 def _insert_node(
-    cursor: sqlite3.Cursor, connection: sqlite3.Connection, identifier: Any, data: Dict
+    cursor: sqlite3.Cursor, connection: sqlite3.Connection, identifier: Any, label: str, data: Dict
 ) -> None:
     existing_node = cursor.execute(
         read_sql("existing-node.sql"), (identifier,)
@@ -105,6 +105,7 @@ def _insert_node(
         read_sql("insert-node.sql"),
         (
             count,
+            label,
             json.dumps(set_data),
         ),
     )
@@ -137,21 +138,21 @@ def vector_search_edge(data: Dict, k: int):
     return _search_edge
 
 
-def add_node(data: Dict, identifier: Any = None) -> CursorExecFunction:
+def add_node(label: str, data: Dict, identifier: Any = None) -> CursorExecFunction:
     def _add_node(cursor, connection):
-        _insert_node(cursor, connection, identifier, data)
+        _insert_node(cursor, connection, identifier, data, label)
 
     return _add_node
 
 
-def add_nodes(nodes: List[Dict], ids: List[Any]) -> CursorExecFunction:
+def add_nodes(nodes: List[Dict], labels: List[str], ids: List[Any]) -> CursorExecFunction:
     def _add_nodes(cursor, connection):
         count = (
             cursor.execute("SELECT COALESCE(MAX(embed_id), 0) FROM nodes").fetchone()[0]
             + 1
         )
 
-        for i, x in enumerate(zip(ids, nodes)):
+        for i, x in enumerate(zip(ids, labels, nodes)):
             existing_node = cursor.execute(
                 read_sql("existing-node.sql"), (x[0],)
             ).fetchone()
@@ -164,7 +165,8 @@ def add_nodes(nodes: List[Dict], ids: List[Any]) -> CursorExecFunction:
                 read_sql("insert-node.sql"),
                 (
                     count + i,
-                    json.dumps(_set_id(x[0], x[1])),
+                    x[1],
+                    json.dumps(_set_id(x[0], x[2])),
                 ),
             )
             cursor.execute(
@@ -172,7 +174,7 @@ def add_nodes(nodes: List[Dict], ids: List[Any]) -> CursorExecFunction:
                 (
                     count + i,
                     json.dumps(
-                        embed_obj.get_embedding(json.dumps(_set_id(x[0], x[1])))
+                        embed_obj.get_embedding(json.dumps(_set_id(x[0], x[2])))
                     ),
                 ),
             )
@@ -181,12 +183,12 @@ def add_nodes(nodes: List[Dict], ids: List[Any]) -> CursorExecFunction:
 
 
 def _upsert_node(
-    cursor: sqlite3.Cursor, connection: sqlite3.Connection, identifier: Any, data: Dict
+    cursor: sqlite3.Cursor, connection: sqlite3.Connection, identifier: Any, label: str, data: Dict
 ) -> None:
     current_data = find_node(identifier)(cursor, connection)
     if not current_data:
         # no prior record exists, so regular insert
-        _insert_node(cursor, connection, identifier, data)
+        _insert_node(cursor, connection, identifier, label, data)
     else:
         current_id = current_data["id"]
         id_to_be_updated = cursor.execute(
@@ -207,6 +209,7 @@ def _upsert_node(
         cursor.execute(
             read_sql("update-node.sql"),
             (
+                label,
                 json.dumps(_set_id(identifier, updated_data)),
                 count,
                 identifier,
@@ -214,28 +217,28 @@ def _upsert_node(
         )
 
 
-def upsert_node(identifier: Any, data: Dict) -> CursorExecFunction:
+def upsert_node(identifier: Any, label: str, data: Dict) -> CursorExecFunction:
     def _upsert(cursor, connection):
-        _upsert_node(cursor, connection, identifier, data)
+        _upsert_node(cursor, connection, identifier, label, data)
 
     return _upsert
 
 
-def upsert_nodes(nodes: List[Dict], ids: List[Any]) -> CursorExecFunction:
+def upsert_nodes(nodes: List[Dict], labels: List[str], ids: List[Any]) -> CursorExecFunction:
     def _upsert(cursor, connection):
-        for id, node in zip(ids, nodes):
-            _upsert_node(cursor, connection, id, node)
+        for id, label, node in zip(ids, labels, nodes):
+            _upsert_node(cursor, connection, id, label, node)
 
     return _upsert
 
 
 def connect_nodes(
-    source_id: Any, target_id: Any, properties: Dict = {}
+    source_id: Any, target_id: Any, label: str, attributes: Dict = {}
 ) -> CursorExecFunction:
     def _connect_nodes(cursor, connection):
         existing_edge = cursor.execute(
             read_sql("existing-edge.sql"),
-            (source_id, target_id, json.dumps(properties)),
+            (source_id, target_id, label, json.dumps(attributes)),
         ).fetchone()
 
         existing_source_node = cursor.execute(
@@ -259,14 +262,16 @@ def connect_nodes(
                 count,
                 source_id,
                 target_id,
-                json.dumps(properties),
+                label,
+                json.dumps(attributes),
             ),
         )
 
         edge_data = {
             "source_id": source_id,
             "target_id": target_id,
-            "properties": properties,
+            "label": label,
+            "attributes": attributes,
         }
 
         cursor.execute(
@@ -278,7 +283,7 @@ def connect_nodes(
 
 
 def connect_many_nodes(
-    sources: List[Any], targets: List[Any], properties: List[Dict]
+    sources: List[Any], targets: List[Any], labels: List[str], attributes: List[Dict]
 ) -> CursorExecFunction:
     def _connect_nodes(cursor, connection):
         count = (
@@ -286,10 +291,10 @@ def connect_many_nodes(
             + 1
         )
 
-        for i, x in enumerate(zip(sources, targets, properties)):
+        for i, x in enumerate(zip(sources, targets, labels, attributes)):
             existing_edge = cursor.execute(
                 read_sql("existing-edge.sql"),
-                (x[0], x[1], json.dumps(x[2])),
+                (x[0], x[1], x[2], json.dumps(x[3])),
             ).fetchone()
 
             existing_source_node = cursor.execute(
@@ -309,7 +314,8 @@ def connect_many_nodes(
                     count + i,
                     x[0],
                     x[1],
-                    json.dumps(x[2]),
+                    x[2],
+                    json.dumps(x[3]),
                 ),
             )
 
@@ -323,7 +329,8 @@ def connect_many_nodes(
                                 (
                                     x[0],
                                     x[1],
-                                    json.dumps(x[2]),
+                                    x[2],
+                                    json.dumps(x[3]),
                                 )
                             )
                         )
@@ -439,7 +446,7 @@ def _generate_query(
     adding the json_tree function and optionally the key, as needed"""
 
     if result_column is None:
-        result_column = "body"  # can also be 'id'
+        result_column = "attribute"  # can also be 'id'
 
     if tree:
         if key:

@@ -1,1 +1,1 @@
-INSERT INTO nodes (embed_id, body) VALUES(?, json(?))
+INSERT INTO nodes (embed_id, label, attribute) VALUES(?, ? ,json(?))

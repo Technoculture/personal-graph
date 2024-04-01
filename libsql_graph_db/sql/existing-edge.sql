@@ -1,1 +1,1 @@
-SELECT embed_id FROM edges WHERE source = ? AND target = ? AND properties = json(?)
+SELECT embed_id FROM edges WHERE source = ? AND target = ? AND label = ? AND attribute = json(?)
