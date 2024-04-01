@@ -7,60 +7,62 @@ from libsql_graph_db import database as db
 from libsql_graph_db import visualizers
 
 
-def insert_single_node(db_url, auth_token, new_node, new_node_id):
+def insert_single_node(db_url, auth_token, new_label, new_node, new_node_id):
     try:
-        db.atomic(db.add_node(new_node, new_node_id), db_url, auth_token)
+        db.atomic(db.add_node(new_label, new_node, new_node_id), db_url, auth_token)
     except Exception as e:
         logging.info(f"Exception: {e}")
 
 
-def bulk_insert_operations(db_url, auth_token, nodes):
+def bulk_insert_operations(db_url, auth_token, labels, nodes):
     ids = []
     bodies = []
     for id, body in nodes.items():
         ids.append(id)
         bodies.append(body)
 
-    db.atomic(db.add_nodes(bodies, ids), db_url, auth_token)
+    db.atomic(db.add_nodes(bodies, labels, ids), db_url, auth_token)
 
 
 def find_a_node(db_url, auth_token, node):
     return db.atomic(db.find_node(node), db_url, auth_token)
 
 
-def bulk_upsert(db_url, auth_token, nodes):
+def bulk_upsert(db_url, auth_token, labels, nodes):
     ids = []
     bodies = []
     for id, body in nodes.items():
         ids.append(id)
         bodies.append(body)
 
-    db.atomic(db.upsert_nodes(bodies, ids), db_url, auth_token)
+    db.atomic(db.upsert_nodes(bodies, labels, ids), db_url, auth_token)
 
 
-def single_upsert(db_url, auth_token, body, id):
-    db.atomic(db.upsert_node(id, body), db_url, auth_token)
+def single_upsert(db_url, auth_token, label, body, id):
+    db.atomic(db.upsert_node(id, label, body), db_url, auth_token)
 
 
-def bulk_node_connect(db_url, auth_token, edges):
+def bulk_node_connect(db_url, auth_token, labels, edges):
     sources = []
     targets = []
-    properties = []
+    attributes = []
     for src, tgts in edges.items():
         for target in tgts:
             tgt, label = target
             sources.append(src)
             targets.append(tgt)
             if label:
-                properties.append(label)
+                attributes.append(label)
             else:
-                properties.append({})
+                attributes.append({})
 
-    db.atomic(db.connect_many_nodes(sources, targets, properties), db_url, auth_token)
+    db.atomic(
+        db.connect_many_nodes(sources, targets, labels, attributes), db_url, auth_token
+    )
 
 
-def single_node_connect(db_url, auth_token, source, target, property):
-    db.atomic(db.connect_nodes(source, target, property), db_url, auth_token)
+def single_node_connect(db_url, auth_token, source, target, label, attribute):
+    db.atomic(db.connect_nodes(source, target, label, attribute), db_url, auth_token)
 
 
 def remove_bulk_nodes(db_url, auth_token, ids):
@@ -80,15 +82,17 @@ def main(args):
     db.initialize(args.url, args.auth_token)
 
     new_node = {"subject": "MES", "type": ["person", "Dr"]}
+    new_label = "Mechanical Engineer"
     new_node_id = 4
 
     # Insert a node into database
-    insert_single_node(args.url, args.auth_token, new_node, new_node_id)
+    insert_single_node(args.url, args.auth_token, new_label, new_node, new_node_id)
 
     new_nodes = {2: {"name": "Peri", "age": "90"}, 3: {"name": "Pema", "age": "66"}}
+    new_labels = ["Cancer Patient", "Tuberculosis Patient"]
 
     # Bulk Insert
-    bulk_insert_operations(args.url, args.auth_token, new_nodes)
+    bulk_insert_operations(args.url, args.auth_token, new_labels, new_nodes)
 
     # Search a node
     logging.info(f"Found Node: {find_a_node(args.url, args.auth_token, 4)}")
@@ -97,26 +101,30 @@ def main(args):
         1: {"name": "Stanley", "age": "30"},
         2: {"name": "Sheeran", "type": ["singer", "rich"]},
     }
+    labels = ["Lunch Box", "Pop Singer"]
 
     # Bulk Update
-    bulk_upsert(args.url, args.auth_token, nodes)
+    bulk_upsert(args.url, args.auth_token, labels, nodes)
 
     body = {"name": "Sheeran", "type": ["singer", "rich"]}
+    label = "American Singer"
     id = 2
 
     # Update a single node
-    single_upsert(args.url, args.auth_token, body, id)
+    single_upsert(args.url, args.auth_token, label, body, id)
 
-    edges = {2: [(3, {"wealth": "1000 Billion"}), (2, {"balance": "1000 rupees"})]}
+    edges = {3: [(3, {"wealth": "1000 Billion"}), (2, {"balance": "1000 rupees"})]}
+    edges_labels = ["Has", "Has"]
 
     # Connect bulk nodes
-    bulk_node_connect(args.url, args.auth_token, edges)
+    bulk_node_connect(args.url, args.auth_token, edges_labels, edges)
 
     source = 3
-    target = 1
-    property = {"relation": "enemy"}
+    target = 3
+    label = "related as an"
+    attribute = {"relation": "enemy"}
 
-    single_node_connect(args.url, args.auth_token, source, target, property)
+    single_node_connect(args.url, args.auth_token, source, target, label, attribute)
 
     # Remove nodes
     remove_bulk_nodes(args.url, args.auth_token, [1, 2])

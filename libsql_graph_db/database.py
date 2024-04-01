@@ -86,7 +86,11 @@ def _set_id(identifier: Any, data: Dict) -> Dict:
 
 
 def _insert_node(
-    cursor: sqlite3.Cursor, connection: sqlite3.Connection, identifier: Any, label: str, data: Dict
+    cursor: sqlite3.Cursor,
+    connection: sqlite3.Connection,
+    identifier: Any,
+    label: str,
+    data: Dict,
 ) -> None:
     existing_node = cursor.execute(
         read_sql("existing-node.sql"), (identifier,)
@@ -145,7 +149,9 @@ def add_node(label: str, data: Dict, identifier: Any = None) -> CursorExecFuncti
     return _add_node
 
 
-def add_nodes(nodes: List[Dict], labels: List[str], ids: List[Any]) -> CursorExecFunction:
+def add_nodes(
+    nodes: List[Dict], labels: List[str], ids: List[Any]
+) -> CursorExecFunction:
     def _add_nodes(cursor, connection):
         count = (
             cursor.execute("SELECT COALESCE(MAX(embed_id), 0) FROM nodes").fetchone()[0]
@@ -183,7 +189,11 @@ def add_nodes(nodes: List[Dict], labels: List[str], ids: List[Any]) -> CursorExe
 
 
 def _upsert_node(
-    cursor: sqlite3.Cursor, connection: sqlite3.Connection, identifier: Any, label: str, data: Dict
+    cursor: sqlite3.Cursor,
+    connection: sqlite3.Connection,
+    identifier: Any,
+    label: str,
+    data: Dict,
 ) -> None:
     current_data = find_node(identifier)(cursor, connection)
     if not current_data:
@@ -224,7 +234,9 @@ def upsert_node(identifier: Any, label: str, data: Dict) -> CursorExecFunction:
     return _upsert
 
 
-def upsert_nodes(nodes: List[Dict], labels: List[str], ids: List[Any]) -> CursorExecFunction:
+def upsert_nodes(
+    nodes: List[Dict], labels: List[str], ids: List[Any]
+) -> CursorExecFunction:
     def _upsert(cursor, connection):
         for id, label, node in zip(ids, labels, nodes):
             _upsert_node(cursor, connection, id, label, node)
