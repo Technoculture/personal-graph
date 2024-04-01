@@ -16,12 +16,12 @@ def main(url, token):
 
     logging.info("Nodes in the Knowledge Graph: \n")
     for node in graph.nodes:
-        logging.info(f"ID: {node.id}, Label: {node.label}, Body: {node.body}")
+        logging.info(f"ID: {node.id}, Label: {node.label}, Attribute: {node.attribute}")
 
     logging.info("Edges in the Knowledge Graph: \n")
     for edge in graph.edges:
         logging.info(
-            f"Source: {edge.source}, Target: {edge.target}, Label: {edge.label}"
+            f"Source: {edge.source}, Target: {edge.target}, Label: {edge.label}, Attribute: {edge.attribute}"
         )
 
     # Testing search query from graph db
