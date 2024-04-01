@@ -3,12 +3,12 @@ Pydantic models for pythonic API to the graph db
 """
 
 from pydantic import BaseModel, Field
-from typing import List, Union
+from typing import List, Union, Dict
 
 
 class Node(BaseModel):
     id: Union[int, str] = Field(..., description="Unique Identifier for the node.")
-    body: str = Field(
+    attribute: Union[str, Dict[str, str]] = Field(
         ..., description="Content or information associated with the node."
     )
     label: str = Field(..., description="Label or name associated with the node.")
@@ -21,7 +21,10 @@ class Edge(BaseModel):
     target: Union[int, str] = Field(
         ..., description="identifier of the target node to which the edge points."
     )
-    label: str = Field(..., description="Label or property associated with the edge.")
+    label: str = Field(..., description="Label associated with the edge.")
+    attribute: Union[str, Dict[str, str]] = Field(
+        ..., description="This is some related attributes with the relationship."
+    )
 
 
 class KnowledgeGraph(BaseModel):

@@ -144,7 +144,7 @@ def vector_search_edge(data: Dict, k: int):
 
 def add_node(label: str, data: Dict, identifier: Any = None) -> CursorExecFunction:
     def _add_node(cursor, connection):
-        _insert_node(cursor, connection, identifier, data, label)
+        _insert_node(cursor, connection, identifier, label, data)
 
     return _add_node
 
