@@ -69,10 +69,14 @@ def mock_openai_client():
 def mock_generate_graph():
     mock_knowledge_graph = KnowledgeGraph(
         nodes=[
-            Node(id=1, body="Mock Node 1", label="Label 1"),
-            Node(id=2, body="Mock Node 2", label="Label 2"),
+            Node(id=1, attribute="Mock Node 1", label="Label 1"),
+            Node(id=2, attribute="Mock Node 2", label="Label 2"),
         ],
-        edges=[Edge(source=1, target=2, label="Mock Edge")],
+        edges=[
+            Edge(
+                source=1, target=2, label="Mock Edge", attribute={"body": "Sample body"}
+            )
+        ],
     )
     with patch(
         "libsql_graph_db.natural.generate_graph", return_value=mock_knowledge_graph

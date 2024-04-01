@@ -80,21 +80,19 @@ def search_from_graph(query: str) -> KnowledgeGraph:
             db_url,
             auth_token,
         )
+
         new_node_data = (
             search_result[3]
             if isinstance(search_result[3], str)
-            else json.dumps(
-                {
-                    "id": 0,
-                    "attribute": {"body": "Mock Node Body"},
-                    "label": "Mock Node Label",
-                }
-            )
+            else json.dumps({"body": "Mock Node Body"})
         )
+
         new_node = Node(
-            id=search_result[1],
+            id=search_result[1] if isinstance(search_result, str) else "0",
             attribute=json.loads(new_node_data),
-            label=search_result[2],
+            label=search_result[2]
+            if isinstance(search_result, str)
+            else "Sample Label",
         )
 
         if new_node not in nodes_list:
@@ -118,7 +116,9 @@ def search_from_graph(query: str) -> KnowledgeGraph:
         new_edge = Edge(
             source=search_result[1],
             target=search_result[2],
-            label=search_result[3],
+            label=search_result[3]
+            if isinstance(search_result, str)
+            else "Sample label",
             attribute=json.loads(search_result[4])
             if isinstance(search_result[4], str)
             else "Sample Property",
