@@ -80,6 +80,8 @@ def search_from_graph(query: str) -> KnowledgeGraph:
             db_url,
             auth_token,
         )
+        if search_result is None:
+            continue
 
         new_node_data = (
             search_result[3]
@@ -112,6 +114,8 @@ def search_from_graph(query: str) -> KnowledgeGraph:
             db_url,
             auth_token,
         )
+        if search_result is None:
+            continue
 
         new_edge = Edge(
             source=search_result[1],
