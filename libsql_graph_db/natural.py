@@ -40,9 +40,9 @@ def generate_graph(query: str) -> KnowledgeGraph:
     return knowledge_graph
 
 
-def insert_into_graph(query: str) -> KnowledgeGraph:
+def insert_into_graph(text: str) -> KnowledgeGraph:
     uuid_dict = {}
-    kg = generate_graph(query)
+    kg = generate_graph(text)
     print(kg)
 
     for node in kg.nodes:
@@ -68,8 +68,8 @@ def insert_into_graph(query: str) -> KnowledgeGraph:
     return kg
 
 
-def search_from_graph(query: str) -> KnowledgeGraph:
-    kg = generate_graph(query)
+def search_from_graph(text: str) -> KnowledgeGraph:
+    kg = generate_graph(text)
 
     nodes_list = []
     edges_list = []

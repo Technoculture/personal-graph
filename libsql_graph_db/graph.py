@@ -8,7 +8,7 @@ import json
 from typing import Any, List, Optional
 import libsql_experimental as libsql  # type: ignore
 from contextlib import AbstractContextManager
-from .models import Node, Edge
+from .models import Node, Edge, KnowledgeGraph
 from .database import (
     atomic,
     connect_nodes,
@@ -24,6 +24,7 @@ from .database import (
     find_outbound_neighbors,
     traverse,
 )
+from .natural import insert_into_graph, search_from_graph
 
 
 class Graph(AbstractContextManager):
@@ -131,3 +132,11 @@ class Graph(AbstractContextManager):
             with_bodies=with_bodies,
         )
         return path
+
+    def insert(self, text: str) -> KnowledgeGraph:
+        kg = insert_into_graph(text)
+        return kg
+
+    def search_query(self, text: str) -> KnowledgeGraph:
+        kg = search_from_graph(text)
+        return kg
