@@ -10,6 +10,7 @@ using an atomic transaction wrapper function.
 """
 
 import json
+import uuid
 import pathlib
 import sqlite3
 from dotenv import load_dotenv
@@ -120,12 +121,27 @@ def _insert_node(
     )
 
 
-def vector_search_node(data: Dict, k: int):
+def vector_search_node(
+    data: Dict, k: Optional[int] = 1, threshold: Optional[float] = None
+):
     def _search_node(cursor, connection):
         embed = json.dumps(embed_obj.get_embedding(json.dumps(data)))
-        node = cursor.execute(read_sql("vector-search-node.sql"), (embed, k)).fetchone()
-
-        return node
+        if k == 1:
+            node = cursor.execute(
+                read_sql("vector-search-node.sql"), (embed, k)
+            ).fetchone()
+            return node
+        else:
+            nodes = cursor.execute(
+                read_sql("vector-search-node.sql"), (embed, k)
+            ).fetchall()
+            if threshold is not None:
+                filtered_results = [
+                    (node[0], node[4]) for node in nodes if node[4] < threshold
+                ]
+                return filtered_results[:k]
+            else:
+                return nodes[:k]
 
     return _search_node
 
@@ -364,7 +380,10 @@ def remove_node(identifier: Any) -> CursorExecFunction:
             "SELECT embed_id FROM edges WHERE source=? OR target=?",
             (identifier, identifier),
         ).fetchall()
-        edge_ids = [i[0] for i in rows]
+
+        edge_ids = []
+        if rows is not None:
+            edge_ids = [i[0] for i in rows]
 
         cursor.execute(
             read_sql("delete-edge.sql"),
@@ -580,3 +599,37 @@ def get_connections(identifier: Any) -> CursorExecFunction:
         ).fetchall()
 
     return _get_connections
+
+
+def merge_by_similarity():
+    def _merge(cursor, connection):
+        nodes = cursor.execute("SELECT id from nodes").fetchall()
+
+        for node_id in nodes:
+            node_data = find_node(node_id[0])(cursor, connection)
+
+            similar_nodes = vector_search_node(node_data, 2, 0.9)(cursor, connection)
+
+            if len(similar_nodes) <= 1:
+                continue
+
+            label = ""
+            attribute = {}
+            for similar_node_id, distance in similar_nodes:
+                similar_node_data = cursor.execute(
+                    "SELECT label, attribute from nodes where embed_id = ?",
+                    (similar_node_id,),
+                ).fetchone()
+
+                label = label + similar_node_data[0] + ","
+                attribute[similar_node_id] = json.loads(similar_node_data[1])
+
+                id_to_be_removed = cursor.execute(
+                    "SELECT id from nodes where embed_id=?", (similar_node_id,)
+                ).fetchone()
+                remove_node(id_to_be_removed[0])(cursor, connection)
+
+            add_node(label, attribute, str(uuid.uuid4()))(cursor, connection)
+            connection.commit()
+
+    return _merge
