@@ -146,12 +146,27 @@ def vector_search_node(
     return _search_node
 
 
-def vector_search_edge(data: Dict, k: int):
+def vector_search_edge(
+    data: Dict, k: Optional[int] = 1, threshold: Optional[float] = None
+):
     def _search_edge(cursor, connection):
         embed = json.dumps(embed_obj.get_embedding(json.dumps(data)))
-        edge = cursor.execute(read_sql("vector-search-edge.sql"), (embed, k)).fetchone()
-
-        return edge
+        if k == 1:
+            edge = cursor.execute(
+                read_sql("vector-search-edge.sql"), (embed, k)
+            ).fetchone()
+            return edge
+        else:
+            edges = cursor.execute(
+                read_sql("vector-search-node.sql"), (embed, k)
+            ).fetchall()
+            if threshold is not None:
+                filtered_results = [
+                    (edge[0], edge[4]) for edge in edges if edge[4] < threshold
+                ]
+                return filtered_results[:k]
+            else:
+                return edges[:k]
 
     return _search_edge
 
@@ -630,6 +645,43 @@ def merge_by_similarity():
                 remove_node(id_to_be_removed[0])(cursor, connection)
 
             add_node(label, attribute, str(uuid.uuid4()))(cursor, connection)
+            connection.commit()
+
+        edges = cursor.execute("SELECT source, target from edges").fetchall()
+
+        for src, tgt in edges:
+            edge = cursor.execute(
+                "SELECT * from edges where source=? AND target=?", (src, tgt)
+            ).fetchone()
+
+            edge_data = {
+                "source_id": edge[1],
+                "target_id": edge[2],
+                "label": edge[3],
+                "attributes": edge[3],
+            }
+            similar_edges = vector_search_edge(edge_data, 2, 0.9)(cursor, connection)
+
+            if len(similar_edges) <= 1:
+                continue
+
+            label = ""
+            attribute = {}
+            for similar_edge_id, distance in similar_edges:
+                similar_edge_data = cursor.execute(
+                    "SELECT * from edges where embed_id=?", (similar_edge_id,)
+                ).fetchone()
+
+                label = label + similar_edge_data[3]
+                attribute[similar_edge_id] = json.loads(similar_edge_data[4])
+
+                src, tgt = cursor.execute(
+                    "SELECT source, target from edges where embed_id=?",
+                    (similar_edge_id,),
+                ).fetchone()
+                remove_nodes([src, tgt])(cursor, connection)
+
+            connect_nodes(str(uuid.uuid4()), str(uuid.uuid4()), label, attribute)
             connection.commit()
 
     return _merge
