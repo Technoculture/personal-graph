@@ -617,13 +617,15 @@ def get_connections(identifier: Any) -> CursorExecFunction:
     return _get_connections
 
 
-def merge_by_similarity() -> CursorExecFunction:
+def pruning(threshold: float, k: int) -> CursorExecFunction:
     def _merge(cursor, connection):
         nodes = cursor.execute("SELECT id from nodes").fetchall()
 
         for node_id in nodes:
             node_data = find_node(node_id[0])(cursor, connection)
-            similar_nodes = vector_search_node(node_data, 2, 0.9)(cursor, connection)
+            similar_nodes = vector_search_node(node_data, k, threshold)(
+                cursor, connection
+            )
 
             if len(similar_nodes) <= 1:
                 continue
@@ -647,38 +649,8 @@ def merge_by_similarity() -> CursorExecFunction:
             add_node(label, attribute, str(uuid.uuid4()))(cursor, connection)
             connection.commit()
 
-        edges = cursor.execute("SELECT source, target from edges").fetchall()
-        for src, tgt in edges:
-            edge = cursor.execute(
-                "SELECT * from edges where source=? AND target=?", (src, tgt)
-            ).fetchone()
-
-            edge_data = {
-                "source_id": edge[1],
-                "target_id": edge[2],
-                "label": edge[3],
-                "attributes": edge[3],
-            }
-            similar_edges = vector_search_edge(edge_data, 2, 0.9)(cursor, connection)
-
-            if len(similar_edges) <= 1:
-                continue
-
-            label = ""
-            attribute = {}
-            for similar_edge_id, distance in similar_edges:
-                similar_edge_data = cursor.execute(
-                    "SELECT * from edges where embed_id=?", (similar_edge_id,)
-                ).fetchone()
-
-                label = label + similar_edge_data[3]
-                attribute[similar_edge_id] = json.loads(similar_edge_data[4])
-
-            src, tgt = str(uuid.uuid4()), str(uuid.uuid4())
-            connect_nodes(str(uuid.uuid4()), str(uuid.uuid4()), label, attribute)
-            add_nodes(nodes=[attribute, attribute], labels=[label], ids=[src, tgt])(
-                cursor, connection
-            )
-            connection.commit()
-
     return _merge
+
+
+def find_similar_nodes(label: str, threshold: float):
+    pass

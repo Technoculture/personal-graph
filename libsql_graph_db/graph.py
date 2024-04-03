@@ -23,6 +23,8 @@ from .database import (
     find_neighbors,
     find_outbound_neighbors,
     traverse,
+    pruning,
+    find_similar_nodes,
 )
 from .natural import insert_into_graph, search_from_graph
 
@@ -134,9 +136,15 @@ class Graph(AbstractContextManager):
         return path
 
     def insert(self, text: str) -> KnowledgeGraph:
-        kg = insert_into_graph(text)
+        kg: KnowledgeGraph = insert_into_graph(text)
         return kg
 
     def search_query(self, text: str) -> KnowledgeGraph:
-        kg = search_from_graph(text)
+        kg: KnowledgeGraph = search_from_graph(text)
         return kg
+
+    def merge_by_similarity(self, threshold, k) -> None:
+        atomic(pruning(threshold, k), self.db_url, self.auth_token)
+
+    def find_nodes_like(self, label: str, threshold: float) -> List[Node]:
+        return atomic(find_similar_nodes(label, threshold), self.db_url, self.auth_token)
