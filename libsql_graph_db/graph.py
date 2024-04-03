@@ -147,4 +147,6 @@ class Graph(AbstractContextManager):
         atomic(pruning(threshold, k), self.db_url, self.auth_token)
 
     def find_nodes_like(self, label: str, threshold: float) -> List[Node]:
-        return atomic(find_similar_nodes(label, threshold), self.db_url, self.auth_token)
+        return atomic(
+            find_similar_nodes(label, threshold), self.db_url, self.auth_token
+        )

@@ -10,7 +10,6 @@ using an atomic transaction wrapper function.
 """
 
 import json
-import uuid
 import pathlib
 import sqlite3
 from dotenv import load_dotenv
@@ -19,7 +18,6 @@ import libsql_experimental as libsql  # type: ignore
 from typing import Callable, Optional, Tuple, Dict, List, Any
 from libsql_graph_db.embeddings import OpenAIEmbeddingsModel
 from jinja2 import Environment, BaseLoader, select_autoescape
-
 
 load_dotenv()
 embed_obj = OpenAIEmbeddingsModel()
@@ -255,6 +253,7 @@ def _upsert_node(
                 identifier,
             ),
         )
+        print("Updated")
 
 
 def upsert_node(identifier: Any, label: str, data: Dict) -> CursorExecFunction:
@@ -623,30 +622,102 @@ def pruning(threshold: float, k: int) -> CursorExecFunction:
 
         for node_id in nodes:
             node_data = find_node(node_id[0])(cursor, connection)
+
+            if node_data is {}:
+                continue
+
             similar_nodes = vector_search_node(node_data, k, threshold)(
                 cursor, connection
             )
 
-            if len(similar_nodes) <= 1:
+            if len(similar_nodes) < 1:
                 continue
 
-            label = ""
-            attribute = {}
-            for similar_node_id, distance in similar_nodes:
-                similar_node_data = cursor.execute(
-                    "SELECT label, attribute from nodes where embed_id = ?",
-                    (similar_node_id,),
+            for rowid, _ in similar_nodes:
+                similar_node_id = cursor.execute(
+                    "SELECT id from nodes where embed_id=?", (rowid,)
                 ).fetchone()
 
-                label = label + similar_node_data[0] + ","
-                attribute[similar_node_id] = json.loads(similar_node_data[1])
+                # Skip the similar nodes to be merged
+                if similar_node_id[0] == node_id[0]:
+                    continue
 
-                id_to_be_removed = cursor.execute(
-                    "SELECT id from nodes where embed_id=?", (similar_node_id,)
-                ).fetchone()
-                remove_node(id_to_be_removed[0])(cursor, connection)
+                in_degree_query = cursor.execute(
+                    "SELECT source, label, attribute FROM edges WHERE target = ?",
+                    (similar_node_id[0],),
+                )
+                out_degree_query = cursor.execute(
+                    "SELECT target, label, attribute FROM edges WHERE source = ?",
+                    (similar_node_id[0],),
+                )
 
-            add_node(label, attribute, str(uuid.uuid4()))(cursor, connection)
+                in_degree = in_degree_query.fetchall() if in_degree_query else []
+                out_degree = out_degree_query.fetchall() if out_degree_query else []
+
+                remove_node(similar_node_id[0])(cursor, connection)
+
+                concatenated_attributes = {}
+                concatenated_labels = ""
+
+                for data in in_degree:
+                    concatenated_attributes.update(json.loads(data[2]))
+                    concatenated_labels += data[1] + ","
+
+                    count = (
+                        cursor.execute(
+                            "SELECT COALESCE(MAX(embed_id), 0) FROM edges"
+                        ).fetchone()[0]
+                        + 1
+                    )
+                    cursor.execute(
+                        read_sql("insert-edge.sql"),
+                        (count, data[0], node_id[0], data[1], data[2]),
+                    )
+
+                    edge_data = {
+                        "source_id": data[0],
+                        "target_id": node_id[0],
+                        "label": data[1],
+                        "attributes": data[2],
+                    }
+                    cursor.execute(
+                        read_sql("insert-edge-embedding.sql"),
+                        (
+                            count,
+                            json.dumps(embed_obj.get_embedding(json.dumps(edge_data))),
+                        ),
+                    )
+
+                for data in out_degree:
+                    concatenated_attributes.update(json.loads(data[2]))
+                    concatenated_labels += data[1] + ","
+
+                    count = (
+                        cursor.execute(
+                            "SELECT COALESCE(MAX(embed_id), 0) FROM edges"
+                        ).fetchone()[0]
+                        + 1
+                    )
+                    cursor.execute(
+                        read_sql("insert-edge.sql"),
+                        (count, node_id[0], data[0], data[1], data[2]),
+                    )
+
+                    edge_data = {
+                        "source_id": node_id[0],
+                        "target_id": data[0],
+                        "label": data[1],
+                        "attributes": data[2],
+                    }
+                    cursor.execute(
+                        read_sql("insert-edge-embedding.sql"),
+                        (
+                            count,
+                            json.dumps(embed_obj.get_embedding(json.dumps(edge_data))),
+                        ),
+                    )
+                upsert_node(node_id[0], concatenated_labels, concatenated_attributes)
+
             connection.commit()
 
     return _merge
