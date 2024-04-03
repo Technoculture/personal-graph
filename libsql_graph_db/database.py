@@ -123,7 +123,7 @@ def _insert_node(
 
 def vector_search_node(
     data: Dict, k: Optional[int] = 1, threshold: Optional[float] = None
-):
+) -> CursorExecFunction:
     def _search_node(cursor, connection):
         embed = json.dumps(embed_obj.get_embedding(json.dumps(data)))
         if k == 1:
@@ -149,7 +149,7 @@ def vector_search_node(
 
 def vector_search_edge(
     data: Dict, k: Optional[int] = 1, threshold: Optional[float] = None
-):
+) -> CursorExecFunction:
     def _search_edge(cursor, connection):
         embed = json.dumps(embed_obj.get_embedding(json.dumps(data)))
         if k == 1:
@@ -617,7 +617,7 @@ def get_connections(identifier: Any) -> CursorExecFunction:
     return _get_connections
 
 
-def merge_by_similarity():
+def merge_by_similarity() -> CursorExecFunction:
     def _merge(cursor, connection):
         nodes = cursor.execute("SELECT id from nodes").fetchall()
 

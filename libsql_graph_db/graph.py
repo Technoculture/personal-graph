@@ -5,7 +5,7 @@ Provide a higher level API to the database using Pydantic
 from __future__ import annotations
 
 import json
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union, Dict
 import libsql_experimental as libsql  # type: ignore
 from contextlib import AbstractContextManager
 from .models import Node, Edge, KnowledgeGraph
@@ -41,11 +41,11 @@ class Graph(AbstractContextManager):
         )
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
         # TODO: graph.save()
         pass
 
-    def add_node(self, node: Node):
+    def add_node(self, node: Node) -> None:
         atomic(
             add_node(
                 node.label,
@@ -59,14 +59,14 @@ class Graph(AbstractContextManager):
         )
 
     def add_nodes(self, nodes: List[Node]) -> None:
-        labels = [node.label for node in nodes]
-        attributes = [
+        labels: List[str] = [node.label for node in nodes]
+        attributes: List[Union[Dict[str, str]]] = [
             json.loads(node.attribute)
             if isinstance(node.attribute, str)
             else node.attribute
             for node in nodes
         ]
-        ids = [node.id for node in nodes]
+        ids: List[Any] = [node.id for node in nodes]
         add_nodes_func = add_nodes(nodes=attributes, labels=labels, ids=ids)
         atomic(add_nodes_func, self.db_url, self.auth_token)
 
@@ -82,10 +82,10 @@ class Graph(AbstractContextManager):
         atomic(connect_nodes_func, self.db_url, self.auth_token)
 
     def add_edges(self, edges: List[Edge]) -> None:
-        sources = [edge.source for edge in edges]
-        targets = [edge.target for edge in edges]
-        labels = [edge.label for edge in edges]
-        attributes = [
+        sources: List[Any] = [edge.source for edge in edges]
+        targets: List[Any] = [edge.target for edge in edges]
+        labels: List[str] = [edge.label for edge in edges]
+        attributes: List[Union[Dict[str, str]]] = [
             json.loads(edge.attribute)
             if isinstance(edge.attribute, str)
             else edge.attribute
