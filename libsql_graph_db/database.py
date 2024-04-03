@@ -626,6 +626,10 @@ def pruning(threshold: float, k: int) -> CursorExecFunction:
             if node_data is {}:
                 continue
 
+            node = cursor.execute(
+                "SELECT label, attribute from nodes where id=?", (node_id[0],)
+            ).fetchone()
+
             similar_nodes = vector_search_node(node_data, k, threshold)(
                 cursor, connection
             )
@@ -653,8 +657,6 @@ def pruning(threshold: float, k: int) -> CursorExecFunction:
 
                 in_degree = in_degree_query.fetchall() if in_degree_query else []
                 out_degree = out_degree_query.fetchall() if out_degree_query else []
-
-                remove_node(similar_node_id[0])(cursor, connection)
 
                 concatenated_attributes = {}
                 concatenated_labels = ""
@@ -716,7 +718,13 @@ def pruning(threshold: float, k: int) -> CursorExecFunction:
                             json.dumps(embed_obj.get_embedding(json.dumps(edge_data))),
                         ),
                     )
-                upsert_node(node_id[0], concatenated_labels, concatenated_attributes)
+
+                updated_attributes = json.loads(node[1]) if node[1] else {}
+                updated_attributes.update(concatenated_attributes)
+                upsert_node(
+                    node_id[0], node[0] + "," + concatenated_labels, updated_attributes
+                )(cursor, connection)
+                remove_node(similar_node_id[0])(cursor, connection)
 
             connection.commit()
 
