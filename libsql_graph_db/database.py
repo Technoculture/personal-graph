@@ -130,6 +130,7 @@ def vector_search_node(
             node = cursor.execute(
                 read_sql("vector-search-node.sql"), (embed, k)
             ).fetchone()
+            print(node)
             return node
         else:
             nodes = cursor.execute(
@@ -622,7 +623,6 @@ def merge_by_similarity():
 
         for node_id in nodes:
             node_data = find_node(node_id[0])(cursor, connection)
-
             similar_nodes = vector_search_node(node_data, 2, 0.9)(cursor, connection)
 
             if len(similar_nodes) <= 1:
@@ -648,7 +648,6 @@ def merge_by_similarity():
             connection.commit()
 
         edges = cursor.execute("SELECT source, target from edges").fetchall()
-
         for src, tgt in edges:
             edge = cursor.execute(
                 "SELECT * from edges where source=? AND target=?", (src, tgt)
@@ -675,13 +674,11 @@ def merge_by_similarity():
                 label = label + similar_edge_data[3]
                 attribute[similar_edge_id] = json.loads(similar_edge_data[4])
 
-                src, tgt = cursor.execute(
-                    "SELECT source, target from edges where embed_id=?",
-                    (similar_edge_id,),
-                ).fetchone()
-                remove_nodes([src, tgt])(cursor, connection)
-
+            src, tgt = str(uuid.uuid4()), str(uuid.uuid4())
             connect_nodes(str(uuid.uuid4()), str(uuid.uuid4()), label, attribute)
+            add_nodes(nodes=[attribute, attribute], labels=[label], ids=[src, tgt])(
+                cursor, connection
+            )
             connection.commit()
 
     return _merge
