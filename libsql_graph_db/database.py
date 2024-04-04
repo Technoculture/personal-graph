@@ -11,7 +11,8 @@ using an atomic transaction wrapper function.
 
 import json
 import pathlib
-import sqlite3
+import sqlite_vss  # type: ignore
+import sqlean as sqlite3  # type: ignore
 from dotenv import load_dotenv
 from functools import lru_cache
 import libsql_experimental as libsql  # type: ignore
@@ -55,7 +56,15 @@ def atomic(
 ) -> Any:
     connection = None
     try:
-        connection = libsql.connect(database=db_url, auth_token=auth_token)
+        if db_url and db_url.endswith(".db"):
+            # Support for local db
+            connection = sqlite3.connect(db_url)
+            connection.enable_load_extension(True)
+            sqlite_vss.load(connection)
+            connection.enable_load_extension(False)
+        else:
+            connection = libsql.connect(database=db_url, auth_token=auth_token)
+
         cursor = connection.cursor()
         cursor.execute("PRAGMA foreign_keys = TRUE;")
         results = cursor_exec_fn(cursor, connection)
@@ -75,7 +84,7 @@ def initialize(
         schema_sql = read_sql(schema_file)
         connection.executescript(schema_sql)
 
-    return atomic(_init, db_url, auth_token)  # type: ignore
+    return atomic(_init, db_url, auth_token)
 
 
 def _set_id(identifier: Any, data: Dict) -> Dict:
@@ -253,7 +262,6 @@ def _upsert_node(
                 identifier,
             ),
         )
-        print("Updated")
 
 
 def upsert_node(identifier: Any, label: str, data: Dict) -> CursorExecFunction:
