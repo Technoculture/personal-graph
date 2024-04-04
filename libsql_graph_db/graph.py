@@ -7,6 +7,8 @@ from __future__ import annotations
 import json
 from typing import Any, List, Optional, Union, Dict
 import libsql_experimental as libsql  # type: ignore
+import sqlean as sqlite3  # type: ignore
+import sqlite_vss  # type: ignore
 from contextlib import AbstractContextManager
 from .models import Node, Edge, KnowledgeGraph
 from .database import (
@@ -35,17 +37,26 @@ class Graph(AbstractContextManager):
         self.auth_token = auth_token
 
     def __enter__(self, schema_file: str = "schema.sql") -> Graph:
-        self.connection = libsql.connect(
-            database=self.db_url, auth_token=self.auth_token
-        )
+        if self.db_url and self.db_url.endswith(".db"):
+            # Support for local SQLite database
+            self.connection = sqlite3.connect(self.db_url)
+            self.connection.enable_load_extension(True)
+            sqlite_vss.load(self.connection)
+            self.connection.enable_load_extension(False)
+        else:
+            self.connection = libsql.connect(
+                database=self.db_url, auth_token=self.auth_token
+            )
         initialize(
             db_url=self.db_url, auth_token=self.auth_token, schema_file=schema_file
         )
         return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
-        # TODO: graph.save()
-        pass
+        self.save()
+
+    def save(self):
+        self.connection.commit()
 
     def add_node(self, node: Node) -> None:
         atomic(

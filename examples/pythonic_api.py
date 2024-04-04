@@ -34,6 +34,8 @@ def main(url, token):
         )
         logging.info(graph.search_query(text="Who is more interested in coral refs"))
 
+        graph.save()
+
 
 if __name__ == "__main__":
     logging.basicConfig(
