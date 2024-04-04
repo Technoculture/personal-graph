@@ -12,7 +12,7 @@ def main(url, token):
 
     # Testing insert query into graph db
     nl_query = "increased thirst, weight loss, increased hunger, frequent urination etc. are all symptoms of diabetes."
-    graph = natural.insert_into_graph(query=nl_query)
+    graph = natural.insert_into_graph(text=nl_query)
 
     logging.info("Nodes in the Knowledge Graph: \n")
     for node in graph.nodes:
