@@ -22,6 +22,7 @@ pytest-mock = "^3.14.0"
 instructor = "^0.6.7"
 fastapi = "^0.110.0"
 uvicorn = "^0.29.0"
+sqlean-py = "^3.45.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.1.1"
