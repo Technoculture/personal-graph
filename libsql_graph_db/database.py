@@ -11,8 +11,6 @@ using an atomic transaction wrapper function.
 
 import json
 import pathlib
-import sqlite_vss  # type: ignore
-import sqlean as sqlite3  # type: ignore
 from dotenv import load_dotenv
 from functools import lru_cache
 import libsql_experimental as libsql  # type: ignore
@@ -22,7 +20,7 @@ from jinja2 import Environment, BaseLoader, select_autoescape
 
 load_dotenv()
 embed_obj = OpenAIEmbeddingsModel()
-CursorExecFunction = Callable[[sqlite3.Cursor, sqlite3.Connection], Any]
+CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
 
 
 @lru_cache(maxsize=None)
@@ -56,12 +54,8 @@ def atomic(
 ) -> Any:
     connection = None
     try:
-        if db_url and db_url.endswith(".db"):
-            # Support for local db
-            connection = sqlite3.connect(db_url)
-            connection.enable_load_extension(True)
-            sqlite_vss.load(connection)
-            connection.enable_load_extension(False)
+        if not db_url:
+            connection = libsql.connect(":memory:")
         else:
             connection = libsql.connect(database=db_url, auth_token=auth_token)
 
@@ -83,6 +77,7 @@ def initialize(
     def _init(cursor, connection):
         schema_sql = read_sql(schema_file)
         connection.executescript(schema_sql)
+        connection.commit()
 
     return atomic(_init, db_url, auth_token)
 
@@ -94,8 +89,8 @@ def _set_id(identifier: Any, data: Dict) -> Dict:
 
 
 def _insert_node(
-    cursor: sqlite3.Cursor,
-    connection: sqlite3.Connection,
+    cursor: libsql.Cursor,
+    connection: libsql.Connection,
     identifier: Any,
     label: str,
     data: Dict,
@@ -226,8 +221,8 @@ def add_nodes(
 
 
 def _upsert_node(
-    cursor: sqlite3.Cursor,
-    connection: sqlite3.Connection,
+    cursor: libsql.Cursor,
+    connection: libsql.Connection,
     identifier: Any,
     label: str,
     data: Dict,
