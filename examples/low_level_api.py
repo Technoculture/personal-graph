@@ -88,14 +88,25 @@ def main(args):
     # Insert a node into database
     insert_single_node(args.url, args.auth_token, new_label, new_node, new_node_id)
 
-    new_nodes = {2: {"name": "Peri", "age": "90"}, 3: {"name": "Pema", "age": "66"}}
-    new_labels = ["Cancer Patient", "Tuberculosis Patient"]
+    new_nodes = {
+        3: {"name": "Peri", "age": "90"},
+        4: {"name": "Pema", "age": "66"},
+        5: {"name": "Ella", "age": "45"},
+    }
+    new_labels = ["Retired Doctor", "Tuberculosis Patient", "Diabetes Pateint"]
 
     # Bulk Insert
     bulk_insert_operations(args.url, args.auth_token, new_labels, new_nodes)
 
     # Search a node
     logging.info(f"Found Node: {find_a_node(args.url, args.auth_token, 4)}")
+
+    body = {"name": "Sheeran", "type": ["singer", "rich"]}
+    label = "related as an"
+    id = 2
+
+    # Update a single node
+    single_upsert(args.url, args.auth_token, label, body, id)
 
     nodes = {
         1: {"name": "Stanley", "age": "30"},
@@ -105,13 +116,6 @@ def main(args):
 
     # Bulk Update
     bulk_upsert(args.url, args.auth_token, labels, nodes)
-
-    body = {"name": "Sheeran", "type": ["singer", "rich"]}
-    label = "American Singer"
-    id = 2
-
-    # Update a single node
-    single_upsert(args.url, args.auth_token, label, body, id)
 
     edges = {3: [(3, {"wealth": "1000 Billion"}), (2, {"balance": "1000 rupees"})]}
     edges_labels = ["Has", "Has"]

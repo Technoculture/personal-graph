@@ -57,7 +57,10 @@ def atomic(
         if not db_url:
             connection = libsql.connect(":memory:")
         else:
-            connection = libsql.connect(database=db_url, auth_token=auth_token)
+            connection = libsql.connect(
+                "local.db", sync_url=db_url, auth_token=auth_token
+            )
+            connection.sync()
 
         cursor = connection.cursor()
         cursor.execute("PRAGMA foreign_keys = TRUE;")
@@ -77,7 +80,7 @@ def initialize(
     def _init(cursor, connection):
         schema_sql = read_sql(schema_file)
         connection.executescript(schema_sql)
-        connection.commit()
+        connection.sync()
 
     return atomic(_init, db_url, auth_token)
 
@@ -121,6 +124,8 @@ def _insert_node(
         read_sql("insert-node-embedding.sql"),
         (count, json.dumps(embed_obj.get_embedding(json.dumps(set_data)))),
     )
+    connection.commit()
+    connection.sync()
 
 
 def vector_search_node(
@@ -132,12 +137,16 @@ def vector_search_node(
             node = cursor.execute(
                 read_sql("vector-search-node.sql"), (embed, k)
             ).fetchone()
-            print(node)
+            connection.commit()
+            connection.sync()
             return node
         else:
             nodes = cursor.execute(
                 read_sql("vector-search-node.sql"), (embed, k)
             ).fetchall()
+            connection.commit()
+            connection.sync()
+
             if threshold is not None:
                 filtered_results = [
                     (node[0], node[4]) for node in nodes if node[4] < threshold
@@ -158,11 +167,17 @@ def vector_search_edge(
             edge = cursor.execute(
                 read_sql("vector-search-edge.sql"), (embed, k)
             ).fetchone()
+            connection.commit()
+            connection.sync()
+
             return edge
         else:
             edges = cursor.execute(
                 read_sql("vector-search-node.sql"), (embed, k)
             ).fetchall()
+            connection.commit()
+            connection.sync()
+
             if threshold is not None:
                 filtered_results = [
                     (edge[0], edge[4]) for edge in edges if edge[4] < threshold
@@ -191,7 +206,7 @@ def add_nodes(
         )
 
         for i, x in enumerate(zip(ids, labels, nodes)):
-            existing_node = cursor.execute(
+            existing_node: None = cursor.execute(
                 read_sql("existing-node.sql"), (x[0],)
             ).fetchone()
 
@@ -216,6 +231,8 @@ def add_nodes(
                     ),
                 ),
             )
+            connection.commit()
+            connection.sync()
 
     return _add_nodes
 
@@ -239,6 +256,9 @@ def _upsert_node(
         updated_data = {**current_data, **data}
 
         cursor.execute(read_sql("delete-node-embedding.sql"), (id_to_be_updated,))
+        connection.commit()
+        connection.sync()
+
         count = (
             cursor.execute("SELECT COALESCE(MAX(embed_id), 0) FROM nodes").fetchone()[0]
             + 1
@@ -257,6 +277,8 @@ def _upsert_node(
                 identifier,
             ),
         )
+        connection.commit()
+        connection.sync()
 
 
 def upsert_node(identifier: Any, label: str, data: Dict) -> CursorExecFunction:
@@ -310,6 +332,7 @@ def connect_nodes(
                 json.dumps(attributes),
             ),
         )
+        connection.sync()
 
         edge_data = {
             "source_id": source_id,
@@ -322,6 +345,7 @@ def connect_nodes(
             read_sql("insert-edge-embedding.sql"),
             (count, json.dumps(embed_obj.get_embedding(json.dumps(edge_data)))),
         )
+        connection.sync()
 
     return _connect_nodes
 
@@ -381,6 +405,8 @@ def connect_many_nodes(
                     ),
                 ),
             )
+            connection.commit()
+            connection.sync()
 
     return _connect_nodes
 
@@ -417,6 +443,7 @@ def remove_node(identifier: Any) -> CursorExecFunction:
         cursor.execute(read_sql("delete-node.sql"), (identifier,))
 
         cursor.execute(read_sql("delete-node-embedding.sql"), (node[0],))
+        connection.sync()
 
     return _remove_node
 
@@ -451,6 +478,8 @@ def remove_nodes(identifiers: List[Any]) -> CursorExecFunction:
             cursor.execute(read_sql("delete-node.sql"), (identifier,))
 
             cursor.execute(read_sql("delete-node-embedding.sql"), (node[0],))
+            connection.commit()
+            connection.sync()
 
     return _remove_node
 
