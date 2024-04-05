@@ -149,8 +149,8 @@ class Graph(AbstractContextManager):
         kg: KnowledgeGraph = search_from_graph(text)
         return kg
 
-    def merge_by_similarity(self, threshold, k) -> None:
-        atomic(pruning(threshold, k), self.db_url, self.auth_token)
+    def merge_by_similarity(self, threshold) -> None:
+        atomic(pruning(threshold), self.db_url, self.auth_token)
 
     def find_nodes_like(self, label: str, threshold: float) -> List[Node]:
         return atomic(

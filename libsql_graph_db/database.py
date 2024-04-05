@@ -621,7 +621,7 @@ def get_connections(identifier: Any) -> CursorExecFunction:
     return _get_connections
 
 
-def pruning(threshold: float, k: int) -> CursorExecFunction:
+def pruning(threshold: float) -> CursorExecFunction:
     def _merge(cursor, connection):
         nodes = cursor.execute("SELECT id from nodes").fetchall()
 
@@ -635,7 +635,7 @@ def pruning(threshold: float, k: int) -> CursorExecFunction:
                 "SELECT label, attribute from nodes where id=?", (node_id[0],)
             ).fetchone()
 
-            similar_nodes = vector_search_node(node_data, k, threshold)(
+            similar_nodes = vector_search_node(node_data, 3, threshold)(
                 cursor, connection
             )
 
@@ -731,22 +731,22 @@ def pruning(threshold: float, k: int) -> CursorExecFunction:
                 )(cursor, connection)
                 remove_node(similar_node_id[0])(cursor, connection)
 
+            connection.commit()
+
     return _merge
 
 
 def find_similar_nodes(label: str, threshold: Optional[float] = None):
     def _identical_nodes(cursor, connection):
-        label_clause = _generate_clause(label, predicate="LIKE")
-
-        # Find nodes based on the label
-        label_value = f"%{label}%"
-        nodes = find_nodes([label_clause], (label_value,))(cursor, connection)
+        nodes = cursor.execute(
+            "SELECT * FROM nodes WHERE label LIKE ?", ("%" + label + "%",)
+        ).fetchall()
 
         similar_rows = []
         for node in nodes:
-            similar_nodes = vector_search_node(node, threshold)(cursor, connection)
+            similar_nodes = vector_search_node(node, 2, threshold)(cursor, connection)
 
-            if similar_nodes < 1:
+            if len(similar_nodes) < 1:
                 continue
 
             for rowid, _ in similar_nodes:
@@ -756,6 +756,7 @@ def find_similar_nodes(label: str, threshold: Optional[float] = None):
 
                 if row in similar_rows:
                     continue
+                similar_rows.append(row)
         return similar_rows
 
     return _identical_nodes

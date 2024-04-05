@@ -25,7 +25,7 @@ def main(url, token):
 
         logging.info(graph.search_node(1))
 
-        graph.merge_by_similarity(threshold=0.9, k=2)
+        graph.merge_by_similarity(threshold=0.9)
         logging.info("Merged nodes")
 
         # Insert query into graph db
@@ -33,6 +33,8 @@ def main(url, token):
             text="My brother is actually pretty interested in coral reefs near Sri Lanka."
         )
         logging.info(graph.search_query(text="Who is more interested in coral refs"))
+
+        logging.info(graph.find_nodes_like(label="relative", threshold=0.9))
 
         graph.save()
 
