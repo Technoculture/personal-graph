@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS nodes (
     embed_id INT NOT NULL UNIQUE,
     label TEXT,
-    attribute TEXT,
+    attribute JSON,
     id   TEXT GENERATED ALWAYS AS (json_extract(attribute, '$.id')) VIRTUAL NOT NULL UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS edges (
     source     TEXT,
     target     TEXT,
     label TEXT,
-    attribute TEXT,
+    attribute JSON,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(source, target, attribute) ON CONFLICT REPLACE,
