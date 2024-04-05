@@ -1,9 +1,9 @@
-name: libsql graph db Workflow
+name: personal graph db Workflow
 
 on:
    pull_request:
     branches: [main]
-    paths: ['libsql_graph_db/**']
+    paths: ['personal_graph/**']
 
 jobs:
   check:
@@ -57,10 +57,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd libsql_graph_db
+          cd personal_graph
           poetry install --no-interaction --no-root
 
       - name: Test with pytest
         run: |
-         cd libsql_graph_db 
+         cd personal_graph 
          poetry run pytest -vvv
