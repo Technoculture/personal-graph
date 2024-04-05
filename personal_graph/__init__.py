@@ -1,3 +1,3 @@
-from personal_graph import graph, models
+from personal_graph import graph
 
-__all__ = ["graph", "models"]
+__all__ = ["graph"]
