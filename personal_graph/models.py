@@ -27,6 +27,15 @@ class Edge(BaseModel):
     )
 
 
+class EdgeInput(BaseModel):
+    source: Node = Field(..., description="Source node from which the edge originates.")
+    target: Node = Field(..., description="Target node to which the edge points.")
+    label: str = Field(..., description="Label associated with the edge.")
+    attribute: Union[str, Dict[str, str]] = Field(
+        ..., description="Additional attributes associated with the edge."
+    )
+
+
 class KnowledgeGraph(BaseModel):
     nodes: List[Node] = Field(..., default_factory=list)
     edges: List[Edge] = Field(..., default_factory=list)

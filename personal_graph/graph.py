@@ -8,7 +8,7 @@ import json
 from typing import Any, List, Optional, Union, Dict
 import libsql_experimental as libsql  # type: ignore
 from contextlib import AbstractContextManager
-from .models import Node, Edge, KnowledgeGraph
+from .models import Node, EdgeInput, KnowledgeGraph
 from .database import (
     atomic,
     connect_nodes,
@@ -78,10 +78,10 @@ class Graph(AbstractContextManager):
         add_nodes_func = add_nodes(nodes=attributes, labels=labels, ids=ids)
         atomic(add_nodes_func, self.db_url, self.auth_token)
 
-    def add_edge(self, edge: Edge) -> None:
+    def add_edge(self, edge: EdgeInput) -> None:
         connect_nodes_func = connect_nodes(
-            edge.source,
-            edge.target,
+            edge.source.id,
+            edge.target.id,
             edge.label,
             json.loads(edge.attribute)
             if isinstance(edge.attribute, str)
@@ -89,9 +89,9 @@ class Graph(AbstractContextManager):
         )
         atomic(connect_nodes_func, self.db_url, self.auth_token)
 
-    def add_edges(self, edges: List[Edge]) -> None:
-        sources: List[Any] = [edge.source for edge in edges]
-        targets: List[Any] = [edge.target for edge in edges]
+    def add_edges(self, edges: List[EdgeInput]) -> None:
+        sources: List[Any] = [edge.source.id for edge in edges]
+        targets: List[Any] = [edge.target.id for edge in edges]
         labels: List[str] = [edge.label for edge in edges]
         attributes: List[Union[Dict[str, str]]] = [
             json.loads(edge.attribute)
@@ -104,7 +104,7 @@ class Graph(AbstractContextManager):
         )
         atomic(connect_many_nodes_func, self.db_url, self.auth_token)
 
-    def upsert_node(self, node: Node) -> None:
+    def update_node(self, node: Node) -> None:
         upsert_node_func = upsert_node(
             identifier=node.id,
             label=node.label,
@@ -114,9 +114,9 @@ class Graph(AbstractContextManager):
         )
         atomic(upsert_node_func, self.db_url, self.auth_token)
 
-    def upsert_nodes(self, nodes: List[Node]) -> None:
+    def update_nodes(self, nodes: List[Node]) -> None:
         for node in nodes:
-            self.upsert_node(node)
+            self.update_node(node)
 
     def remove_node(self, id: Any) -> None:
         atomic(remove_node(id), self.db_url, self.auth_token)
