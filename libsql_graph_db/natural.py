@@ -43,7 +43,6 @@ def generate_graph(query: str) -> KnowledgeGraph:
 def insert_into_graph(text: str) -> KnowledgeGraph:
     uuid_dict = {}
     kg = generate_graph(text)
-    print(kg)
 
     for node in kg.nodes:
         uuid_dict[node.id] = str(uuid.uuid4())
