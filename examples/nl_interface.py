@@ -2,8 +2,8 @@
 import os
 import logging
 from dotenv import load_dotenv
-from libsql_graph_db import database as db
-from libsql_graph_db import natural
+from personal_graph import database as db
+from personal_graph import natural
 
 
 def main(url, token):

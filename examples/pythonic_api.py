@@ -1,7 +1,7 @@
 import logging
 import os
-from libsql_graph_db.graph import Graph
-from libsql_graph_db.models import Node, Edge
+from personal_graph.graph import Graph
+from personal_graph.models import Node, Edge
 
 
 def main(url, token):

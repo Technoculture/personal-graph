@@ -1,4 +1,4 @@
-from libsql_graph_db.database import (
+from personal_graph.database import (
     add_node,
     add_nodes,
     upsert_node,

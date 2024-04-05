@@ -3,8 +3,8 @@ import os
 import logging
 import argparse
 from dotenv import load_dotenv
-from libsql_graph_db import database as db
-from libsql_graph_db import visualizers
+from personal_graph import database as db
+from personal_graph import visualizers
 
 
 def insert_single_node(db_url, auth_token, new_label, new_node, new_node_id):

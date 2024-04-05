@@ -4,8 +4,8 @@ import uuid
 import instructor
 from openai import OpenAI
 from dotenv import load_dotenv
-from libsql_graph_db.models import Node, Edge, KnowledgeGraph
-from libsql_graph_db.database import (
+from personal_graph.models import Node, Edge, KnowledgeGraph
+from personal_graph.database import (
     add_node,
     atomic,
     connect_nodes,

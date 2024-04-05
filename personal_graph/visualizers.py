@@ -10,7 +10,7 @@ and extensible to other libraries.
 
 import json
 from graphviz import Digraph  # type: ignore
-from libsql_graph_db import database as db
+from personal_graph import database as db
 from typing import List, Dict, Any, Tuple, Optional
 
 

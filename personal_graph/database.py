@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 from functools import lru_cache
 import libsql_experimental as libsql  # type: ignore
 from typing import Callable, Optional, Tuple, Dict, List, Any
-from libsql_graph_db.embeddings import OpenAIEmbeddingsModel
+from personal_graph.embeddings import OpenAIEmbeddingsModel
 from jinja2 import Environment, BaseLoader, select_autoescape
 
 load_dotenv()
