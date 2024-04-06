@@ -8,19 +8,16 @@ from personal_graph.graph import Graph
 
 def test_add_node(mock_atomic, mock_db_connection_and_cursor):
     graph = Graph()
-
     node = Node(
         id=1,
         attribute={"name": "Jack", "body": "Jack is Joe's cousin brother"},
         label="relative",
     )
-
     assert graph.add_node(node) is None
 
 
 def test_add_nodes(mock_atomic, mock_db_connection_and_cursor):
     graph = Graph()
-
     nodes = [
         Node(
             id=1,
@@ -146,6 +143,7 @@ def test_search_query():
 
 def test_merge_by_similarity(mock_atomic, mock_db_connection_and_cursor):
     graph = Graph()
+    test_insert()
 
     assert graph.merge_by_similarity(0.9) is None
 
