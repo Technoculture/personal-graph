@@ -2,7 +2,7 @@
 Unit test for high level apis
 """
 
-from personal_graph.models import Node, EdgeInput
+from personal_graph.models import Node, EdgeInput, KnowledgeGraph
 from personal_graph.graph import Graph
 
 
@@ -129,18 +129,32 @@ def test_traverse(mock_atomic, mock_db_connection_and_cursor):
     assert graph.traverse(1, 2) is not None
 
 
-def test_insert(mock_atomic, mock_db_connection_and_cursor):
+def test_insert(
+    mock_openai_client, mock_generate_graph, mock_atomic, mock_db_connection_and_cursor
+):
+    mock_openai_client.chat.completions.create.return_value = mock_generate_graph
+
     graph = Graph()
     test_add_nodes(mock_atomic, mock_db_connection_and_cursor)
 
-    assert graph.insert("Alice has suffocation at night.")
+    result = graph.insert("Alice has suffocation at night.")
+    assert result == mock_generate_graph
 
 
-def test_search_query(mock_atomic, mock_db_connection_and_cursor):
+def test_search_query(
+    mock_openai_client, mock_generate_graph, mock_atomic, mock_db_connection_and_cursor
+):
+    mock_openai_client.chat.completions.create.return_value = mock_generate_graph
     graph = Graph()
-    test_insert(mock_atomic, mock_db_connection_and_cursor)
+    test_insert(
+        mock_openai_client,
+        mock_generate_graph,
+        mock_atomic,
+        mock_db_connection_and_cursor,
+    )
 
-    assert graph.search_query("Suffocation problem.")
+    result = graph.search_query("Suffocation problem.")
+    assert isinstance(result, KnowledgeGraph)
 
 
 def test_merge_by_similarity(mock_atomic, mock_db_connection_and_cursor):
