@@ -129,14 +129,16 @@ def test_traverse(mock_atomic, mock_db_connection_and_cursor):
     assert graph.traverse(1, 2) is not None
 
 
-def test_insert():
+def test_insert(mock_atomic, mock_db_connection_and_cursor):
     graph = Graph()
+    test_add_nodes(mock_atomic, mock_db_connection_and_cursor)
 
     assert graph.insert("Alice has suffocation at night.")
 
 
-def test_search_query():
+def test_search_query(mock_atomic, mock_db_connection_and_cursor):
     graph = Graph()
+    test_insert(mock_atomic, mock_db_connection_and_cursor)
 
     assert graph.search_query("Suffocation problem.")
 
