@@ -1,4 +1,4 @@
-name: personal graph db Workflow
+name: Personal Graph Workflow
 
 on:
    pull_request:
