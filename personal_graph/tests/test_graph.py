@@ -132,18 +132,18 @@ def test_traverse(mock_atomic, mock_db_connection_and_cursor):
 def test_insert():
     graph = Graph()
 
-    assert graph.insert("Alice has suffocation at night.") is not None
+    assert graph.insert("Alice has suffocation at night.")
 
 
 def test_search_query():
     graph = Graph()
 
-    assert graph.search_query("Suffocation problem.") is not None
+    assert graph.search_query("Suffocation problem.")
 
 
 def test_merge_by_similarity(mock_atomic, mock_db_connection_and_cursor):
     graph = Graph()
-    test_insert()
+    test_add_nodes(mock_atomic, mock_db_connection_and_cursor)
 
     assert graph.merge_by_similarity(0.9) is None
 
