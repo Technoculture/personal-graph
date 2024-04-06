@@ -1,1 +1,0 @@
-SELECT embed_id FROM edges WHERE source = ? AND target = ? AND properties = json(?)

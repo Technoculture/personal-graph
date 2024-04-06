@@ -2,8 +2,8 @@
 import os
 import logging
 from dotenv import load_dotenv
-from libsql_graph_db import database as db
-from libsql_graph_db import natural
+from personal_graph import database as db
+from personal_graph import natural
 
 
 def main(url, token):
@@ -12,16 +12,16 @@ def main(url, token):
 
     # Testing insert query into graph db
     nl_query = "increased thirst, weight loss, increased hunger, frequent urination etc. are all symptoms of diabetes."
-    graph = natural.insert_into_graph(query=nl_query)
+    graph = natural.insert_into_graph(text=nl_query)
 
     logging.info("Nodes in the Knowledge Graph: \n")
     for node in graph.nodes:
-        logging.info(f"ID: {node.id}, Label: {node.label}, Body: {node.body}")
+        logging.info(f"ID: {node.id}, Label: {node.label}, Attribute: {node.attribute}")
 
     logging.info("Edges in the Knowledge Graph: \n")
     for edge in graph.edges:
         logging.info(
-            f"Source: {edge.source}, Target: {edge.target}, Label: {edge.label}"
+            f"Source: {edge.source}, Target: {edge.target}, Label: {edge.label}, Attribute: {edge.attribute}"
         )
 
     # Testing search query from graph db

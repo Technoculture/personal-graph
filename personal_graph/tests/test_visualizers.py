@@ -1,4 +1,4 @@
-from libsql_graph_db.visualizers import graphviz_visualize, graphviz_visualize_bodies
+from personal_graph.visualizers import graphviz_visualize, graphviz_visualize_bodies
 
 
 def test_graphviz_visualize(

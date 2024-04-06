@@ -4,8 +4,8 @@ import uuid
 import instructor
 from openai import OpenAI
 from dotenv import load_dotenv
-from libsql_graph_db.models import Node, Edge, KnowledgeGraph
-from libsql_graph_db.database import (
+from personal_graph.models import Node, Edge, KnowledgeGraph
+from personal_graph.database import (
     add_node,
     atomic,
     connect_nodes,
@@ -40,14 +40,14 @@ def generate_graph(query: str) -> KnowledgeGraph:
     return knowledge_graph
 
 
-def insert_into_graph(query: str) -> KnowledgeGraph:
+def insert_into_graph(text: str) -> KnowledgeGraph:
     uuid_dict = {}
-    kg = generate_graph(query)
+    kg = generate_graph(text)
 
     for node in kg.nodes:
         uuid_dict[node.id] = str(uuid.uuid4())
         atomic(
-            add_node({"body": node.body, "label": node.label}, uuid_dict[node.id]),
+            add_node(node.label, {"body": node.attribute}, uuid_dict[node.id]),
             db_url,
             auth_token,
         )
@@ -57,7 +57,8 @@ def insert_into_graph(query: str) -> KnowledgeGraph:
             connect_nodes(
                 uuid_dict[edge.source],
                 uuid_dict[edge.target],
-                {"properties": edge.label},
+                edge.label,
+                {"body": edge.attribute},
             ),
             db_url,
             auth_token,
@@ -66,24 +67,34 @@ def insert_into_graph(query: str) -> KnowledgeGraph:
     return kg
 
 
-def search_from_graph(query: str) -> KnowledgeGraph:
-    kg = generate_graph(query)
+def search_from_graph(text: str) -> KnowledgeGraph:
+    kg = generate_graph(text)
 
     nodes_list = []
     edges_list = []
 
     for node in kg.nodes:
         search_result = atomic(
-            vector_search_node({"body": node.body, "label": node.label}, 1),
+            vector_search_node({"body": node.attribute}, 1),
             db_url,
             auth_token,
         )
+        if search_result is None:
+            continue
+
         new_node_data = (
-            json.loads(search_result[2])
-            if isinstance(search_result[2], str)
-            else {"id": 0, "body": "Mock Node Body", "label": "Mock Node Label"}
+            search_result[3]
+            if isinstance(search_result[3], str)
+            else json.dumps({"body": "Mock Node Body"})
         )
-        new_node = Node(**new_node_data)
+
+        new_node = Node(
+            id=search_result[1] if isinstance(search_result, str) else "0",
+            attribute=json.loads(new_node_data),
+            label=search_result[2]
+            if isinstance(search_result, str)
+            else "Sample Label",
+        )
 
         if new_node not in nodes_list:
             nodes_list.append(new_node)
@@ -94,18 +105,25 @@ def search_from_graph(query: str) -> KnowledgeGraph:
                 {
                     "source_id": edge.source,
                     "target_id": edge.target,
-                    "properties": edge.label,
+                    "label": edge.label,
+                    "attribute": {"body": edge.attribute},
                 },
                 1,
             ),
             db_url,
             auth_token,
         )
+        if search_result is None:
+            continue
+
         new_edge = Edge(
             source=search_result[1],
             target=search_result[2],
-            label=json.loads(search_result[3])["properties"]
-            if isinstance(search_result[3], str)
+            label=search_result[3]
+            if isinstance(search_result, str)
+            else "Sample label",
+            attribute=json.loads(search_result[4])
+            if isinstance(search_result[4], str)
             else "Sample Property",
         )
 

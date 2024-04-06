@@ -1,12 +1,12 @@
 [tool.poetry]
-name = "libsql-graph-db"
+name = "personal graph"
 version = "0.1.3"
 description = "Graph database in LibSQL"
 authors = ["Anubhuti Bhardwaj <anubhutibhardwaj11@gmail.com>"]
 license = "MIT"
 readme = "README.md"
 exclude = [
-    { path = "examples/libsql-graph.ipynb" }
+    { path = "examples/personal-graph.ipynb" }
 ]
 
 [tool.poetry.dependencies]
@@ -22,6 +22,7 @@ pytest-mock = "^3.14.0"
 instructor = "^0.6.7"
 fastapi = "^0.110.0"
 uvicorn = "^0.29.0"
+sqlean-py = "^3.45.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.1.1"

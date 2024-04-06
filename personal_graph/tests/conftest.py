@@ -1,18 +1,18 @@
 import pytest
 from unittest.mock import patch
 
-from libsql_graph_db.models import KnowledgeGraph, Node, Edge
+from personal_graph.models import KnowledgeGraph, Node, Edge
 
 
 @pytest.fixture
 def mock_atomic():
-    with patch("libsql_graph_db.database.atomic") as mock_atomic:
+    with patch("personal_graph.database.atomic") as mock_atomic:
         yield mock_atomic
 
 
 @pytest.fixture
 def mock_db_connection_and_cursor():
-    with patch("libsql_graph_db.database.libsql.connect") as mock_connect:
+    with patch("personal_graph.database.libsql.connect") as mock_connect:
         mock_connection = mock_connect.return_value
         mock_cursor = mock_connection.cursor.return_value
         yield mock_connection, mock_cursor
@@ -20,9 +20,7 @@ def mock_db_connection_and_cursor():
 
 @pytest.fixture
 def mock_embeddings_model():
-    with patch(
-        "libsql_graph_db.database.embed_obj.get_embedding"
-    ) as mock_get_embedding:
+    with patch("personal_graph.database.embed_obj.get_embedding") as mock_get_embedding:
         # Define fixed embeddings for testing
         fixed_embeddings = {
             '{"name": "Alice", "age": 30}': [0.1, 0.2, 0.3],
@@ -38,22 +36,20 @@ def mock_embeddings_model():
 
 @pytest.fixture
 def mock_find_node():
-    with patch("libsql_graph_db.visualizers.db.find_node") as mock_find_node:
+    with patch("personal_graph.visualizers.db.find_node") as mock_find_node:
         yield mock_find_node
 
 
 @pytest.fixture
 def mock_get_connections():
-    with patch(
-        "libsql_graph_db.visualizers.db.get_connections"
-    ) as mock_get_connections:
+    with patch("personal_graph.visualizers.db.get_connections") as mock_get_connections:
         yield mock_get_connections
 
 
 @pytest.fixture
 def mock_dot_render():
     with patch(
-        "libsql_graph_db.visualizers.Digraph.render",
+        "personal_graph.visualizers.Digraph.render",
         new=lambda self, *args, **kwargs: None,
     ):
         yield
@@ -61,7 +57,7 @@ def mock_dot_render():
 
 @pytest.fixture
 def mock_openai_client():
-    with patch("libsql_graph_db.natural.client") as mock_client:
+    with patch("personal_graph.natural.client") as mock_client:
         yield mock_client
 
 
@@ -69,12 +65,16 @@ def mock_openai_client():
 def mock_generate_graph():
     mock_knowledge_graph = KnowledgeGraph(
         nodes=[
-            Node(id=1, body="Mock Node 1", label="Label 1"),
-            Node(id=2, body="Mock Node 2", label="Label 2"),
+            Node(id=1, attribute="Mock Node 1", label="Label 1"),
+            Node(id=2, attribute="Mock Node 2", label="Label 2"),
         ],
-        edges=[Edge(source=1, target=2, label="Mock Edge")],
+        edges=[
+            Edge(
+                source=1, target=2, label="Mock Edge", attribute={"body": "Sample body"}
+            )
+        ],
     )
     with patch(
-        "libsql_graph_db.natural.generate_graph", return_value=mock_knowledge_graph
+        "personal_graph.natural.generate_graph", return_value=mock_knowledge_graph
     ):
         yield mock_knowledge_graph

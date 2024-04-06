@@ -1,5 +1,5 @@
-from libsql_graph_db.models import KnowledgeGraph
-from libsql_graph_db.natural import insert_into_graph, search_from_graph
+from personal_graph.models import KnowledgeGraph
+from personal_graph.natural import insert_into_graph, search_from_graph
 
 
 def test_insert_into_graph(
