@@ -8,6 +8,7 @@ import json
 from typing import Any, List, Optional, Union, Dict
 import libsql_experimental as libsql  # type: ignore
 from contextlib import AbstractContextManager
+from graphviz import Digraph  # type: ignore
 from .models import Node, EdgeInput, KnowledgeGraph
 from .database import (
     atomic,
@@ -25,8 +26,10 @@ from .database import (
     traverse,
     pruning,
     find_similar_nodes,
+    nodes_list,
 )
 from .natural import insert_into_graph, search_from_graph
+from .visualizers import graphviz_visualize
 
 
 class Graph(AbstractContextManager):
@@ -156,3 +159,9 @@ class Graph(AbstractContextManager):
         return atomic(
             find_similar_nodes(label, threshold), self.db_url, self.auth_token
         )
+
+    def visualize(self, file: str, path: List[str]) -> Digraph:
+        return graphviz_visualize(self.db_url, self.auth_token, file, path)
+
+    def fetch_ids_from_db(self) -> List[str]:
+        return atomic(nodes_list(), self.db_url, self.auth_token)

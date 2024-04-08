@@ -760,3 +760,13 @@ def find_similar_nodes(label: str, threshold: Optional[float] = None):
         return similar_rows
 
     return _identical_nodes
+
+
+def nodes_list() -> CursorExecFunction:
+    def _fetch_nodes_from_db(cursor, connection):
+        nodes = cursor.execute("SELECT id from nodes").fetchall()
+        ids = [id[0] for id in nodes]
+
+        return ids
+
+    return _fetch_nodes_from_db
