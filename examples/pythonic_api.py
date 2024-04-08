@@ -1,5 +1,9 @@
-import logging
 import os
+import sys
+import logging
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from personal_graph.graph import Graph
 from personal_graph.models import Node, EdgeInput
 
@@ -57,6 +61,8 @@ def main(url, token):
         logging.info(graph.search_query(text="Who is more interested in coral refs"))
 
         logging.info(graph.find_nodes_like(label="relative", threshold=0.9))
+
+        graph.visualize("sample.dot", ["2"])
 
         graph.save()
 
