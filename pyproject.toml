@@ -24,6 +24,8 @@ fastapi = "^0.110.0"
 uvicorn = "^0.29.0"
 sqlean-py = "^3.45.1"
 streamlit = "^1.33.0"
+types-pygments = "^2.17.0.20240310"
+types-decorator = "^5.1.8.20240310"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.1.1"
