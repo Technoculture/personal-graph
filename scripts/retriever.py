@@ -19,7 +19,6 @@ class Retriever(dspy.Retrieve):
         db_url: str,
         auth_token: str,
         k: int = 5,
-
     ):
         super().__init__(k=k)
         self.k = k
