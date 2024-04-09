@@ -1,17 +1,16 @@
 import os
 import sys
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import dspy  # type: ignore
-from dsp.utils import dotdict  # type: ignore
 from dotenv import load_dotenv
 
 load_dotenv()
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from personal_graph.graph import Graph
-from personal_graph.models import Node
+from personal_graph.graph import Graph  # noqa: E402
+from personal_graph.models import Node  # noqa: E402
 
 
 class Retriever(dspy.Retrieve):
@@ -35,10 +34,10 @@ class Retriever(dspy.Retrieve):
             passages.extend(kg.nodes)
         return passages
 
-    def forward(self, query_or_queries: str, k: Optional[int] = None, **kwargs) -> dspy.Prediction:
+    def forward(
+        self, query_or_queries: Union[str, List[str]], k: Optional[int] = None, **kwargs
+    ) -> list[Node]:
         if not isinstance(query_or_queries, list):
             query_or_queries = [query_or_queries]
         passages = self._retrieve_passages(query_or_queries)
-        return dspy.Prediction(passages=list(passages))
-
-
+        return passages
