@@ -123,7 +123,7 @@ def _insert_node(
 
 
 def vector_search_node(
-    data: Dict, k: Optional[int] = 1, threshold: Optional[float] = None
+    data: Dict, k: int = 1, threshold: Optional[float] = None
 ) -> CursorExecFunction:
     def _search_node(cursor, connection):
         embed = json.dumps(embed_obj.get_embedding(json.dumps(data)))
