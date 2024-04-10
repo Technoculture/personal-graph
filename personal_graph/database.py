@@ -769,7 +769,7 @@ def all_connected_nodes(
             for connected_node in connected_nodes:
                 for id in connected_node:
                     res = cursor.execute(
-                        "SELECT embed_id, id, label, attribute from nodes where id=?",
+                        "SELECT id, label, attribute from nodes where id=?",
                         (id,),
                     ).fetchone()
                     if res not in resultant_connected_nodes:

@@ -1,10 +1,10 @@
 import os
 import uuid
 import instructor
-from graphviz import Digraph
+from graphviz import Digraph  # type: ignore
 from openai import OpenAI
 from dotenv import load_dotenv
-from personal_graph.models import KnowledgeGraph
+from personal_graph.models import KnowledgeGraph, Node, Edge
 from personal_graph.database import (
     add_node,
     atomic,
@@ -46,11 +46,11 @@ def visualize_knowledge_graph(kg: KnowledgeGraph):
 
     # Add nodes
     for node in kg.nodes:
-        dot.node(node[1], node[2], color="black")
+        dot.node(node.id, node.label, color="black")
 
     # Add edges
     for edge in kg.edges:
-        dot.edge(str(edge[1]), str(edge[2]), edge[3], color="black")
+        dot.edge(str(edge.source), str(edge.target), edge.label, color="black")
 
     # Render the graph
     dot.render("knowledge_graph.gv", view=True)
@@ -94,20 +94,29 @@ def search_from_graph(text: str) -> KnowledgeGraph:
     if similar_edges and similar_nodes is None or similar_nodes is None:
         return resultant_subgraph
 
-    resultant_subgraph.nodes = [node[:-1] for node in similar_nodes]
+    resultant_subgraph.nodes = [
+        Node(id=node[1], label=node[2], attribute=node[3]) for node in similar_nodes
+    ]
 
     for node in similar_nodes:
         nodes = atomic(all_connected_nodes(node, "node"), db_url, auth_token)
         for i in nodes:
             if i not in resultant_subgraph.nodes:
-                resultant_subgraph.nodes.append(i)
+                resultant_subgraph.nodes.append(
+                    Node(id=i[0], label=i[1], attribute=i[2])
+                )
 
-    resultant_subgraph.edges = [edge[:-1] for edge in similar_edges]
+    resultant_subgraph.edges = [
+        Edge(source=edge[1], target=edge[2], label=edge[3], attribute=edge[4])
+        for edge in similar_edges
+    ]
     for edge in similar_edges:
         nodes = atomic(all_connected_nodes(edge, "edge"), db_url, auth_token)
         for i in nodes:
             if i not in resultant_subgraph.nodes:
-                resultant_subgraph.nodes.append(i)
+                resultant_subgraph.nodes.append(
+                    Node(id=i[0], label=i[1], attribute=i[2])
+                )
 
     visualize_knowledge_graph(resultant_subgraph)
     return resultant_subgraph
