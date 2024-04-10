@@ -1,16 +1,17 @@
 import os
-import json
 import uuid
 import instructor
+from graphviz import Digraph
 from openai import OpenAI
 from dotenv import load_dotenv
-from personal_graph.models import Node, Edge, KnowledgeGraph
+from personal_graph.models import KnowledgeGraph
 from personal_graph.database import (
     add_node,
     atomic,
     connect_nodes,
     vector_search_node,
     vector_search_edge,
+    all_connected_nodes,
 )
 
 load_dotenv()
@@ -38,6 +39,21 @@ def generate_graph(query: str) -> KnowledgeGraph:
         response_model=KnowledgeGraph,
     )
     return knowledge_graph
+
+
+def visualize_knowledge_graph(kg: KnowledgeGraph):
+    dot = Digraph(comment="Knowledge Graph")
+
+    # Add nodes
+    for node in kg.nodes:
+        dot.node(node[1], node[2], color="black")
+
+    # Add edges
+    for edge in kg.edges:
+        dot.edge(str(edge[1]), str(edge[2]), edge[3], color="black")
+
+    # Render the graph
+    dot.render("knowledge_graph.gv", view=True)
 
 
 def insert_into_graph(text: str) -> KnowledgeGraph:
@@ -68,68 +84,30 @@ def insert_into_graph(text: str) -> KnowledgeGraph:
 
 
 def search_from_graph(text: str) -> KnowledgeGraph:
-    kg = generate_graph(text)
+    similar_nodes = atomic(
+        vector_search_node({"body": text}, 0.9, 2), db_url, auth_token
+    )
+    similar_edges = atomic(vector_search_edge({"body": text}, k=2), db_url, auth_token)
 
-    nodes_list = []
-    edges_list = []
+    resultant_subgraph = KnowledgeGraph()
 
-    for node in kg.nodes:
-        search_result = atomic(
-            vector_search_node({"body": node.attribute}, 1),
-            db_url,
-            auth_token,
-        )
-        if search_result is None:
-            continue
+    if similar_edges and similar_nodes is None or similar_nodes is None:
+        return resultant_subgraph
 
-        new_node_data = (
-            search_result[3]
-            if isinstance(search_result[3], str)
-            else json.dumps({"body": "Mock Node Body"})
-        )
+    resultant_subgraph.nodes = [node[:-1] for node in similar_nodes]
 
-        new_node = Node(
-            id=search_result[1] if isinstance(search_result, str) else "0",
-            attribute=json.loads(new_node_data),
-            label=search_result[2]
-            if isinstance(search_result, str)
-            else "Sample Label",
-        )
+    for node in similar_nodes:
+        nodes = atomic(all_connected_nodes(node, "node"), db_url, auth_token)
+        for i in nodes:
+            if i not in resultant_subgraph.nodes:
+                resultant_subgraph.nodes.append(i)
 
-        if new_node not in nodes_list:
-            nodes_list.append(new_node)
+    resultant_subgraph.edges = [edge[:-1] for edge in similar_edges]
+    for edge in similar_edges:
+        nodes = atomic(all_connected_nodes(edge, "edge"), db_url, auth_token)
+        for i in nodes:
+            if i not in resultant_subgraph.nodes:
+                resultant_subgraph.nodes.append(i)
 
-    for edge in kg.edges:
-        search_result = atomic(
-            vector_search_edge(
-                {
-                    "source_id": edge.source,
-                    "target_id": edge.target,
-                    "label": edge.label,
-                    "attribute": {"body": edge.attribute},
-                },
-                1,
-            ),
-            db_url,
-            auth_token,
-        )
-        if search_result is None:
-            continue
-
-        new_edge = Edge(
-            source=search_result[1],
-            target=search_result[2],
-            label=search_result[3]
-            if isinstance(search_result, str)
-            else "Sample label",
-            attribute=json.loads(search_result[4])
-            if isinstance(search_result[4], str)
-            else "Sample Property",
-        )
-
-        if new_edge not in edges_list:
-            edges_list.append(new_edge)
-
-    knowledge_graph = KnowledgeGraph(nodes=nodes_list, edges=edges_list)
-
-    return knowledge_graph
+    visualize_knowledge_graph(resultant_subgraph)
+    return resultant_subgraph
