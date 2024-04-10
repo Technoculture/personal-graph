@@ -1,16 +1,7 @@
-import os
-import sys
-from typing import List, Optional, Union
-
 import dspy  # type: ignore
-from dotenv import load_dotenv
-
-load_dotenv()
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-from personal_graph.graph import Graph  # noqa: E402
-from personal_graph.models import Node  # noqa: E402
+from typing import List, Optional, Union
+from personal_graph.graph import Graph
+from personal_graph.models import Node
 
 
 class Retriever(dspy.Retrieve):
