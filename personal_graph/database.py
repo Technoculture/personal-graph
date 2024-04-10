@@ -127,23 +127,17 @@ def vector_search_node(
 ) -> CursorExecFunction:
     def _search_node(cursor, connection):
         embed = json.dumps(embed_obj.get_embedding(json.dumps(data)))
-        if k == 1:
-            node = cursor.execute(
-                read_sql("vector-search-node.sql"), (embed, k)
-            ).fetchone()
-            return node
-        else:
-            nodes = cursor.execute(
-                read_sql("vector-search-node.sql"), (embed, k)
-            ).fetchall()
+        nodes = cursor.execute(
+            read_sql("vector-search-node.sql"), (embed, k)
+        ).fetchall()
 
-            if threshold is not None:
-                filtered_results = [
-                    (node[0], node[4]) for node in nodes if node[4] < threshold
-                ]
-                return filtered_results[:k]
-            else:
-                return nodes[:k]
+        if threshold is not None:
+            filtered_results = [
+                (node[0], node[4]) for node in nodes if node[4] < threshold
+            ]
+            return filtered_results[:k]
+        else:
+            return nodes[:k]
 
     return _search_node
 
@@ -153,24 +147,17 @@ def vector_search_edge(
 ) -> CursorExecFunction:
     def _search_edge(cursor, connection):
         embed = json.dumps(embed_obj.get_embedding(json.dumps(data)))
-        if k == 1:
-            edge = cursor.execute(
-                read_sql("vector-search-edge.sql"), (embed, k)
-            ).fetchone()
+        edges = cursor.execute(
+            read_sql("vector-search-node.sql"), (embed, k)
+        ).fetchall()
 
-            return edge
+        if threshold is not None:
+            filtered_results = [
+                (edge[0], edge[4]) for edge in edges if edge[4] < threshold
+            ]
+            return filtered_results[:k]
         else:
-            edges = cursor.execute(
-                read_sql("vector-search-node.sql"), (embed, k)
-            ).fetchall()
-
-            if threshold is not None:
-                filtered_results = [
-                    (edge[0], edge[4]) for edge in edges if edge[4] < threshold
-                ]
-                return filtered_results[:k]
-            else:
-                return edges[:k]
+            return edges[:k]
 
     return _search_edge
 
