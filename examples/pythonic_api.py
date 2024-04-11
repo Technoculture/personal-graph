@@ -1,7 +1,10 @@
 import logging
 import os
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from personal_graph.graph import Graph
-from personal_graph.models import Node, EdgeInput
+from personal_graph.models import Node, EdgeInput, KnowledgeGraph, Edge
 
 
 def main(url, token):
@@ -57,6 +60,51 @@ def main(url, token):
         logging.info(graph.search_query(text="Who is more interested in coral refs"))
 
         logging.info(graph.find_nodes_like(label="relative", threshold=0.9))
+
+        kg = KnowledgeGraph(
+            nodes=[
+                Node(
+                    id="13549727-1612-4b16-b942-492c1e2d9281",
+                    attribute='{"body":"Disease","id":"13549727-1612-4b16-b942-492c1e2d9281"}',
+                    label="Tuberculosis",
+                ),
+                Node(
+                    id="fc825bd5-313b-41c5-94b6-1f974162dba2",
+                    attribute='{"body":"A bacterial infection caused by Mycobacterium tuberculosis that primarily affects the lungs.","id":"fc825bd5-313b-41c5-94b6-1f974162dba2"}',
+                    label="Tuberculosis",
+                ),
+                Node(
+                    id="7ccf0900-4380-4421-89b6-ab5e1d586587",
+                    attribute='{"body":"An individual receiving medical treatment for a specific condition or disease.","id":"7ccf0900-4380-4421-89b6-ab5e1d586587"}',
+                    label="Patient",
+                ),
+                Node(
+                    id="c2d483c0-98ac-45b2-a564-e671dd1dd5fb",
+                    attribute='{"body":"Person","id":"c2d483c0-98ac-45b2-a564-e671dd1dd5fb"}',
+                    label="Alice",
+                ),
+                Node(
+                    id="ced81c3d-5edd-481a-aa76-319569080240",
+                    attribute='{"body":"Action","id":"ced81c3d-5edd-481a-aa76-319569080240"}',
+                    label="Suffering",
+                ),
+            ],
+            edges=[
+                Edge(
+                    source="fc825bd5-313b-41c5-94b6-1f974162dba2",
+                    target="7ccf0900-4380-4421-89b6-ab5e1d586587",
+                    label="Diagnosis",
+                    attribute='{"body":"The identification of Tuberculosis in an individual."}',
+                ),
+                Edge(
+                    source="c2d483c0-98ac-45b2-a564-e671dd1dd5fb",
+                    target="ced81c3d-5edd-481a-aa76-319569080240",
+                    label="is suffering from",
+                    attribute='{"body":"Present Tense Verb"}',
+                ),
+            ],
+        )
+        logging.info(graph.visualize_graph(kg))
 
         graph.save()
 

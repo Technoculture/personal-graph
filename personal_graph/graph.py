@@ -26,7 +26,7 @@ from .database import (
     pruning,
     find_similar_nodes,
 )
-from .natural import insert_into_graph, search_from_graph
+from .natural import insert_into_graph, search_from_graph, visualize_knowledge_graph
 
 
 class Graph(AbstractContextManager):
@@ -148,6 +148,9 @@ class Graph(AbstractContextManager):
     def search_query(self, text: str) -> KnowledgeGraph:
         kg: KnowledgeGraph = search_from_graph(text)
         return kg
+
+    def visualize_graph(self, kg: KnowledgeGraph) -> None:
+        visualize_knowledge_graph(kg)
 
     def merge_by_similarity(self, threshold) -> None:
         atomic(pruning(threshold), self.db_url, self.auth_token)
