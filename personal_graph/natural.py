@@ -29,11 +29,11 @@ def generate_graph(query: str) -> KnowledgeGraph:
         messages=[
             {
                 "role": "system",
-                "content": "You are a high quality knowledge graph generator based on the user query for the purpose of generating descriptive and informative knowledge graphs.",
+                "content": "You are a high quality knowledge graph generator based on the user query for the purpose of generating descriptive, informative, detailed and accurate knowledge graphs. You can generate proper nodes and edges as a knowledge graph.",
             },
             {
                 "role": "user",
-                "content": f"Help me describe this user query as a detailed knowledge graph with proper, meaningful and unique relationships and edges: {query}",
+                "content": f"Help me describe this user query as a detailed knowledge graph with meaningful relationships that should provide some descriptive attributes(attribute is the detailed and proper information about the edge) and informative labels about the nodes and relationship. Try to make most of the relationships between similar nodes: {query}",
             },
         ],
         response_model=KnowledgeGraph,
@@ -116,4 +116,5 @@ def search_from_graph(text: str) -> KnowledgeGraph:
             if node not in resultant_subgraph.nodes:
                 resultant_subgraph.nodes.append(node)
 
+    visualize_knowledge_graph(resultant_subgraph)
     return resultant_subgraph

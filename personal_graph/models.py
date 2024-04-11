@@ -9,9 +9,9 @@ from typing import List, Union, Dict
 class Node(BaseModel):
     id: Union[int, str] = Field(..., description="Unique Identifier for the node.")
     attribute: Union[str, Dict[str, str]] = Field(
-        ..., description="Content or information associated with the node."
+        ..., min_length=2, description="Detailed information associated with the node."
     )
-    label: str = Field(..., description="Label or name associated with the node.")
+    label: str = Field(..., min_length=2, description="Most related and unique name associated with the node.")
 
 
 class Edge(BaseModel):
@@ -21,18 +21,18 @@ class Edge(BaseModel):
     target: Union[int, str] = Field(
         ..., description="identifier of the target node to which the edge points."
     )
-    label: str = Field(..., description="Label associated with the edge.")
+    label: str = Field(..., min_length=2, description="Most related and unique name associated with the edge.")
     attribute: Union[str, Dict[str, str]] = Field(
-        ..., description="This is some related attributes with the relationship."
+        ..., min_length=2, description="Detailed information associated with the relationships."
     )
 
 
 class EdgeInput(BaseModel):
     source: Node = Field(..., description="Source node from which the edge originates.")
     target: Node = Field(..., description="Target node to which the edge points.")
-    label: str = Field(..., description="Label associated with the edge.")
+    label: str = Field(..., min_length=2, description="Most related and unique name associated with the edge.")
     attribute: Union[str, Dict[str, str]] = Field(
-        ..., description="Additional attributes associated with the edge."
+        ..., min_length=2, description="Detailed information associated within the relationships."
     )
 
 
