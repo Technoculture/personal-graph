@@ -11,7 +11,11 @@ class Node(BaseModel):
     attribute: Union[str, Dict[str, str]] = Field(
         ..., min_length=2, description="Detailed information associated with the node."
     )
-    label: str = Field(..., min_length=2, description="Most related and unique name associated with the node.")
+    label: str = Field(
+        ...,
+        min_length=2,
+        description="Most related and unique name associated with the node.",
+    )
 
 
 class Edge(BaseModel):
@@ -21,18 +25,30 @@ class Edge(BaseModel):
     target: Union[int, str] = Field(
         ..., description="identifier of the target node to which the edge points."
     )
-    label: str = Field(..., min_length=2, description="Most related and unique name associated with the edge.")
+    label: str = Field(
+        ...,
+        min_length=2,
+        description="Most related and unique name associated with the edge.",
+    )
     attribute: Union[str, Dict[str, str]] = Field(
-        ..., min_length=2, description="Detailed information associated with the relationships."
+        ...,
+        min_length=2,
+        description="Detailed information associated with the relationships.",
     )
 
 
 class EdgeInput(BaseModel):
     source: Node = Field(..., description="Source node from which the edge originates.")
     target: Node = Field(..., description="Target node to which the edge points.")
-    label: str = Field(..., min_length=2, description="Most related and unique name associated with the edge.")
+    label: str = Field(
+        ...,
+        min_length=2,
+        description="Most related and unique name associated with the edge.",
+    )
     attribute: Union[str, Dict[str, str]] = Field(
-        ..., min_length=2, description="Detailed information associated within the relationships."
+        ...,
+        min_length=2,
+        description="Detailed information associated within the relationships.",
     )
 
 
