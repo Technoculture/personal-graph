@@ -53,7 +53,7 @@ def visualize_knowledge_graph(kg: KnowledgeGraph):
         dot.edge(str(edge.source), str(edge.target), edge.label, color="black")
 
     # Render the graph
-    dot.render("knowledge_graph.gv", view=False)
+    dot.render("knowledge_graph.gv", view=True)
 
 
 def insert_into_graph(text: str) -> KnowledgeGraph:
@@ -118,5 +118,4 @@ def search_from_graph(text: str) -> KnowledgeGraph:
                     Node(id=i[0], label=i[1], attribute=i[2])
                 )
 
-    visualize_knowledge_graph(resultant_subgraph)
     return resultant_subgraph

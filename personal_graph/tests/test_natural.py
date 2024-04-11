@@ -1,5 +1,5 @@
-from personal_graph.models import KnowledgeGraph
-from personal_graph.natural import insert_into_graph, search_from_graph
+from personal_graph.models import KnowledgeGraph, Node, Edge
+from personal_graph.natural import insert_into_graph, search_from_graph, visualize_knowledge_graph
 
 
 def test_insert_into_graph(
@@ -25,3 +25,17 @@ def test_search_from_graph(
 
     assert isinstance(result, KnowledgeGraph)
     mock_cursor.execute.assert_called()
+
+
+def test_visualize_knowledge_graph(mock_dot_render):
+    kg = KnowledgeGraph()
+    kg.nodes = [
+        Node(id='1', label="Node1", attribute="Attribute1"),
+        Node(id='2', label="Node2", attribute="Attribute2")
+    ]
+    kg.edges = [
+        Edge(source='1', target='2', label="Edge1", attribute="Attribute1"),
+        Edge(source='2', target='3', label="Edge2", attribute="Attribute2")
+    ]
+
+    visualize_knowledge_graph(kg)
