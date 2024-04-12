@@ -99,20 +99,33 @@ def search_from_graph(text: str) -> KnowledgeGraph:
     ]
 
     for node in similar_nodes:
-        nodes = atomic(all_connected_nodes(node, "node"), db_url, auth_token)
+        similar_node = Node(id=node[1], label=node[2], attribute=node[3])
+        nodes = atomic(all_connected_nodes(similar_node), db_url, auth_token)
+
+        if not nodes:
+            continue
+
         for i in nodes:
-            node = Node(id=i[0], label=i[1], attribute=i[2])
-            if node not in resultant_subgraph.nodes:
-                resultant_subgraph.nodes.append(node)
+            if i not in resultant_subgraph.nodes:
+                resultant_subgraph.nodes.append(i)
 
     resultant_subgraph.edges = [
         Edge(source=edge[1], target=edge[2], label=edge[3], attribute=edge[4])
         for edge in similar_edges
     ]
     for edge in similar_edges:
-        nodes = atomic(all_connected_nodes(edge, "edge"), db_url, auth_token)
-        for i in nodes:
-            node = Node(id=i[0], label=i[1], attribute=i[2])
+        similar_edge = Edge(
+            source=edge[1],
+            target=edge[2],
+            label=edge[3],
+            attribute=edge[4],
+        )
+        nodes = atomic(all_connected_nodes(similar_edge), db_url, auth_token)
+
+        if not nodes:
+            continue
+
+        for node in nodes:
             if node not in resultant_subgraph.nodes:
                 resultant_subgraph.nodes.append(node)
 

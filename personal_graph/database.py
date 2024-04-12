@@ -14,9 +14,10 @@ import pathlib
 from dotenv import load_dotenv
 from functools import lru_cache
 import libsql_experimental as libsql  # type: ignore
-from typing import Callable, Optional, Tuple, Dict, List, Any
+from typing import Callable, Optional, Tuple, Dict, List, Any, Union
 from personal_graph.embeddings import OpenAIEmbeddingsModel
 from jinja2 import Environment, BaseLoader, select_autoescape
+from personal_graph.models import Node, Edge
 
 load_dotenv()
 embed_obj = OpenAIEmbeddingsModel()
@@ -745,19 +746,17 @@ def find_similar_nodes(label: str, threshold: Optional[float] = None):
     return _identical_nodes
 
 
-def all_connected_nodes(
-    node_or_edge: Tuple[Any], node_or_edge_type: str
-) -> CursorExecFunction:
+def all_connected_nodes(node_or_edge: Union[Node | Edge]) -> CursorExecFunction:
     def _connected_nodes(cursor, connection):
         nodes = None
-        if node_or_edge_type == "node":
-            index = node_or_edge[1]
+        if isinstance(node_or_edge, Node):
+            index = node_or_edge.id
             nodes = cursor.execute(
                 "SELECT source, target FROM edges WHERE source=? OR target=?",
                 (index, index),
             )
-        elif node_or_edge_type == "edge":
-            index1, index2 = node_or_edge[1], node_or_edge[2]
+        elif isinstance(node_or_edge, Edge):
+            index1, index2 = node_or_edge.source, node_or_edge.target
             nodes = cursor.execute(
                 "SELECT source, target FROM edges WHERE source=? OR target=? OR source=? OR target=?",
                 (index1, index1, index2, index2),
@@ -773,7 +772,9 @@ def all_connected_nodes(
                         (id,),
                     ).fetchone()
                     if res not in resultant_connected_nodes:
-                        resultant_connected_nodes.append(res)
+                        resultant_connected_nodes.append(
+                            Node(id=res[0], label=res[1], attribute=res[2])
+                        )
 
             return resultant_connected_nodes
 
