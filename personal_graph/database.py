@@ -14,9 +14,10 @@ import pathlib
 from dotenv import load_dotenv
 from functools import lru_cache
 import libsql_experimental as libsql  # type: ignore
-from typing import Callable, Optional, Tuple, Dict, List, Any
+from typing import Callable, Optional, Tuple, Dict, List, Any, Union
 from personal_graph.embeddings import OpenAIEmbeddingsModel
 from jinja2 import Environment, BaseLoader, select_autoescape
+from personal_graph.models import Node, Edge
 
 load_dotenv()
 embed_obj = OpenAIEmbeddingsModel()
@@ -123,54 +124,43 @@ def _insert_node(
 
 
 def vector_search_node(
-    data: Dict, k: Optional[int] = 1, threshold: Optional[float] = None
+    data: Dict, threshold: Optional[float] = None, k: int = 10
 ) -> CursorExecFunction:
     def _search_node(cursor, connection):
         embed = json.dumps(embed_obj.get_embedding(json.dumps(data)))
-        if k == 1:
-            node = cursor.execute(
-                read_sql("vector-search-node.sql"), (embed, k)
-            ).fetchone()
-            return node
-        else:
-            nodes = cursor.execute(
-                read_sql("vector-search-node.sql"), (embed, k)
-            ).fetchall()
+        nodes = cursor.execute(
+            read_sql("vector-search-node.sql"), (embed, k)
+        ).fetchall()
 
-            if threshold is not None:
-                filtered_results = [
-                    (node[0], node[4]) for node in nodes if node[4] < threshold
-                ]
-                return filtered_results[:k]
-            else:
-                return nodes[:k]
+        if not nodes:
+            return None
+
+        if threshold is not None:
+            filtered_results = [node for node in nodes if node[4] < threshold]
+            return filtered_results[:k]
+        else:
+            return nodes[:k]
 
     return _search_node
 
 
 def vector_search_edge(
-    data: Dict, k: Optional[int] = 1, threshold: Optional[float] = None
+    data: Dict, threshold: Optional[float] = None, k: int = 10
 ) -> CursorExecFunction:
     def _search_edge(cursor, connection):
         embed = json.dumps(embed_obj.get_embedding(json.dumps(data)))
-        if k == 1:
-            edge = cursor.execute(
-                read_sql("vector-search-edge.sql"), (embed, k)
-            ).fetchone()
+        edges = cursor.execute(
+            read_sql("vector-search-edge.sql"), (embed, k)
+        ).fetchall()
 
-            return edge
+        if not edges:
+            return None
+
+        if threshold is not None:
+            filtered_results = [edge for edge in edges if edge[5] < threshold]
+            return filtered_results[:k]
         else:
-            edges = cursor.execute(
-                read_sql("vector-search-node.sql"), (embed, k)
-            ).fetchall()
-
-            if threshold is not None:
-                filtered_results = [
-                    (edge[0], edge[4]) for edge in edges if edge[4] < threshold
-                ]
-                return filtered_results[:k]
-            else:
-                return edges[:k]
+            return edges[:k]
 
     return _search_edge
 
@@ -495,7 +485,7 @@ def _generate_query(
     adding the json_tree function and optionally the key, as needed"""
 
     if result_column is None:
-        result_column = "attribute"  # can also be 'id'
+        result_column = "attributes"  # can also be 'id'
 
     if tree:
         if key:
@@ -632,17 +622,17 @@ def pruning(threshold: float) -> CursorExecFunction:
                 continue
 
             node = cursor.execute(
-                "SELECT label, attribute from nodes where id=?", (node_id[0],)
+                "SELECT label, attributes from nodes where id=?", (node_id[0],)
             ).fetchone()
 
-            similar_nodes = vector_search_node(node_data, 3, threshold)(
+            similar_nodes = vector_search_node(node_data, threshold, 3)(
                 cursor, connection
             )
 
             if len(similar_nodes) < 1:
                 continue
 
-            for rowid, _ in similar_nodes:
+            for rowid, _, _, _, _ in similar_nodes:
                 similar_node_id = cursor.execute(
                     "SELECT id from nodes where embed_id=?", (rowid,)
                 ).fetchone()
@@ -652,11 +642,11 @@ def pruning(threshold: float) -> CursorExecFunction:
                     continue
 
                 in_degree_query = cursor.execute(
-                    "SELECT source, label, attribute FROM edges WHERE target = ?",
+                    "SELECT source, label, attributes FROM edges WHERE target = ?",
                     (similar_node_id[0],),
                 )
                 out_degree_query = cursor.execute(
-                    "SELECT target, label, attribute FROM edges WHERE source = ?",
+                    "SELECT target, label, attributes FROM edges WHERE source = ?",
                     (similar_node_id[0],),
                 )
 
@@ -744,14 +734,14 @@ def find_similar_nodes(label: str, threshold: Optional[float] = None):
 
         similar_rows = []
         for node in nodes:
-            similar_nodes = vector_search_node(node, 2, threshold)(cursor, connection)
+            similar_nodes = vector_search_node(node, threshold, 2)(cursor, connection)
 
             if len(similar_nodes) < 1:
                 continue
 
             for rowid, _ in similar_nodes:
                 row = cursor.execute(
-                    "SELECT id, label, attribute from nodes where embed_id=?", (rowid,)
+                    "SELECT id, label, attributes from nodes where embed_id=?", (rowid,)
                 ).fetchone()
 
                 if row in similar_rows:
@@ -760,3 +750,38 @@ def find_similar_nodes(label: str, threshold: Optional[float] = None):
         return similar_rows
 
     return _identical_nodes
+
+
+def all_connected_nodes(node_or_edge: Union[Node | Edge]) -> CursorExecFunction:
+    def _connected_nodes(cursor, connection):
+        nodes = None
+        if isinstance(node_or_edge, Node):
+            index = node_or_edge.id
+            nodes = cursor.execute(
+                "SELECT source, target FROM edges WHERE source=? OR target=?",
+                (index, index),
+            )
+        elif isinstance(node_or_edge, Edge):
+            index1, index2 = node_or_edge.source, node_or_edge.target
+            nodes = cursor.execute(
+                "SELECT source, target FROM edges WHERE source=? OR target=? OR source=? OR target=?",
+                (index1, index1, index2, index2),
+            )
+
+        resultant_connected_nodes = []
+        if nodes:
+            connected_nodes = nodes.fetchall()
+            for connected_node in connected_nodes:
+                for id in connected_node:
+                    res = cursor.execute(
+                        "SELECT id, label, attributes from nodes where id=?",
+                        (id,),
+                    ).fetchone()
+                    if res not in resultant_connected_nodes:
+                        resultant_connected_nodes.append(
+                            Node(id=res[0], label=res[1], attributes=res[2])
+                        )
+
+            return resultant_connected_nodes
+
+    return _connected_nodes
