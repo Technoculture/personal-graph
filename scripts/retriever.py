@@ -25,7 +25,11 @@ class Retriever(dspy.Retrieve):
         self.graph = Graph(db_url, auth_token)
 
     def _retrieve_passages(self, queries: List[str]) -> List[Node]:
-        passages = []
+        passages: List[Node] = []
+
+        if not queries:
+            return passages
+
         for query in queries:
             kg = self.graph.search_query(query)
             self.graph.visualize_graph(kg)
