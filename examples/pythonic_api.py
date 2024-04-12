@@ -1,8 +1,5 @@
 import logging
 import os
-import sys
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from personal_graph.graph import Graph
 from personal_graph.models import Node, EdgeInput, KnowledgeGraph, Edge
 
