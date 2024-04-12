@@ -62,9 +62,7 @@ def main(url, token):
 
         logging.info(graph.find_nodes_like(label="relative", threshold=0.9))
 
-<<<<<<< HEAD
         graph.visualize("sample.dot", ["2"])
-=======
         kg = KnowledgeGraph(
             nodes=[
                 Node(
@@ -109,7 +107,6 @@ def main(url, token):
             ],
         )
         logging.info(graph.visualize_graph(kg))
->>>>>>> main
 
         graph.save()
 

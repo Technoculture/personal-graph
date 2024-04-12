@@ -752,7 +752,6 @@ def find_similar_nodes(label: str, threshold: Optional[float] = None):
     return _identical_nodes
 
 
-<<<<<<< HEAD
 def nodes_list() -> CursorExecFunction:
     def _fetch_nodes_from_db(cursor, connection):
         nodes = cursor.execute("SELECT id from nodes").fetchall()
@@ -761,7 +760,8 @@ def nodes_list() -> CursorExecFunction:
         return ids
 
     return _fetch_nodes_from_db
-=======
+
+
 def all_connected_nodes(node_or_edge: Union[Node | Edge]) -> CursorExecFunction:
     def _connected_nodes(cursor, connection):
         nodes = None
@@ -795,4 +795,3 @@ def all_connected_nodes(node_or_edge: Union[Node | Edge]) -> CursorExecFunction:
             return resultant_connected_nodes
 
     return _connected_nodes
->>>>>>> main

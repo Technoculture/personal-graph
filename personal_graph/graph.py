@@ -28,12 +28,8 @@ from .database import (
     find_similar_nodes,
     nodes_list,
 )
-<<<<<<< HEAD
-from .natural import insert_into_graph, search_from_graph
-from .visualizers import graphviz_visualize
-=======
 from .natural import insert_into_graph, search_from_graph, visualize_knowledge_graph
->>>>>>> main
+from .visualizers import graphviz_visualize
 
 
 class Graph(AbstractContextManager):
