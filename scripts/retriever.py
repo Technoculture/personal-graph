@@ -39,7 +39,7 @@ class Retriever(dspy.Retrieve):
             query_or_queries = [query_or_queries]
         passages = self._retrieve_passages(query_or_queries)
         predictions = [
-            dspy.Prediction(context=p, long_text=p.attribute) for p in passages
+            dspy.Prediction(context=p, long_text=p.attributes) for p in passages
         ]
 
         return predictions

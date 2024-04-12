@@ -8,7 +8,7 @@ from typing import List, Union, Dict
 
 class Node(BaseModel):
     id: Union[int, str] = Field(..., description="Unique Identifier for the node.")
-    attribute: Union[str, Dict[str, str]] = Field(
+    attributes: Union[str, Dict[str, str]] = Field(
         ..., min_length=1, description="Detailed information associated with the node."
     )
     label: str = Field(
@@ -30,7 +30,7 @@ class Edge(BaseModel):
         min_length=2,
         description="Most related and unique name associated with the edge.",
     )
-    attribute: Union[str, Dict[str, str]] = Field(
+    attributes: Union[str, Dict[str, str]] = Field(
         ...,
         min_length=1,
         description="Detailed information associated with the relationships.",
@@ -45,7 +45,7 @@ class EdgeInput(BaseModel):
         min_length=2,
         description="Most related and unique name associated with the edge.",
     )
-    attribute: Union[str, Dict[str, str]] = Field(
+    attributes: Union[str, Dict[str, str]] = Field(
         ...,
         min_length=1,
         description="Detailed information associated within the relationships.",

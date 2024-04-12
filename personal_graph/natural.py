@@ -63,7 +63,7 @@ def insert_into_graph(text: str) -> KnowledgeGraph:
     for node in kg.nodes:
         uuid_dict[node.id] = str(uuid.uuid4())
         atomic(
-            add_node(node.label, {"body": node.attribute}, uuid_dict[node.id]),
+            add_node(node.label, {"body": node.attributes}, uuid_dict[node.id]),
             db_url,
             auth_token,
         )
@@ -74,7 +74,7 @@ def insert_into_graph(text: str) -> KnowledgeGraph:
                 uuid_dict[edge.source],
                 uuid_dict[edge.target],
                 edge.label,
-                {"body": edge.attribute},
+                {"body": edge.attributes},
             ),
             db_url,
             auth_token,
@@ -95,11 +95,11 @@ def search_from_graph(text: str) -> KnowledgeGraph:
         return resultant_subgraph
 
     resultant_subgraph.nodes = [
-        Node(id=node[1], label=node[2], attribute=node[3]) for node in similar_nodes
+        Node(id=node[1], label=node[2], attributes=node[3]) for node in similar_nodes
     ]
 
     for node in similar_nodes:
-        similar_node = Node(id=node[1], label=node[2], attribute=node[3])
+        similar_node = Node(id=node[1], label=node[2], attributes=node[3])
         nodes = atomic(all_connected_nodes(similar_node), db_url, auth_token)
 
         if not nodes:
@@ -110,7 +110,7 @@ def search_from_graph(text: str) -> KnowledgeGraph:
                 resultant_subgraph.nodes.append(i)
 
     resultant_subgraph.edges = [
-        Edge(source=edge[1], target=edge[2], label=edge[3], attribute=edge[4])
+        Edge(source=edge[1], target=edge[2], label=edge[3], attributes=edge[4])
         for edge in similar_edges
     ]
     for edge in similar_edges:
@@ -118,7 +118,7 @@ def search_from_graph(text: str) -> KnowledgeGraph:
             source=edge[1],
             target=edge[2],
             label=edge[3],
-            attribute=edge[4],
+            attributes=edge[4],
         )
         nodes = atomic(all_connected_nodes(similar_edge), db_url, auth_token)
 

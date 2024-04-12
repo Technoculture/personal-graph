@@ -34,12 +34,12 @@ def test_search_from_graph(
 def test_visualize_knowledge_graph(mock_dot_render):
     kg = KnowledgeGraph()
     kg.nodes = [
-        Node(id="1", label="Node1", attribute="Attribute1"),
-        Node(id="2", label="Node2", attribute="Attribute2"),
+        Node(id="1", label="Node1", attributes="Attribute1"),
+        Node(id="2", label="Node2", attributes="Attribute2"),
     ]
     kg.edges = [
-        Edge(source="1", target="2", label="Edge1", attribute="Attribute1"),
-        Edge(source="2", target="3", label="Edge2", attribute="Attribute2"),
+        Edge(source="1", target="2", label="Edge1", attributes="Attribute1"),
+        Edge(source="2", target="3", label="Edge2", attributes="Attribute2"),
     ]
 
     visualize_knowledge_graph(kg)

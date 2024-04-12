@@ -65,12 +65,15 @@ def mock_openai_client():
 def mock_generate_graph():
     mock_knowledge_graph = KnowledgeGraph(
         nodes=[
-            Node(id=1, attribute="Mock Node 1", label="Label 1"),
-            Node(id=2, attribute="Mock Node 2", label="Label 2"),
+            Node(id=1, attributes="Mock Node 1", label="Label 1"),
+            Node(id=2, attributes="Mock Node 2", label="Label 2"),
         ],
         edges=[
             Edge(
-                source=1, target=2, label="Mock Edge", attribute={"body": "Sample body"}
+                source=1,
+                target=2,
+                label="Mock Edge",
+                attributes={"body": "Sample body"},
             )
         ],
     )
