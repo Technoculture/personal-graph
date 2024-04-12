@@ -28,8 +28,12 @@ from .database import (
     find_similar_nodes,
     nodes_list,
 )
+<<<<<<< HEAD
 from .natural import insert_into_graph, search_from_graph
 from .visualizers import graphviz_visualize
+=======
+from .natural import insert_into_graph, search_from_graph, visualize_knowledge_graph
+>>>>>>> main
 
 
 class Graph(AbstractContextManager):
@@ -60,9 +64,9 @@ class Graph(AbstractContextManager):
         atomic(
             add_node(
                 node.label,
-                json.loads(node.attribute)
-                if isinstance(node.attribute, str)
-                else node.attribute,
+                json.loads(node.attributes)
+                if isinstance(node.attributes, str)
+                else node.attributes,
                 node.id,
             ),
             self.db_url,
@@ -72,9 +76,9 @@ class Graph(AbstractContextManager):
     def add_nodes(self, nodes: List[Node]) -> None:
         labels: List[str] = [node.label for node in nodes]
         attributes: List[Union[Dict[str, str]]] = [
-            json.loads(node.attribute)
-            if isinstance(node.attribute, str)
-            else node.attribute
+            json.loads(node.attributes)
+            if isinstance(node.attributes, str)
+            else node.attributes
             for node in nodes
         ]
         ids: List[Any] = [node.id for node in nodes]
@@ -86,9 +90,9 @@ class Graph(AbstractContextManager):
             edge.source.id,
             edge.target.id,
             edge.label,
-            json.loads(edge.attribute)
-            if isinstance(edge.attribute, str)
-            else edge.attribute,
+            json.loads(edge.attributes)
+            if isinstance(edge.attributes, str)
+            else edge.attributes,
         )
         atomic(connect_nodes_func, self.db_url, self.auth_token)
 
@@ -97,9 +101,9 @@ class Graph(AbstractContextManager):
         targets: List[Any] = [edge.target.id for edge in edges]
         labels: List[str] = [edge.label for edge in edges]
         attributes: List[Union[Dict[str, str]]] = [
-            json.loads(edge.attribute)
-            if isinstance(edge.attribute, str)
-            else edge.attribute
+            json.loads(edge.attributes)
+            if isinstance(edge.attributes, str)
+            else edge.attributes
             for edge in edges
         ]
         connect_many_nodes_func = connect_many_nodes(
@@ -111,9 +115,9 @@ class Graph(AbstractContextManager):
         upsert_node_func = upsert_node(
             identifier=node.id,
             label=node.label,
-            data=json.loads(node.attribute)
-            if isinstance(node.attribute, str)
-            else node.attribute,
+            data=json.loads(node.attributes)
+            if isinstance(node.attributes, str)
+            else node.attributes,
         )
         atomic(upsert_node_func, self.db_url, self.auth_token)
 
@@ -151,6 +155,9 @@ class Graph(AbstractContextManager):
     def search_query(self, text: str) -> KnowledgeGraph:
         kg: KnowledgeGraph = search_from_graph(text)
         return kg
+
+    def visualize_graph(self, kg: KnowledgeGraph) -> None:
+        visualize_knowledge_graph(kg)
 
     def merge_by_similarity(self, threshold) -> None:
         atomic(pruning(threshold), self.db_url, self.auth_token)
