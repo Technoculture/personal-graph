@@ -1,7 +1,10 @@
 #! /usr/bin/python
 import os
+import sys
 import logging
 from dotenv import load_dotenv
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from personal_graph import database as db
 from personal_graph import natural
 
