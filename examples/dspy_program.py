@@ -3,10 +3,10 @@ import sys
 import dspy  # type: ignore
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from scripts.retriever import Retriever
+from personal_graph.retriever import PersonalRM
 
 turbo = dspy.OpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPEN_API_KEY"))
-retriever = Retriever(
+retriever = PersonalRM(
     db_url=os.getenv("LIBSQL_URL"), auth_token=os.getenv("LIBSQL_AUTH_TOKEN"), k=2
 )
 
@@ -37,4 +37,4 @@ class RAG(dspy.Module):
 
 rag = RAG(depth=2)
 
-rag("What is the similarity between Jack and Ronaldo?")
+rag("How is Jack related to James?")

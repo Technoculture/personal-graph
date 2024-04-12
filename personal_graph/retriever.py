@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-class Retriever(dspy.Retrieve):
+class PersonalRM(dspy.Retrieve):
     def __init__(
         self,
         db_url: Optional[str] = None,
@@ -39,6 +39,7 @@ class Retriever(dspy.Retrieve):
     def forward(
         self, query_or_queries: Union[str, List[str]], k: Optional[int] = None, **kwargs
     ) -> List[dspy.Prediction]:
+        # TODO: Use the value of k
         if not isinstance(query_or_queries, list):
             query_or_queries = [query_or_queries]
         passages = self._retrieve_passages(query_or_queries)

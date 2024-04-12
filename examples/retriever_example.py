@@ -5,13 +5,13 @@ import sys
 from dotenv import load_dotenv
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from scripts.retriever import Retriever
+from personal_graph.retriever import PersonalRM
 
 
 def main(db_url, auth_token):
     query = "What is the similarity between Jack and Ronaldo?"
 
-    retriever = Retriever(
+    retriever = PersonalRM(
         db_url=db_url,
         auth_token=auth_token,
     )
