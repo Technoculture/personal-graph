@@ -1,14 +1,21 @@
+import os
+import sys
 import dspy  # type: ignore
 from typing import List, Optional, Union
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from personal_graph.graph import Graph
 from personal_graph.models import Node
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class Retriever(dspy.Retrieve):
     def __init__(
         self,
-        db_url: str,
-        auth_token: str,
+        db_url: Optional[str] = None,
+        auth_token: Optional[str] = None,
         k: int = 5,
     ):
         super().__init__(k=k)
@@ -27,8 +34,12 @@ class Retriever(dspy.Retrieve):
 
     def forward(
         self, query_or_queries: Union[str, List[str]], k: Optional[int] = None, **kwargs
-    ) -> list[Node]:
+    ) -> List[dspy.Prediction]:
         if not isinstance(query_or_queries, list):
             query_or_queries = [query_or_queries]
         passages = self._retrieve_passages(query_or_queries)
-        return passages
+        predictions = [
+            dspy.Prediction(context=p, long_text=p.attribute) for p in passages
+        ]
+
+        return predictions

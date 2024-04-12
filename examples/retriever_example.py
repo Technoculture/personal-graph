@@ -10,7 +10,7 @@ from scripts.retriever import Retriever
 
 
 def main(db_url, auth_token):
-    query = "A boy who has asthma loves to play cricket?"
+    query = "What is the similarity between Jack and Ronaldo?"
 
     retriever = Retriever(
         db_url=db_url,
