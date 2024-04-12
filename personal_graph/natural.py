@@ -116,5 +116,4 @@ def search_from_graph(text: str) -> KnowledgeGraph:
             if node not in resultant_subgraph.nodes:
                 resultant_subgraph.nodes.append(node)
 
-    visualize_knowledge_graph(resultant_subgraph)
     return resultant_subgraph
