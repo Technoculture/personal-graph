@@ -1,12 +1,7 @@
-import json
-
-import streamlit as st
 import os
+import json
 import dspy  # type: ignore
-import sys
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
+import streamlit as st
 from personal_graph.graph import Graph
 from personal_graph.retriever import PersonalRM
 
@@ -55,12 +50,12 @@ def main():
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    user_backstory = st.sidebar.chat_input("Enter your backstory")
-    if st.sidebar.button("Load Backstory"):
-        graph.insert(user_backstory)
-        st.sidebar.success("Backstory loaded successfully!")
+    st.sidebar.title("Backstory")
+    backstory = st.sidebar.text_input("Enter your backstory")
 
-    st.sidebar.title("Graph Visualization")
+    if st.sidebar.button("Load"):
+        kg = graph.insert(backstory)
+        st.sidebar.graphviz_chart(graph.visualize_graph(kg))
 
     if prompt := st.chat_input("Say Something?"):
         with st.chat_message("user"):
