@@ -684,6 +684,7 @@ def pruning(threshold: float) -> CursorExecFunction:
                             json.dumps(embed_obj.get_embedding(json.dumps(edge_data))),
                         ),
                     )
+                connection.commit()
 
                 for data in out_degree:
                     concatenated_attributes.update(json.loads(data[2]))
@@ -713,6 +714,7 @@ def pruning(threshold: float) -> CursorExecFunction:
                             json.dumps(embed_obj.get_embedding(json.dumps(edge_data))),
                         ),
                     )
+                    connection.commit()
 
                 updated_attributes = json.loads(node[1]) if node[1] else {}
                 updated_attributes.update(concatenated_attributes)
