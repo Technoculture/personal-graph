@@ -52,8 +52,7 @@ def visualize_knowledge_graph(kg: KnowledgeGraph):
     for edge in kg.edges:
         dot.edge(str(edge.source), str(edge.target), edge.label, color="black")
 
-    # Render the graph
-    dot.render("knowledge_graph.gv", view=True)
+    return dot
 
 
 def insert_into_graph(text: str) -> KnowledgeGraph:

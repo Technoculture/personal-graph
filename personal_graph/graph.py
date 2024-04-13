@@ -153,7 +153,7 @@ class Graph(AbstractContextManager):
         return kg
 
     def visualize_graph(self, kg: KnowledgeGraph) -> None:
-        visualize_knowledge_graph(kg)
+        return visualize_knowledge_graph(kg)
 
     def merge_by_similarity(self, threshold) -> None:
         atomic(pruning(threshold), self.db_url, self.auth_token)
