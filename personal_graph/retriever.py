@@ -32,7 +32,6 @@ class PersonalRM(dspy.Retrieve):
 
         for query in queries:
             kg = self.graph.search_query(query)
-            self.graph.visualize_graph(kg)
             passages.extend(kg.nodes)
         return passages
 

@@ -152,7 +152,7 @@ class Graph(AbstractContextManager):
         kg: KnowledgeGraph = search_from_graph(text)
         return kg
 
-    def visualize_graph(self, kg: KnowledgeGraph) -> None:
+    def visualize_graph(self, kg: KnowledgeGraph) -> Digraph:
         return visualize_knowledge_graph(kg)
 
     def merge_by_similarity(self, threshold) -> None:

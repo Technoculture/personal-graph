@@ -41,7 +41,7 @@ def generate_graph(query: str) -> KnowledgeGraph:
     return knowledge_graph
 
 
-def visualize_knowledge_graph(kg: KnowledgeGraph):
+def visualize_knowledge_graph(kg: KnowledgeGraph) -> Digraph:
     dot = Digraph(comment="Knowledge Graph")
 
     # Add nodes
