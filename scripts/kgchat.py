@@ -1,39 +1,43 @@
-import os
-import sys
 import streamlit as st
+import sys
+import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 from personal_graph.graph import Graph
-from dotenv import load_dotenv
+import os
+from examples.dspy_program import RAG
 
-load_dotenv()
+rag = RAG(depth=2)
 
-with Graph(
-    db_url=os.getenv("LIBSQL_URL"), auth_token=os.getenv("LIBSQL_AUTH_TOKEN")
-) as kg:
-    st.title("Conversational Knowledge Graph")
 
-    # Create two columns for chat and graph visualization
-    col1, col2 = st.columns(2)
+def main():
+    st.title("Knowledge Graph Chat")
 
-    with col1:
-        chat_history = st.empty()
+    graph = Graph(os.getenv("LIBSQL_URL"), os.getenv("LIBSQL_AUTH_TOKEN"))
+    chat_history = []
 
-        # Start the conversation in curious mode
-        st.write(
-            "Hello! I'm an AI assistant, and I'm curious to learn more about you. Let's start a conversation!"
-        )
-        user_input = st.text_input("You: ", key="user_input")
+    st.sidebar.title("Graph Visualization")
+    graph_plot = st.sidebar.empty()
 
-        # Process the user input and update the knowledge graph
-        kg_response = kg.insert(user_input)
+    user_input = st.text_input("You: ", key="user_input")
+    if user_input:
+        chat_history.append({"role": "user", "content": user_input})
+        graph.insert(user_input)
+        kg = graph.search_query(user_input)
 
-        chat_history.markdown(f"You: {user_input}")
+        if kg.nodes:
+            graph_plot.graphviz_chart(graph.visualize_graph(kg))
+        else:
+            graph_plot.warning("No nodes found for the query.")
 
-        with col2:
-            graph_viz_source = kg.visualize("sample.dot", kg.fetch_ids_from_db())
-            if graph_viz_source:
-                graph_viz = st.graphviz_chart(graph_viz_source)
+        response = rag(user_input)
+        chat_history.append({"role": "assistant", "content": response.answer})
+        for chat in chat_history:
+            if chat["role"] == "user":
+                st.write("You: " + chat["content"])
             else:
-                st.warning("No knowledge graph to visualize.")
+                st.write("Assistant: " + chat["content"])
+
+
+if __name__ == "__main__":
+    main()
