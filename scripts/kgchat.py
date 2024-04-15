@@ -1,6 +1,9 @@
 import os
 import dspy  # type: ignore
 import streamlit as st
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from personal_graph.graph import Graph
 from personal_graph.retriever import PersonalRM
 
@@ -58,9 +61,18 @@ def main():
 
     if prompt := st.chat_input("Say Something?"):
         with st.chat_message("user"):
+            st.markdown(prompt)
+
+        with st.spinner("Processing..."):
             response = rag(prompt)
 
+        with st.chat_message("assistant"):
             st.markdown(response.answer)
+
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        st.session_state.messages.append(
+            {"role": "assistant", "content": response.answer}
+        )
 
 
 if __name__ == "__main__":
