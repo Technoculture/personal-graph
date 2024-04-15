@@ -1,5 +1,4 @@
 import os
-import json
 import dspy  # type: ignore
 import streamlit as st
 from personal_graph.graph import Graph
@@ -61,12 +60,7 @@ def main():
         with st.chat_message("user"):
             response = rag(prompt)
 
-            if isinstance(response.context, str):
-                st.markdown(response.context)
-            else:
-                for content in response.context:
-                    content_dict = json.loads(content)
-                    st.markdown(content_dict["body"])
+            st.markdown(response.answer)
 
 
 if __name__ == "__main__":
