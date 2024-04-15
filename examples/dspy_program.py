@@ -1,12 +1,11 @@
 import os
 import dspy  # type: ignore
+from personal_graph.graph import Graph
 from personal_graph.retriever import PersonalRM
 
+graph = Graph(os.getenv("LIBSQL_URL"), os.getenv("LIBSQL_AUTH_TOKEN"))
 turbo = dspy.OpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPEN_API_KEY"))
-retriever = PersonalRM(
-    db_url=os.getenv("LIBSQL_URL"), auth_token=os.getenv("LIBSQL_AUTH_TOKEN"), k=2
-)
-
+retriever = PersonalRM(graph=graph, k=2)
 dspy.settings.configure(lm=turbo, rm=retriever)
 
 

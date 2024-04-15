@@ -1,18 +1,8 @@
 import os
 import dspy  # type: ignore
 import streamlit as st
-import sys
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from personal_graph.graph import Graph
 from personal_graph.retriever import PersonalRM
-
-turbo = dspy.OpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPEN_API_KEY"))
-retriever = PersonalRM(
-    db_url=os.getenv("LIBSQL_URL"), auth_token=os.getenv("LIBSQL_AUTH_TOKEN"), k=2
-)
-
-dspy.settings.configure(lm=turbo, rm=retriever)
 
 
 class GenerateAnswer(dspy.Signature):
@@ -42,6 +32,9 @@ def main():
     st.title("Knowledge Graph Chat")
 
     graph = Graph(os.getenv("LIBSQL_URL"), os.getenv("LIBSQL_AUTH_TOKEN"))
+    turbo = dspy.OpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPEN_API_KEY"))
+    retriever = PersonalRM(graph=graph, k=2)
+    dspy.settings.configure(lm=turbo, rm=retriever)
 
     # Initialize chat history
     if "messages" not in st.session_state:
@@ -58,6 +51,8 @@ def main():
     if st.sidebar.button("Load"):
         kg = graph.insert(backstory)
         st.sidebar.graphviz_chart(graph.visualize_graph(kg))
+        retriever = PersonalRM(graph=graph, k=2)
+        dspy.settings.configure(lm=turbo, rm=retriever)
 
     if prompt := st.chat_input("Say Something?"):
         with st.chat_message("user"):
