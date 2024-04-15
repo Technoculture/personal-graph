@@ -657,7 +657,14 @@ def pruning(threshold: float) -> CursorExecFunction:
                 concatenated_labels = ""
 
                 for data in in_degree:
-                    concatenated_attributes.update(json.loads(data[2]))
+                    for key, value in json.loads(data[2]).items():
+                        if key in concatenated_attributes:
+                            # If the key already exists, update its value
+                            concatenated_attributes[key] += value
+                        else:
+                            # If the key doesn't exist, add a new key-value pair
+                            concatenated_attributes[key] = value
+
                     concatenated_labels += data[1] + ","
 
                     count = (
@@ -670,6 +677,7 @@ def pruning(threshold: float) -> CursorExecFunction:
                         read_sql("insert-edge.sql"),
                         (count, data[0], node_id[0], data[1], data[2]),
                     )
+                    connection.commit()
 
                     edge_data = {
                         "source_id": data[0],
@@ -684,10 +692,16 @@ def pruning(threshold: float) -> CursorExecFunction:
                             json.dumps(embed_obj.get_embedding(json.dumps(edge_data))),
                         ),
                     )
-                connection.commit()
+                    connection.commit()
 
                 for data in out_degree:
-                    concatenated_attributes.update(json.loads(data[2]))
+                    for key, value in json.loads(data[2]).items():
+                        if key in concatenated_attributes:
+                            # If the key already exists, update its value
+                            concatenated_attributes[key] += value
+                        else:
+                            # If the key doesn't exist, add a new key-value pair
+                            concatenated_attributes[key] = value
                     concatenated_labels += data[1] + ","
 
                     count = (
@@ -700,6 +714,7 @@ def pruning(threshold: float) -> CursorExecFunction:
                         read_sql("insert-edge.sql"),
                         (count, node_id[0], data[0], data[1], data[2]),
                     )
+                    connection.commit()
 
                     edge_data = {
                         "source_id": node_id[0],
