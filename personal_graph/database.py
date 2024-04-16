@@ -121,6 +121,7 @@ def _insert_node(
         read_sql("insert-node-embedding.sql"),
         (count, json.dumps(embed_obj.get_embedding(json.dumps(set_data)))),
     )
+    connection.commit()
 
 
 def vector_search_node(
@@ -314,6 +315,7 @@ def connect_nodes(
             read_sql("insert-edge-embedding.sql"),
             (count, json.dumps(embed_obj.get_embedding(json.dumps(edge_data)))),
         )
+        connection.commit()
 
     return _connect_nodes
 
