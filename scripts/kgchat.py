@@ -76,7 +76,10 @@ def main():
     else:
         backstory = st.sidebar.text_area("Enter your backstory", height=300)
 
-    if st.sidebar.button("Load"):
+    if st.sidebar.button(
+        "Load", disabled=st.session_state.get("load_button_disabled", False)
+    ):
+        st.session_state["load_button_disabled"] = True
         if len(backstory) < 2000:
             st.sidebar.warning("Please enter a backstory with at least 2000 tokens.")
         else:
@@ -94,15 +97,23 @@ def main():
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        structured_message = analyzer(new_message=prompt).structured_message
-        st.write(f"- {structured_message}")
-
-        with st.status("Retrieving graph and generating response..."):
-            response = rag(prompt)
-            kg = graph.search_query(prompt)
-            st.graphviz_chart(graph.visualize_graph(kg))
-
         with st.chat_message("assistant"):
+            with st.status("Understanding User's Message..."):
+                structured_message = analyzer(new_message=prompt).structured_message
+                st.write(f"- {structured_message}")
+
+            response = rag(prompt)
+
+            with st.status("Retrieving graph and generating response..."):
+                contexts = response.context
+                for context in contexts:
+                    body = json.loads(context).get("body", "")
+                    st.write(f"{body}")
+
+            with st.status("Generating response..."):
+                kg = graph.search_query(prompt)
+                st.graphviz_chart(graph.visualize_graph(kg))
+
             st.markdown(response.answer)
 
         st.session_state.messages.append({"role": "user", "content": prompt})
