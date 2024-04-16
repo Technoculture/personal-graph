@@ -2804,7 +2804,10 @@ files = [
 idna = ">=2.0"
 multidict = ">=4.0"
 
+[extras]
+scrollable-textbox = ["streamlit-scrollable-textbox"]
+
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "166941d22ee11241b6605c9b76d475c7e60f5a510febc68276aed0a42cf171ed"
+content-hash = "2c252fafeeeaaeed612028e999d3c08bed7a55196c0d15bf0d815b78bda38586"
