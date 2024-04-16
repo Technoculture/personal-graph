@@ -1,9 +1,15 @@
+import json
 import os
 from typing import List
 import dspy  # type: ignore
 import streamlit as st
 from personal_graph.graph import Graph
 from personal_graph.retriever import PersonalRM
+
+try:
+    import streamlit_scrollable_textbox as stx  # type: ignore
+except ImportError:
+    stx = None
 
 
 class UserMessageAnalyzer(dspy.Signature):
@@ -65,25 +71,36 @@ def main():
             st.markdown(message["content"])
 
     st.sidebar.title("Backstory")
-    backstory = st.sidebar.text_input("Enter your backstory")
+    if stx is not None:
+        backstory = stx.scrollableTextbox("Enter your backstory", height=300)
+    else:
+        backstory = st.sidebar.text_area("Enter your backstory", height=300)
 
     if st.sidebar.button("Load"):
-        kg = graph.insert(backstory)
-        st.sidebar.graphviz_chart(graph.visualize_graph(kg))
-        retriever = PersonalRM(graph=graph, k=2)
-        dspy.settings.configure(lm=turbo, rm=retriever)
+        if len(backstory) < 2000:
+            st.sidebar.warning("Please enter a backstory with at least 2000 tokens.")
+        else:
+            kg = graph.insert(backstory)
+            with st.sidebar.status("Retrieved knowledge graph visualization:"):
+                st.sidebar.graphviz_chart(graph.visualize_graph(kg))
+
+                for idx, context in enumerate(rag(backstory).context, start=1):
+                    body = json.loads(context).get("body", "")
+                    st.sidebar.write(f"{idx}. {body}")
+            retriever = PersonalRM(graph=graph, k=2)
+            dspy.settings.configure(lm=turbo, rm=retriever)
 
     if prompt := st.chat_input("Say Something?"):
         with st.chat_message("user"):
             st.markdown(prompt)
 
         structured_message = analyzer(new_message=prompt).structured_message
-
-        # for sub_message in structured_message:
         st.write(f"- {structured_message}")
 
-        with st.spinner("Processing..."):
+        with st.status("Retrieving graph and generating response..."):
             response = rag(prompt)
+            kg = graph.search_query(prompt)
+            st.graphviz_chart(graph.visualize_graph(kg))
 
         with st.chat_message("assistant"):
             st.markdown(response.answer)
