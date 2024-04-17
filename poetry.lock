@@ -2805,7 +2805,7 @@ idna = ">=2.0"
 multidict = ">=4.0"
 
 [extras]
-scrollable-textbox = ["streamlit-scrollable-textbox"]
+scrollable-textbox = []
 
 [metadata]
 lock-version = "2.0"
