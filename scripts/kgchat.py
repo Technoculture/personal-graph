@@ -84,6 +84,7 @@ def main():
             st.sidebar.warning("Please enter a backstory with at least 2000 tokens.")
         else:
             kg = graph.insert(backstory)
+            st.session_state["kg"] = kg
             with st.sidebar.status("Retrieved knowledge graph visualization:"):
                 st.sidebar.graphviz_chart(graph.visualize_graph(kg))
 
@@ -94,6 +95,7 @@ def main():
             dspy.settings.configure(lm=turbo, rm=retriever)
 
     if prompt := st.chat_input("Say Something?"):
+        kg = st.session_state.get("kg", None)
         with st.chat_message("user"):
             st.markdown(prompt)
 
@@ -111,8 +113,23 @@ def main():
                     st.write(f"{body}")
 
             with st.status("Generating response..."):
-                kg = graph.search_query(prompt)
-                st.graphviz_chart(graph.visualize_graph(kg))
+                # is_unique = graph.is_unique_text(prompt)
+                is_unique = True
+                if is_unique and kg is not None:
+                    sub_graph = graph.insert(prompt)
+                    for sg_node in sub_graph.nodes:
+                        kg.nodes.append(sg_node)
+
+                    for sg_edge in sub_graph.edges:
+                        kg.edges.append(sg_edge)
+
+                    # Update the sidebar graph with the new information
+                    st.sidebar.graphviz_chart(graph.visualize_graph(kg))
+
+                else:
+                    kg = graph.search_query(prompt)
+                st.session_state["kg"] = kg
+                st.graphviz_chart(graph.visualize_graph(sub_graph))
 
             st.markdown(response.answer)
 
