@@ -27,6 +27,7 @@ from .database import (
     pruning,
     find_similar_nodes,
     nodes_list,
+    vector_search_node,
 )
 from .natural import insert_into_graph, search_from_graph, visualize_knowledge_graph
 from .visualizers import graphviz_visualize
@@ -168,3 +169,14 @@ class Graph(AbstractContextManager):
 
     def fetch_ids_from_db(self) -> List[str]:
         return atomic(nodes_list(), self.db_url, self.auth_token)
+
+    def is_unique_prompt(self, text: str, threshold: float) -> bool:
+        similar_nodes = atomic(
+            vector_search_node({"body": text}, threshold, 1),
+            self.db_url,
+            self.auth_token,
+        )
+
+        if similar_nodes is None:
+            return True
+        return True

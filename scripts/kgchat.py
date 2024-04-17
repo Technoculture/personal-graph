@@ -3,9 +3,6 @@ import os
 from typing import List
 import dspy  # type: ignore
 import streamlit as st
-import sys
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from personal_graph.graph import Graph
 from personal_graph.retriever import PersonalRM
 
@@ -120,9 +117,8 @@ def main():
                     st.write(f"{body}")
 
             with st.status("Generating response..."):
-                # is_unique = graph.is_unique_text(prompt)
-                is_unique = True  # TODO: Implement this function is_unique_prompt()
-                if is_unique and kg is not None:
+                is_unique = graph.is_unique_prompt(prompt, 0.9)
+                if is_unique and kg:
                     sub_graph = graph.insert(prompt)
                     for sg_node in sub_graph.nodes:
                         kg.nodes.append(sg_node)
@@ -140,11 +136,12 @@ def main():
                     ):
                         body = json.loads(context).get("body", "")
                         st.sidebar.write(f"{idx}. {body}")
+                    st.graphviz_chart(graph.visualize_graph(sub_graph))
 
                 else:
                     kg = graph.search_query(prompt)
+                    st.graphviz_chart(graph.visualize_graph(kg))
                 st.session_state["kg"] = kg
-                st.graphviz_chart(graph.visualize_graph(sub_graph))
 
             st.markdown(response.answer)
 
