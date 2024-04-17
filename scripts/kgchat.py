@@ -3,6 +3,9 @@ import os
 from typing import List
 import dspy  # type: ignore
 import streamlit as st
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from personal_graph.graph import Graph
 from personal_graph.retriever import PersonalRM
 
@@ -71,6 +74,9 @@ def main():
             st.markdown(message["content"])
 
     st.sidebar.title("Backstory")
+    # Managing backstory session
+    if "backstory" not in st.session_state:
+        st.session_state.backstory = ""
     if stx is not None:
         backstory = stx.scrollableTextbox("Enter your backstory", height=300)
     else:
@@ -85,6 +91,7 @@ def main():
         else:
             kg = graph.insert(backstory)
             st.session_state["kg"] = kg
+            st.session_state["backstory"] = backstory
             with st.sidebar.status("Retrieved knowledge graph visualization:"):
                 st.sidebar.graphviz_chart(graph.visualize_graph(kg))
 
@@ -114,7 +121,7 @@ def main():
 
             with st.status("Generating response..."):
                 # is_unique = graph.is_unique_text(prompt)
-                is_unique = True
+                is_unique = True  # TODO: Implement this function is_unique_prompt()
                 if is_unique and kg is not None:
                     sub_graph = graph.insert(prompt)
                     for sg_node in sub_graph.nodes:
@@ -123,8 +130,16 @@ def main():
                     for sg_edge in sub_graph.edges:
                         kg.edges.append(sg_edge)
 
+                    # Update the backstory with the new prompt
+                    st.session_state.backstory += "\n" + prompt
+
                     # Update the sidebar graph with the new information
                     st.sidebar.graphviz_chart(graph.visualize_graph(kg))
+                    for idx, context in enumerate(
+                        rag(st.session_state.backstory).context, start=1
+                    ):
+                        body = json.loads(context).get("body", "")
+                        st.sidebar.write(f"{idx}. {body}")
 
                 else:
                     kg = graph.search_query(prompt)
