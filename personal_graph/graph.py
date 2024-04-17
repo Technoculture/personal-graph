@@ -8,6 +8,7 @@ import json
 from typing import Any, List, Optional, Union, Dict
 import libsql_experimental as libsql  # type: ignore
 from contextlib import AbstractContextManager
+from graphviz import Digraph  # type: ignore
 from .models import Node, EdgeInput, KnowledgeGraph
 from .database import (
     atomic,
@@ -25,8 +26,11 @@ from .database import (
     traverse,
     pruning,
     find_similar_nodes,
+    nodes_list,
+    vector_search_node,
 )
 from .natural import insert_into_graph, search_from_graph, visualize_knowledge_graph
+from .visualizers import graphviz_visualize
 
 
 class Graph(AbstractContextManager):
@@ -149,8 +153,8 @@ class Graph(AbstractContextManager):
         kg: KnowledgeGraph = search_from_graph(text)
         return kg
 
-    def visualize_graph(self, kg: KnowledgeGraph) -> None:
-        visualize_knowledge_graph(kg)
+    def visualize_graph(self, kg: KnowledgeGraph) -> Digraph:
+        return visualize_knowledge_graph(kg)
 
     def merge_by_similarity(self, threshold) -> None:
         atomic(pruning(threshold), self.db_url, self.auth_token)
@@ -159,3 +163,20 @@ class Graph(AbstractContextManager):
         return atomic(
             find_similar_nodes(label, threshold), self.db_url, self.auth_token
         )
+
+    def visualize(self, file: str, path: List[str]) -> Digraph:
+        return graphviz_visualize(self.db_url, self.auth_token, file, path)
+
+    def fetch_ids_from_db(self) -> List[str]:
+        return atomic(nodes_list(), self.db_url, self.auth_token)
+
+    def is_unique_prompt(self, text: str, threshold: float) -> bool:
+        similar_nodes = atomic(
+            vector_search_node({"body": text}, threshold, 1),
+            self.db_url,
+            self.auth_token,
+        )
+
+        if not similar_nodes:
+            return True
+        return False

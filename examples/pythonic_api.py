@@ -1,5 +1,5 @@
-import logging
 import os
+import logging
 from personal_graph.graph import Graph
 from personal_graph.models import Node, EdgeInput, KnowledgeGraph, Edge
 
@@ -58,6 +58,7 @@ def main(url, token):
 
         logging.info(graph.find_nodes_like(label="relative", threshold=0.9))
 
+        graph.visualize("sample.dot", ["2"])
         kg = KnowledgeGraph(
             nodes=[
                 Node(

@@ -121,6 +121,7 @@ def _insert_node(
         read_sql("insert-node-embedding.sql"),
         (count, json.dumps(embed_obj.get_embedding(json.dumps(set_data)))),
     )
+    connection.commit()
 
 
 def vector_search_node(
@@ -314,6 +315,7 @@ def connect_nodes(
             read_sql("insert-edge-embedding.sql"),
             (count, json.dumps(embed_obj.get_embedding(json.dumps(edge_data)))),
         )
+        connection.commit()
 
     return _connect_nodes
 
@@ -657,7 +659,14 @@ def pruning(threshold: float) -> CursorExecFunction:
                 concatenated_labels = ""
 
                 for data in in_degree:
-                    concatenated_attributes.update(json.loads(data[2]))
+                    for key, value in json.loads(data[2]).items():
+                        if key in concatenated_attributes:
+                            # If the key already exists, update its value
+                            concatenated_attributes[key] += value
+                        else:
+                            # If the key doesn't exist, add a new key-value pair
+                            concatenated_attributes[key] = value
+
                     concatenated_labels += data[1] + ","
 
                     count = (
@@ -670,6 +679,7 @@ def pruning(threshold: float) -> CursorExecFunction:
                         read_sql("insert-edge.sql"),
                         (count, data[0], node_id[0], data[1], data[2]),
                     )
+                    connection.commit()
 
                     edge_data = {
                         "source_id": data[0],
@@ -684,9 +694,16 @@ def pruning(threshold: float) -> CursorExecFunction:
                             json.dumps(embed_obj.get_embedding(json.dumps(edge_data))),
                         ),
                     )
+                    connection.commit()
 
                 for data in out_degree:
-                    concatenated_attributes.update(json.loads(data[2]))
+                    for key, value in json.loads(data[2]).items():
+                        if key in concatenated_attributes:
+                            # If the key already exists, update its value
+                            concatenated_attributes[key] += value
+                        else:
+                            # If the key doesn't exist, add a new key-value pair
+                            concatenated_attributes[key] = value
                     concatenated_labels += data[1] + ","
 
                     count = (
@@ -699,6 +716,7 @@ def pruning(threshold: float) -> CursorExecFunction:
                         read_sql("insert-edge.sql"),
                         (count, node_id[0], data[0], data[1], data[2]),
                     )
+                    connection.commit()
 
                     edge_data = {
                         "source_id": node_id[0],
@@ -713,6 +731,7 @@ def pruning(threshold: float) -> CursorExecFunction:
                             json.dumps(embed_obj.get_embedding(json.dumps(edge_data))),
                         ),
                     )
+                    connection.commit()
 
                 updated_attributes = json.loads(node[1]) if node[1] else {}
                 updated_attributes.update(concatenated_attributes)
@@ -750,6 +769,16 @@ def find_similar_nodes(label: str, threshold: Optional[float] = None):
         return similar_rows
 
     return _identical_nodes
+
+
+def nodes_list() -> CursorExecFunction:
+    def _fetch_nodes_from_db(cursor, connection):
+        nodes = cursor.execute("SELECT id from nodes").fetchall()
+        ids = [id[0] for id in nodes]
+
+        return ids
+
+    return _fetch_nodes_from_db
 
 
 def all_connected_nodes(node_or_edge: Union[Node | Edge]) -> CursorExecFunction:

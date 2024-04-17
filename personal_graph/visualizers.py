@@ -54,7 +54,7 @@ def graphviz_visualize(
     exclude_edge_keys: List[str] = [],
     hide_edge_key: bool = False,
     edge_kv: str = " ",
-) -> None:
+) -> Digraph:
     ids = []
     for i in path:
         ids.append(str(i))
@@ -92,6 +92,7 @@ def graphviz_visualize(
             visited.append(i)
 
     dot.render(dot_file, format=format)
+    return dot
 
 
 def graphviz_visualize_bodies(

@@ -23,6 +23,9 @@ instructor = "^0.6.7"
 fastapi = "^0.110.0"
 uvicorn = "^0.29.0"
 sqlean-py = "^3.45.1"
+streamlit = "^1.33.0"
+types-pygments = "^2.17.0.20240310"
+types-decorator = "^5.1.8.20240310"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.1.1"
@@ -31,6 +34,9 @@ mypy = "^1.9.0"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.3"
+
+[tool.poetry.extras]
+scrollable-textbox = ["streamlit-scrollable-textbox"]
 
 [build-system]
 requires = [

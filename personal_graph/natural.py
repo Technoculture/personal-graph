@@ -41,7 +41,7 @@ def generate_graph(query: str) -> KnowledgeGraph:
     return knowledge_graph
 
 
-def visualize_knowledge_graph(kg: KnowledgeGraph):
+def visualize_knowledge_graph(kg: KnowledgeGraph) -> Digraph:
     dot = Digraph(comment="Knowledge Graph")
 
     # Add nodes
@@ -52,81 +52,90 @@ def visualize_knowledge_graph(kg: KnowledgeGraph):
     for edge in kg.edges:
         dot.edge(str(edge.source), str(edge.target), edge.label, color="black")
 
-    # Render the graph
-    dot.render("knowledge_graph.gv", view=True)
+    return dot
 
 
 def insert_into_graph(text: str) -> KnowledgeGraph:
     uuid_dict = {}
     kg = generate_graph(text)
 
-    for node in kg.nodes:
-        uuid_dict[node.id] = str(uuid.uuid4())
-        atomic(
-            add_node(node.label, {"body": node.attributes}, uuid_dict[node.id]),
-            db_url,
-            auth_token,
-        )
+    try:
+        for node in kg.nodes:
+            uuid_dict[node.id] = str(uuid.uuid4())
+            atomic(
+                add_node(node.label, {"body": node.attributes}, uuid_dict[node.id]),
+                db_url,
+                auth_token,
+            )
 
-    for edge in kg.edges:
-        atomic(
-            connect_nodes(
-                uuid_dict[edge.source],
-                uuid_dict[edge.target],
-                edge.label,
-                {"body": edge.attributes},
-            ),
-            db_url,
-            auth_token,
-        )
+        for edge in kg.edges:
+            atomic(
+                connect_nodes(
+                    uuid_dict[edge.source],
+                    uuid_dict[edge.target],
+                    edge.label,
+                    {"body": edge.attributes},
+                ),
+                db_url,
+                auth_token,
+            )
+    except KeyError:
+        return KnowledgeGraph()
 
     return kg
 
 
 def search_from_graph(text: str) -> KnowledgeGraph:
-    similar_nodes = atomic(
-        vector_search_node({"body": text}, 0.9, 2), db_url, auth_token
-    )
-    similar_edges = atomic(vector_search_edge({"body": text}, k=2), db_url, auth_token)
-
-    resultant_subgraph = KnowledgeGraph()
-
-    if similar_edges and similar_nodes is None or similar_nodes is None:
-        return resultant_subgraph
-
-    resultant_subgraph.nodes = [
-        Node(id=node[1], label=node[2], attributes=node[3]) for node in similar_nodes
-    ]
-
-    for node in similar_nodes:
-        similar_node = Node(id=node[1], label=node[2], attributes=node[3])
-        nodes = atomic(all_connected_nodes(similar_node), db_url, auth_token)
-
-        if not nodes:
-            continue
-
-        for i in nodes:
-            if i not in resultant_subgraph.nodes:
-                resultant_subgraph.nodes.append(i)
-
-    resultant_subgraph.edges = [
-        Edge(source=edge[1], target=edge[2], label=edge[3], attributes=edge[4])
-        for edge in similar_edges
-    ]
-    for edge in similar_edges:
-        similar_edge = Edge(
-            source=edge[1],
-            target=edge[2],
-            label=edge[3],
-            attributes=edge[4],
+    try:
+        similar_nodes = atomic(
+            vector_search_node({"body": text}, 0.9, 2), db_url, auth_token
         )
-        nodes = atomic(all_connected_nodes(similar_edge), db_url, auth_token)
+        similar_edges = atomic(
+            vector_search_edge({"body": text}, k=2), db_url, auth_token
+        )
 
-        if not nodes:
-            continue
+        resultant_subgraph = KnowledgeGraph()
 
-        for node in nodes:
-            if node not in resultant_subgraph.nodes:
-                resultant_subgraph.nodes.append(node)
+        if similar_edges and similar_nodes is None or similar_nodes is None:
+            return resultant_subgraph
+
+        resultant_subgraph.nodes = [
+            Node(id=node[1], label=node[2], attributes=node[3])
+            for node in similar_nodes
+        ]
+
+        for node in similar_nodes:
+            similar_node = Node(id=node[1], label=node[2], attributes=node[3])
+            nodes = atomic(all_connected_nodes(similar_node), db_url, auth_token)
+
+            if not nodes:
+                continue
+
+            for i in nodes:
+                if i not in resultant_subgraph.nodes:
+                    resultant_subgraph.nodes.append(i)
+
+        resultant_subgraph.edges = [
+            Edge(source=edge[1], target=edge[2], label=edge[3], attributes=edge[4])
+            for edge in similar_edges
+        ]
+        for edge in similar_edges:
+            similar_edge = Edge(
+                source=edge[1],
+                target=edge[2],
+                label=edge[3],
+                attributes=edge[4],
+            )
+            nodes = atomic(all_connected_nodes(similar_edge), db_url, auth_token)
+
+            if not nodes:
+                continue
+
+            for node in nodes:
+                if node not in resultant_subgraph.nodes:
+                    resultant_subgraph.nodes.append(node)
+
+    except KeyError:
+        return KnowledgeGraph()
 
     return resultant_subgraph

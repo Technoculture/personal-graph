@@ -1,9 +1,5 @@
-import os
-import sys
 import dspy  # type: ignore
 from typing import List, Optional, Union
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from personal_graph.graph import Graph
 from personal_graph.models import Node
 from dotenv import load_dotenv
@@ -14,15 +10,12 @@ load_dotenv()
 class PersonalRM(dspy.Retrieve):
     def __init__(
         self,
-        db_url: Optional[str] = None,
-        auth_token: Optional[str] = None,
+        graph: Graph,
         k: int = 5,
     ):
         super().__init__(k=k)
         self.k = k
-        self.db_url = db_url
-        self.auth_token = auth_token
-        self.graph = Graph(db_url, auth_token)
+        self.graph = graph
 
     def _retrieve_passages(self, queries: List[str]) -> List[Node]:
         passages: List[Node] = []
@@ -32,7 +25,6 @@ class PersonalRM(dspy.Retrieve):
 
         for query in queries:
             kg = self.graph.search_query(query)
-            self.graph.visualize_graph(kg)
             passages.extend(kg.nodes)
         return passages
 
