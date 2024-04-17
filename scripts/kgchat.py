@@ -117,8 +117,8 @@ def main():
                     st.write(f"{body}")
 
             with st.status("Generating response..."):
-                is_unique = graph.is_unique_prompt(prompt, 0.9)
-                if is_unique:
+                is_unique = graph.is_unique_prompt(prompt, 0.6)
+                if is_unique and kg:
                     sub_graph = graph.insert(prompt)
                     for sg_node in sub_graph.nodes:
                         kg.nodes.append(sg_node)
@@ -140,8 +140,8 @@ def main():
                     st.graphviz_chart(graph.visualize_graph(sub_graph))
 
                 else:
-                    kg = graph.search_query(prompt)
-                    st.graphviz_chart(graph.visualize_graph(kg))
+                    sub_graph = graph.search_query(prompt)
+                    st.graphviz_chart(graph.visualize_graph(sub_graph))
 
             st.markdown(response.answer)
 
