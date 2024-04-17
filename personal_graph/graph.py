@@ -177,6 +177,6 @@ class Graph(AbstractContextManager):
             self.auth_token,
         )
 
-        if similar_nodes is None:
+        if not similar_nodes:
             return True
-        return True
+        return False

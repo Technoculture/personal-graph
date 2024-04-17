@@ -118,7 +118,7 @@ def main():
 
             with st.status("Generating response..."):
                 is_unique = graph.is_unique_prompt(prompt, 0.9)
-                if is_unique and kg:
+                if is_unique:
                     sub_graph = graph.insert(prompt)
                     for sg_node in sub_graph.nodes:
                         kg.nodes.append(sg_node)
@@ -128,6 +128,7 @@ def main():
 
                     # Update the backstory with the new prompt
                     st.session_state.backstory += "\n" + prompt
+                    st.session_state["kg"] = kg
 
                     # Update the sidebar graph with the new information
                     st.sidebar.graphviz_chart(graph.visualize_graph(kg))
@@ -141,7 +142,6 @@ def main():
                 else:
                     kg = graph.search_query(prompt)
                     st.graphviz_chart(graph.visualize_graph(kg))
-                st.session_state["kg"] = kg
 
             st.markdown(response.answer)
 
