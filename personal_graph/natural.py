@@ -15,15 +15,18 @@ from personal_graph.database import (
 )
 
 load_dotenv()
+
 if os.getenv("OPEN_API_KEY"):
     client = instructor.patch(OpenAI(api_key=os.getenv("OPEN_API_KEY")))
 else:
     client = None
+
 db_url = os.getenv("LIBSQL_URL")
 auth_token = os.getenv("LIBSQL_AUTH_TOKEN")
 
 
 def generate_graph(query: str) -> KnowledgeGraph:
+    client = instructor.patch(OpenAI(api_key=os.getenv("OPEN_API_KEY")))
     knowledge_graph = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
@@ -64,8 +67,8 @@ def insert_into_graph(text: str) -> KnowledgeGraph:
             uuid_dict[node.id] = str(uuid.uuid4())
             atomic(
                 add_node(node.label, {"body": node.attributes}, uuid_dict[node.id]),
-                db_url,
-                auth_token,
+                os.getenv("LIBSQL_URL"),
+                os.getenv("LIBSQL_AUTH_TOKEN"),
             )
 
         for edge in kg.edges:
@@ -76,8 +79,8 @@ def insert_into_graph(text: str) -> KnowledgeGraph:
                     edge.label,
                     {"body": edge.attributes},
                 ),
-                db_url,
-                auth_token,
+                os.getenv("LIBSQL_URL"),
+                os.getenv("LIBSQL_AUTH_TOKEN"),
             )
     except KeyError:
         return KnowledgeGraph()
@@ -88,10 +91,14 @@ def insert_into_graph(text: str) -> KnowledgeGraph:
 def search_from_graph(text: str) -> KnowledgeGraph:
     try:
         similar_nodes = atomic(
-            vector_search_node({"body": text}, 0.9, 2), db_url, auth_token
+            vector_search_node({"body": text}, 0.9, 2),
+            os.getenv("LIBSQL_URL"),
+            os.getenv("LIBSQL_AUTH_TOKEN"),
         )
         similar_edges = atomic(
-            vector_search_edge({"body": text}, k=2), db_url, auth_token
+            vector_search_edge({"body": text}, k=2),
+            os.getenv("LIBSQL_URL"),
+            os.getenv("LIBSQL_AUTH_TOKEN"),
         )
 
         resultant_subgraph = KnowledgeGraph()
@@ -106,7 +113,11 @@ def search_from_graph(text: str) -> KnowledgeGraph:
 
         for node in similar_nodes:
             similar_node = Node(id=node[1], label=node[2], attributes=node[3])
-            nodes = atomic(all_connected_nodes(similar_node), db_url, auth_token)
+            nodes = atomic(
+                all_connected_nodes(similar_node),
+                os.getenv("LIBSQL_URL"),
+                os.getenv("LIBSQL_AUTH_TOKEN"),
+            )
 
             if not nodes:
                 continue
@@ -126,7 +137,11 @@ def search_from_graph(text: str) -> KnowledgeGraph:
                 label=edge[3],
                 attributes=edge[4],
             )
-            nodes = atomic(all_connected_nodes(similar_edge), db_url, auth_token)
+            nodes = atomic(
+                all_connected_nodes(similar_edge),
+                os.getenv("LIBSQL_URL"),
+                os.getenv("LIBSQL_AUTH_TOKEN"),
+            )
 
             if not nodes:
                 continue

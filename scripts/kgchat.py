@@ -56,10 +56,10 @@ def main():
 
     st.title("Knowledge Graph Chat")
 
-    graph = Graph(os.getenv("LIBSQL_URL"), os.getenv("LIBSQL_AUTH_TOKEN"))
-    turbo = dspy.OpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPEN_API_KEY"))
-    retriever = PersonalRM(graph=graph, k=2)
-    dspy.settings.configure(lm=turbo, rm=retriever)
+    with Graph(os.getenv("LIBSQL_URL"), os.getenv("LIBSQL_AUTH_TOKEN")) as graph:
+        turbo = dspy.OpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPEN_API_KEY"))
+        retriever = PersonalRM(graph=graph, k=2)
+        dspy.settings.configure(lm=turbo, rm=retriever)
 
     # Initialize chat history
     if "messages" not in st.session_state:
