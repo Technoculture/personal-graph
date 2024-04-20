@@ -225,6 +225,12 @@ def main():
                 else:
                     sub_graph = graph.search_query(prompt)
                     st.graphviz_chart(graph.visualize_graph(sub_graph))
+                    st.sidebar.graphviz_chart(graph.visualize_graph(kg))
+                    for idx, context in enumerate(
+                        rag(st.session_state.backstory).context, start=1
+                    ):
+                        body = json.loads(context).get("body", "")
+                        st.sidebar.write(f"{idx}. {body}")
 
             st.markdown(response.answer)
 
