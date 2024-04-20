@@ -1,152 +1,137 @@
-# Personal-Graph
+# Personal-Graph: A Knowledge Graph Library for AI
 
-1. Modern Interface
-Some amounts of JSON validation and Context Manager/Class wrapper
-    ```py
-    # Planned API
-    with personal_graph.connect(url, token) as graph:
-      graph.add([Node(label="sam", attributes={...}), Node(label="ella", attributes={...})])
-      graph.connect(from="sam", to="ella", label="brother", attributes={...})
-  
-      graph.merge_by_similarity(threshold=0.9)
-      
-      relatives: list[Node] = graph.find_nodes_like(label="relative", threshold=0.9)
-    ```
-2. AI Native Features
-     - Semantic Search (Sqlite-vss)
-     - Natural language interface to KGs (Instructor, Pydantic)
-    ```py
-    # Planned API
-    with personal_graph.connect(url, token) as graph:
-      graph.insert(text="My brother is actually pretty interested in coral reefs near Sri Lanka.")
-      subgraph: KnowledgeGraph = graph.find_subgraph_like(text="Why would I be interested in ocean?")
-      subgraph.draw()
-    ```
-3. Good Performance on reads (even with complex queries)
-     - Local replicas are supported by libsql
-4. Support for Machine Learning Libraries
-     - Export to dict functions for Networkx/PyG etc 
+Personal-Graph is a Python library for creating, managing, and querying knowledge graphs. It aims to help solve working and long-term memory challenges in AI systems, particularly Large Language Models (LLMs).
+
+## Features
+
+- 🚀 **High Performance and Reliability**: Built on top of libsql, a SQLite engine written in Rust
+- 🔌 **Seamless Integration with Turso DB**: Efficient storage and retrieval of graph data
+- 🌐 **Edge Computing Support**: Run personalized knowledge graphs for each user
+- 🔒 **Data Privacy and Customization**: Each user has their own isolated database
+- 🌿 **Modern and Intuitive API**: JSON validation and context manager/class wrapper
+- 🔍 **Semantic Search and Natural Language Interfaces**: Powered by Sqlite-vss, Instructor, and Pydantic
+- ⚡ **Fast Read Performance**: Optimized for complex queries using libsql for local replicas
+- 🤝 **Compatibility with Machine Learning Libraries**: Export functions for Networkx and PyG
+
+## Installation
+
+Install Personal-Graph using pip:
+```sh
+pip install personal-graph
+```
 
 ## Usage
 
-### Basic Functions
+### Building a Working Memory for an AI
 
-The [database script](personal_graph/database.py) provides convenience functions for [atomic transactions](https://en.wikipedia.org/wiki/Atomicity_(database_systems)) to add, delete, connect, and search for nodes.
+```python
+from personal_graph import Graph
 
+graph = Graph("your_db_url", "your_auth_token")
 
-Any single node or path of nodes can also be depicted graphically by using the `visualize` function within the database script to generate [dot](https://graphviz.org/doc/info/lang.html) files, which in turn can be converted to images with Graphviz.
+# Insert information into the graph
+graph.insert(text="Alice is Bob's sister. Bob works at Google.")
 
-#### Example
+# Retrieve relevant information from the graph
+query = "Who is Alice?"
+results = graph.search(query)
 
-It needs database url(db_url) and authentication token(auth_token) to connect with a remote database:
+# Use the retrieved information to answer questions
+print(f"Question: {query}")
+print(f"Answer: Alice is Bob's sister.")
 
-```
->>> from personal_graph import database as db
->>> db.initialize(db_url, auth_token)
->>> db.atomic(db_url, auth_token, db.add_node({'name': 'Apple Computer Company', 'type':['company', 'start-up'], 'founded': 'April 1, 1976'}, 1))
->>> db.atomic(db_url, auth_token, db.add_node({'name': 'Steve Wozniak', 'type':['person','engineer','founder']}, 2))
->>> db.atomic(db_url, auth_token, db.add_node({'name': 'Steve Jobs', 'type':['person','designer','founder']}, 3))
->>> db.atomic(db_url, auth_token, db.add_node({'name': 'Ronald Wayne', 'type':['person','administrator','founder']}, 4))
->>> db.atomic(db_url, auth_token, db.add_node({'name': 'Mike Markkula', 'type':['person','investor']}, 5))
->>> db.atomic(db_url, auth_token, db.connect_nodes(2, 1, {'action': 'founded'}))
->>> db.atomic(db_url, auth_token, db.connect_nodes(3, 1, {'action': 'founded'}))
->>> db.atomic(db_url, auth_token, db.connect_nodes(4, 1, {'action': 'founded'}))
->>> db.atomic(db_url, auth_token, db.connect_nodes(5, 1, {'action': 'invested', 'equity': 80000, 'debt': 170000}))
->>> db.atomic(db_url, auth_token, db.connect_nodes(1, 4, {'action': 'divested', 'amount': 800, 'date': 'April 12, 1976'}))
->>> db.atomic(db_url, auth_token,  db.connect_nodes(2, 3))
->>> db.atomic(db_url, auth_token, db.upsert_node(2, {'nickname': 'Woz'}))
+query = "Where does Bob work?"
+results = graph.search(query)
+print(f"Question: {query}")
+print(f"Answer: Bob works at Google.")
 ```
 
-There are also bulk operations, to insert and connect lists of nodes in one transaction.
+In this example, we insert information about Alice and Bob into the knowledge graph. We then use the search method to retrieve relevant information based on the given queries. The retrieved information can be used as part of the AI's working memory to answer questions and provide context for further interactions.
 
-The nodes can be searched by their ids:
+### Building Long-Term Memory
+```python
+from personal_graph import Graph
 
+graph = Graph("your_db_url", "your_auth_token")
+
+# Insert information about conversations with the user over time
+graph.insert(text="User talked about their childhood dreams and aspirations.", 
+             attributes={"date": "2023-01-15", "topic": "childhood dreams", "depth_score": 3})
+graph.insert(text="User discussed their fears and insecurities in their current relationship.",
+             attributes={"date": "2023-02-28", "topic": "relationship fears", "depth_score": 4})
+graph.insert(text="User shared their spiritual beliefs and existential questions.",
+             attributes={"date": "2023-03-10", "topic": "spirituality and existence", "depth_score": 5})
+graph.insert(text="User mentioned their favorite hobbies and weekend activities.",
+             attributes={"date": "2023-04-02", "topic": "hobbies", "depth_score": 2})
+
+# User queries about the deepest conversation
+query = "What was the deepest conversation we've ever had?"
+
+results = graph.search(query, sort_by="depth_score", descending=True, limit=1)
+
+if results:
+    deepest_conversation = results[0]
+    print(f"Question: {query}")
+    print(f"Answer: Our deepest conversation was on {deepest_conversation['date']} when we discussed {deepest_conversation['topic']}.")
+else:
+    print(f"Question: {query}")
+    print("Answer: I apologize, but I don't have enough information to determine our deepest conversation.")
 ```
->>> db.atomic(db_url, auth_token, db.find_node(1))
-{'name': 'Apple Computer Company', 'type': ['company', 'start-up'], 'founded': 'April 1, 1976', 'id': 1}
-```
+In this example, we insert information about different conversations with the user over time, including the date, topic, and a depth score indicating how deep or meaningful the conversation was. The depth score is assigned based on the perceived depth of the conversation, with higher scores representing deeper conversations.
 
-Searches can also use combinations of other attributes, both as strict equality, or using `LIKE` in combination with a trailing `%` for "starts with" or `%` at both ends for "contains":
+When the user asks, "What was the deepest conversation we've ever had?", we use the search method to retrieve the conversation with the highest depth score. We set sort_by="depth_score" to sort the results based on the depth score, descending=True to sort in descending order (highest score first), and limit=1 to retrieve only the conversation with the highest depth score.
 
-```
->>> db.atomic(db_url, auth_token, db.find_nodes([db._generate_clause('name', predicate='LIKE')], ('Steve%',)))
-[{'name': 'Steve Wozniak', 'type': ['person', 'engineer', 'founder'], 'id': 2, 'nickname': 'Woz'}, {'name': 'Steve Jobs', 'type': ['person', 'designer', 'founder'], 'id': 3}]
->>> db.atomic(db_url, auth_token, db.find_nodes([db._generate_clause('name', predicate='LIKE'), db._generate_clause('name', predicate='LIKE', joiner='OR')], ('%Woz%', '%Markkula',)))
-[{'name': 'Steve Wozniak', 'type': ['person', 'engineer', 'founder'], 'id': 2, 'nickname': 'Woz'}, {'name': 'Mike Markkula', 'type': ['person', 'investor'], 'id': 5}]
-```
+If a conversation is found, the AI responds with the date and topic of the deepest conversation. If no conversations are found or the depth information is missing, the AI provides an appropriate response indicating that it doesn't have enough information to determine the deepest conversation.
 
-More complex queries to introspect the json body, using the [sqlite json_tree() function](https://www.sqlite.org/json1.html), are also possible, such as this query for every node whose `type` array contains the value `founder`:
+This example showcases how Personal-Graph can be used to build long-term memory about the user's interactions with the AI and retrieve specific information based on certain criteria, such as the depth of the conversation.
 
-```
->>> db.atomic(db_url, auth_token,  db.find_nodes([db._generate_clause('type', tree=True)], ('founder',), tree_query=True, key='type'))
-[{'name': 'Steve Wozniak', 'type': ['person', 'engineer', 'founder'], 'id': 2, 'nickname': 'Woz'}, {'name': 'Steve Jobs', 'type': ['person', 'designer', 'founder'], 'id': 3}, {'name': 'Ronald Wayne', 'type': ['person', 'administrator', 'founder'], 'id': 4}]
-```
+### Creating and Querying a Knowledge Graph
+```py
+from personal_graph import Graph, natural
 
-See the `_generate_clause()` and `_generate_query()` functions in [database.py](personal_graph/database.py) for usage hints.
+graph = Graph("your_db_url", "your_auth_token")
 
-Paths through the graph can be discovered with a starting node id, and an optional ending id; the default neighbor expansion is nodes connected nodes in either direction, but that can changed by specifying either `find_outbound_neighbors` or `find_inbound_neighbors` instead:
+nl_query = "Increased thirst, weight loss, increased hunger, and frequent urination are all symptoms of diabetes."
+graph = natural.insert(text=nl_query)
 
-```
->>> db.traverse(db_url, auth_token, 2, 3)
-['2', '1', '3']
->>> db.traverse(db_url, auth_token, 4, 5)
-['4', '1', '2', '3', '5']
->>> db.traverse(db_url, auth_token, 5, neighbors_fn=db.find_inbound_neighbors)
-['5']
->>> db.traverse(db_url, auth_token, 5, neighbors_fn=db.find_outbound_neighbors)
-['5', '1', '4']
->>> db.traverse(db_url, auth_token, 5, neighbors_fn=db.find_neighbors)
-['5', '1', '2', '3', '4']
-```
+search_query = "I am losing weight too frequently."
+knowledge_graph = natural.search_from_graph(search_query)
 
-Any path or list of nodes can rendered graphically by using the `visualize` function. This command produces [dot](https://graphviz.org/doc/info/lang.html) files, which are also rendered as images with Graphviz:
-
-```
->>> from visualizers import graphviz_visualize
->>> graphviz_visualize(db_url, auth_token, 'apple.dot', [4, 1, 5])
-```
-
-The [resulting text file](personal_graph/tests/fixtures/apple-raw.dot) also comes with an associated image (the default is [png](https://en.wikipedia.org/wiki/Portable_Network_Graphics), but that can be changed by supplying a different value to the `format` parameter)
-
-The default options include every key/value pair (excluding the id) in the node and edge objects, and there are display options to help refine what is produced:
-
-```
->>> graphviz_visualize(db_url, auth_token, 'apple.dot', [4, 1, 5], exclude_node_keys=['type'], hide_edge_key=True)
->>> path_with_bodies = db.traverse(db_url, auth_token, source, target, with_bodies=True) 
->>>graphviz_visualize_bodies('apple.dot', path_with_bodies)
+print(knowledge_graph)
 ```
 
-The [resulting dot file](personal_graph/tests/fixtures/apple.dot) can be edited further as needed; the [dot guide](https://graphviz.org/pdf/dotguide.pdf) has more options and examples.
+### Retrieval and Question-Answering
+```py
+import dspy
+from personal_graph.graph import Graph
+from personal_graph.retriever import PersonalRM
 
-## Time Complexity
+graph = Graph("your_db_url", "your_auth_token")
+retriever = PersonalRM(graph=graph, k=2)
 
-| Scenario | Average Time Complexity | Worst Case Time Complexity |
-| -------- | ----------------------- | -------------------------- |
-| Single Node Insert | O(1) | O(1) |
-| Single Edge Insert | O(1) | O(1) |
-| Single Node Retrieval by ID | O(1) | O(1) |
-| Single Edge Retrieval by ID | O(1) | O(1) |
-| Retrieval of All Nodes | O(n) | O(n) |
-| Retrieval of All Edges | O(m) | O(m) |
-| Retrieval of All Neighbors of a Node	O(avg_degree) | O(n) |
-| Retrieval of All Edges of a Node	O(avg_degree) | O(n) | 
-| BFS/DFS Traversal | O(n + m) | O(n + m) |
-| Shortest Path (Unweighted) | O(n + m) | O(n + m) |
-| Shortest Path (Weighted) | O((n + m) log n) | O((n + m) log n) |
-| Connected Components | O(n + m) | O(n + m) |
-| Strongly Connected Components | O(n + m) | O(n + m) |
-| Minimum Spanning Tree | O(m log n) | O(m log n) |
-| Semantic Search (Approximate) | O(log n) | O(n) |
-| Natural Language Query (Approximate) | O(n) | O(n^2) |
+class RAG(dspy.Module):
+    def __init__(self, depth=3):
+        super().__init__()
+        self.retrieve = dspy.Retrieve(k=depth)
+        self.generate_answer = dspy.ChainOfThought(GenerateAnswer)
 
-## Applications
+    def forward(self, question):
+        context = self.retrieve(question).passages
+        prediction = self.generate_answer(context=context, question=question)
+        return dspy.Prediction(context=context, answer=prediction.answer)
 
-* [Social networks](https://en.wikipedia.org/wiki/Social_graph)
-* [Interest maps/recommendation finders](https://en.wikipedia.org/wiki/Interest_graph)
-* [To-do / task lists](https://en.wikipedia.org/wiki/Task_list)
-* [Bug trackers](https://en.wikipedia.org/wiki/Open-source_software_development#Bug_trackers_and_task_lists)
-* [Customer relationship management (CRM)](https://en.wikipedia.org/wiki/Customer_relationship_management)
-* [Gantt chart](https://en.wikipedia.org/wiki/Gantt_chart)
+rag = RAG(depth=2)
+answer = rag("How is Jack related to James?")
+print(answer)
+```
 
-> [!NOTE]
-> This repo adds significant functionality on top of [simple-graph-pypi](https://github.com/dpapathanasiou/simple-graph-pypi) to add AI native features such as similarity search and Natural language interface. We also migrate the project from sqlite to libsql in order to interface with [TursoDB](https://turso.tech/).
+For more details and API documentation, see the Personal-Graph Documentation.
+
+## Contributing
+Contributions are welcome! Please read our Contribution Guidelines and Code of Conduct.
+
+## License
+Personal-Graph is released under the MIT License.
+
+## Contact
+Questions, feedback, or suggestions? Reach out at your_email@example.com or open an issue on GitHub.
