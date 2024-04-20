@@ -3,15 +3,10 @@
 Personal-Graph is a Python library for creating, managing, and querying knowledge graphs. It aims to help solve working and long-term memory challenges in AI systems, particularly Large Language Models (LLMs).
 
 ## Features
-
-- 🚀 **High Performance and Reliability**: Built on top of libsql, a SQLite engine written in Rust
-- 🔌 **Seamless Integration with Turso DB**: Efficient storage and retrieval of graph data
-- 🌐 **Edge Computing Support**: Run personalized knowledge graphs for each user
-- 🔒 **Data Privacy and Customization**: Each user has their own isolated database
-- 🌿 **Modern and Intuitive API**: JSON validation and context manager/class wrapper
-- 🔍 **Semantic Search and Natural Language Interfaces**: Powered by Sqlite-vss, Instructor, and Pydantic
-- ⚡ **Fast Read Performance**: Optimized for complex queries using libsql for local replicas
-- 🤝 **Compatibility with Machine Learning Libraries**: Export functions for Networkx and PyG
+- 🚀 **Can Be Fast**: Built on libsql, a high-performance SQLite engine in Rust
+- 👨 **One DB per User**: Integrate with Turso DB for private, user-specific knowledge graphs
+- 💬 **Natural Language Interfaces**: Natural language queries powered by Sqlite-vss and Instructor
+- 🤖 **ML-Ready**: Export data for machine learning libraries like Networkx and PyG
 
 ## Installation
 
@@ -77,13 +72,13 @@ else:
     print(f"Question: {query}")
     print("Answer: I apologize, but I don't have enough information to determine our deepest conversation.")
 ```
-In this example, we insert information about different conversations with the user over time, including the date, topic, and a depth score indicating how deep or meaningful the conversation was. The depth score is assigned based on the perceived depth of the conversation, with higher scores representing deeper conversations.
+In this example, we store information about conversations with the user, including the date, topic, and a depth score. The depth score represents how meaningful the conversation was.
 
-When the user asks, "What was the deepest conversation we've ever had?", we use the search method to retrieve the conversation with the highest depth score. We set sort_by="depth_score" to sort the results based on the depth score, descending=True to sort in descending order (highest score first), and limit=1 to retrieve only the conversation with the highest depth score.
+When the user asks about the deepest conversation, we search for the conversation with the highest depth score using the search method. We sort the results by the depth score in descending order and limit the output to one conversation.
 
-If a conversation is found, the AI responds with the date and topic of the deepest conversation. If no conversations are found or the depth information is missing, the AI provides an appropriate response indicating that it doesn't have enough information to determine the deepest conversation.
+If a conversation is found, the AI responds with the date and topic of the deepest conversation. If no conversations are found, the AI informs the user that it doesn't have enough information.
 
-This example showcases how Personal-Graph can be used to build long-term memory about the user's interactions with the AI and retrieve specific information based on certain criteria, such as the depth of the conversation.
+This example demonstrates how Personal-Graph can be used to build long-term memory about user interactions and retrieve specific information based on criteria like conversation depth.
 
 ### Creating and Querying a Knowledge Graph
 ```py
