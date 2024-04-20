@@ -134,4 +134,4 @@ Contributions are welcome! Please read our Contribution Guidelines and Code of C
 Personal-Graph is released under the MIT License.
 
 ## Contact
-Questions, feedback, or suggestions? Reach out at your_email@example.com or open an issue on GitHub.
+Questions, feedback, or suggestions? Reach out at satyam@technoculture.io or open an issue on GitHub.
