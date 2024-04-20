@@ -90,6 +90,33 @@ class MessageAnalyzerModule(dspy.Module):
         return self.analyze_message(new_message=new_message)
 
 
+def create_and_save_cache(rag):
+    list_of_context = []
+
+    with Graph(os.getenv("LIBSQL_URL"), os.getenv("LIBSQL_AUTH_TOKEN")) as graph:
+        turbo = dspy.OpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPEN_API_KEY"))
+
+        kg = graph.insert("DEFAULT_BACKSTORY")
+        retriever = PersonalRM(graph=graph, k=2)
+        dspy.settings.configure(lm=turbo, rm=retriever)
+
+        # Convert KnowledgeGraph object to a dictionary
+        nodes_edges_dict = {
+            "nodes": [node.__dict__ for node in kg.nodes],
+            "edges": [edge.__dict__ for edge in kg.edges],
+        }
+
+        for idx, context in enumerate(rag("DEFAULT_BACKSTORY").context, start=1):
+            body = json.loads(context).get("body", "")
+            list_of_context.append(f"{idx}. {body}")
+
+    cache_dir = "cache"
+    os.makedirs(cache_dir, exist_ok=True)
+    joblib.dump("DEFAULT_BACKSTORY", os.path.join(cache_dir, "backstory.pkl"))
+    joblib.dump(nodes_edges_dict, os.path.join(cache_dir, "kg.pkl"))
+    joblib.dump(list_of_context, os.path.join(cache_dir, "context.pkl"))
+
+
 def load_cache():
     cache_dir = "cache"
     if (
