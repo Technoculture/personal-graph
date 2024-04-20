@@ -53,14 +53,37 @@ from personal_graph import Graph
 graph = Graph("your_db_url", "your_auth_token")
 
 # Insert information about conversations with the user over time
-graph.insert(text="User talked about their childhood dreams and aspirations.", 
-             attributes={"date": "2023-01-15", "topic": "childhood dreams", "depth_score": 3})
-graph.insert(text="User discussed their fears and insecurities in their current relationship.",
-             attributes={"date": "2023-02-28", "topic": "relationship fears", "depth_score": 4})
-graph.insert(text="User shared their spiritual beliefs and existential questions.",
-             attributes={"date": "2023-03-10", "topic": "spirituality and existence", "depth_score": 5})
-graph.insert(text="User mentioned their favorite hobbies and weekend activities.",
-             attributes={"date": "2023-04-02", "topic": "hobbies", "depth_score": 2})
+graph.insert(
+  text="User talked about their childhood dreams and aspirations.",
+  attributes={
+    "date": "2023-01-15",
+    "topic": "childhood dreams",
+    "depth_score": 3
+  })
+
+graph.insert(
+  text="User discussed their fears and insecurities in their current relationship.",
+  attributes={
+    "date": "2023-02-28",
+    "topic": "relationship fears",
+    "depth_score": 4
+})
+
+graph.insert(
+  text="User shared their spiritual beliefs and existential questions.",
+  attributes={
+    "date": "2023-03-10",
+    "topic": "spirituality and existence",
+    "depth_score": 5
+})
+
+graph.insert(
+  text="User mentioned their favorite hobbies and weekend activities.",
+  attributes={
+    "date": "2023-04-02",
+    "topic": "hobbies",
+    "depth_score": 2
+})
 
 # User queries about the deepest conversation
 query = "What was the deepest conversation we've ever had?"
