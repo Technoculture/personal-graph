@@ -1,4 +1,7 @@
-# Personal-Graph: A Knowledge Graph Library for AI
+# Personal-Graph: Graph for building memory for AI applications
+[![PyPI version](https://badge.fury.io/py/personal-graph.svg)](https://badge.fury.io/py/personal-graph)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Checks and Test](https://github.com/Technoculture/personal-graph/actions/workflows/personal-graph.yaml/badge.svg)](https://github.com/Technoculture/personal-graph/actions/workflows/personal-graph.yaml)
 
 Personal-Graph is a Python library for creating, managing, and querying knowledge graphs. It aims to help solve working and long-term memory challenges in AI systems, particularly Large Language Models (LLMs).
 
