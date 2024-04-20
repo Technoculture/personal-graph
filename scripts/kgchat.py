@@ -146,7 +146,14 @@ def main():
                 structured_message = analyzer(new_message=prompt).structured_message
                 st.write(f"- {structured_message}")
 
-            response = rag(prompt)
+                # TODO: Add system_prompt when it's available in dspy package
+                ella = dspy.OpenAI(
+                    model="gpt-3.5-turbo",
+                    api_key=os.getenv("OPEN_API_KEY"),
+                    max_tokens=4000,
+                )
+                with dspy.context(lm=ella):
+                    response = rag(prompt)
 
             with st.status("Retrieving graph and generating response..."):
                 contexts = response.context
