@@ -1,4 +1,4 @@
-name: Personal Graph Workflow
+name: Checks and Test
 
 on:
    pull_request:
