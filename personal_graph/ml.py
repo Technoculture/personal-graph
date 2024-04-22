@@ -4,11 +4,11 @@ import matplotlib.pyplot as plt
 from personal_graph.graph import Graph
 
 
-def to_networkx(graph: Graph) -> nx.DiGraph:
+def to_networkx(graph: Graph) -> nx.Graph:
     """
     Convert the graph database to a NetworkX DiGraph object.
     """
-    G = nx.DiGraph()  # Empty Graph with no nodes and edges
+    G = nx.Graph()  # Empty Graph with no nodes and edges
 
     # Add nodes
     node_ids = graph.fetch_ids_from_db()
