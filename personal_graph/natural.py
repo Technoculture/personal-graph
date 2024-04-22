@@ -49,7 +49,7 @@ def visualize_knowledge_graph(kg: KnowledgeGraph) -> Digraph:
 
     # Add nodes
     for node in kg.nodes:
-        dot.node(node.id, node.label, color="black")
+        dot.node(str(node.id), node.label, color="black")
 
     # Add edges
     for edge in kg.edges:
