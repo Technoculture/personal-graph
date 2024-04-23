@@ -6,7 +6,7 @@ from personal_graph.graph import Graph
 from personal_graph.models import Node, KnowledgeGraph, Edge
 
 
-def to_networkx(graph: Graph, post_visualize: bool = False) -> nx.Graph:
+def to_networkx(graph: Graph, *, post_visualize: bool = False) -> nx.Graph:
     """
     Convert the graph database to a NetworkX DiGraph object.
     """

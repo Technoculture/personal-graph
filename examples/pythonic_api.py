@@ -1,7 +1,7 @@
 import os
 import logging
 from personal_graph.graph import Graph
-from personal_graph.ml import to_networkx, to_personal_graph
+from personal_graph.ml import to_networkx, from_networkx
 from personal_graph.models import Node, EdgeInput, KnowledgeGraph, Edge
 
 
@@ -106,12 +106,12 @@ def main(url, token):
         logging.info(graph.visualize_graph(kg))
 
         # Personal Graph to NetworkX
-        networkx = to_networkx(graph, True)
+        networkx = to_networkx(graph, post_visualize=True)
         logging.info("Personal Graph to NetworkX Graph")
         logging.info(networkx)
 
         # NetworkX to Personal Graph
-        personal_graph = to_personal_graph(networkx)
+        personal_graph = from_networkx(networkx)
         logging.info("NetworkX Graph to Personal Graph")
         logging.info(personal_graph)
         visualized_personal_graph = graph.visualize_graph(personal_graph)
