@@ -12,14 +12,8 @@ def to_networkx(graph: Graph, post_visualize: bool = False) -> nx.Graph:
     """
     G = nx.Graph()  # Empty Graph with no nodes and edges
 
-    # Add nodes
     node_ids = graph.fetch_ids_from_db()
-    for node_id in node_ids:
-        node_data = graph.search_node(node_id)
-        node_label = graph.search_node_label(node_id)
-        G.add_node(node_id, label=node_label, **node_data)
-
-    # Add edges
+    # Add edges to networkX
     for source_id in node_ids:
         for target_id, _, edge_data in graph.traverse(source_id, with_bodies=True):
             edge_label = graph.search_edge_label(source_id, target_id)
@@ -27,18 +21,29 @@ def to_networkx(graph: Graph, post_visualize: bool = False) -> nx.Graph:
                 source_id, target_id, label=edge_label, **(json.loads(edge_data))
             )
 
+    node_ids_with_edges = set([node for edge in G.edges() for node in edge])
+    for node_id in node_ids:
+        if node_id not in node_ids_with_edges:
+            node_data = graph.search_node(node_id)
+            node_label = graph.search_node_label(node_id)
+            G.add_node(node_id, label=node_label, **node_data)
+
     if post_visualize:
         # Visualizing the NetworkX Graph
-        plt.figure(figsize=(10, 8))
+        plt.figure(figsize=(10, 8), dpi=100)  # Increase the figure size and resolution
+        pos = nx.spring_layout(G)  # Use spring layout for better node positioning
         nx.draw(
             G,
-            with_labels=True,
+            pos,
+            with_labels=True,  # Show node labels
             node_color="skyblue",
             edge_color="gray",
-            font_size=8,
-            node_size=500,
+            font_size=10,  # Adjust font size as needed
+            node_size=500,  # Adjust node size as needed
+            font_weight="bold",  # Make node labels bold
+            font_color="black",  # Set node label color
         )
-        plt.axis("off")
+        plt.axis("on")  # Show the axes
         plt.show()
 
     return G
