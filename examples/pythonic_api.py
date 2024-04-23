@@ -111,11 +111,9 @@ def main(url, token):
         logging.info(networkx)
 
         # NetworkX to Personal Graph
-        personal_graph = from_networkx(networkx)
+        personal_graph = from_networkx(networkx, post_visualize=True)
         logging.info("NetworkX Graph to Personal Graph")
         logging.info(personal_graph)
-        visualized_personal_graph = graph.visualize_graph(personal_graph)
-        visualized_personal_graph.render("sample.dot")
 
         graph.save()
 
