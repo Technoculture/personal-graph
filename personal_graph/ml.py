@@ -49,24 +49,18 @@ def to_networkx(graph: Graph, post_visualize: bool = False) -> nx.Graph:
     return G
 
 
-def to_personal_graph(network_graph: nx) -> KnowledgeGraph:
+def from_networkx(network_graph: nx) -> KnowledgeGraph:
     graph = KnowledgeGraph()
 
-    # Convert nodes
-    for node_id, node_data in network_graph.nodes(data=True):
-        node_attributes: Dict[str, Any] = node_data
-        node_label: str = node_attributes.pop("label", "")
-        node = Node(
-            id=str(node_id),
-            label=node_label[0] if node_label else "",
-            attributes=json.dumps(node_attributes),
-        )
-        graph.nodes.append(node)
+    node_ids_with_edges = set()
 
-    # Convert edges
+    # Convert networkX edges to personal graph edges
     for source_id, target_id, edge_data in network_graph.edges(data=True):
         edge_attributes: Dict[str, Any] = edge_data
         edge_label: str = edge_attributes.pop("label", "")
+        node_ids_with_edges.add(str(source_id))
+        node_ids_with_edges.add(str(target_id))
+
         edge = Edge(
             source=str(source_id),
             target=str(target_id),
@@ -74,5 +68,17 @@ def to_personal_graph(network_graph: nx) -> KnowledgeGraph:
             attributes=json.dumps(edge_attributes),
         )
         graph.edges.append(edge)
+
+    # Convert networkX nodes to personal graph nodes
+    for node_id, node_data in network_graph.nodes(data=True):
+        if str(node_id) not in node_ids_with_edges:
+            node_attributes: Dict[str, Any] = node_data
+            node_label: str = node_attributes.pop("label", "")
+            node = Node(
+                id=str(node_id),
+                label=node_label[0] if node_label else "",
+                attributes=json.dumps(node_attributes),
+            )
+            graph.nodes.append(node)
 
     return graph
