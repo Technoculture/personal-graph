@@ -1,7 +1,9 @@
 import json
 import networkx as nx  # type: ignore
+from typing import Dict, Any
 import matplotlib.pyplot as plt
 from personal_graph.graph import Graph
+from personal_graph.models import Node, KnowledgeGraph, Edge
 
 
 def to_networkx(graph: Graph, post_visualize: bool = False) -> nx.Graph:
@@ -14,12 +16,16 @@ def to_networkx(graph: Graph, post_visualize: bool = False) -> nx.Graph:
     node_ids = graph.fetch_ids_from_db()
     for node_id in node_ids:
         node_data = graph.search_node(node_id)
-        G.add_node(node_id, **node_data)
+        node_label = graph.search_node_label(node_id)
+        G.add_node(node_id, label=node_label, **node_data)
 
     # Add edges
     for source_id in node_ids:
         for target_id, _, edge_data in graph.traverse(source_id, with_bodies=True):
-            G.add_edge(source_id, target_id, **(json.loads(edge_data)))
+            edge_label = graph.search_edge_label(source_id, target_id)
+            G.add_edge(
+                source_id, target_id, label=edge_label, **(json.loads(edge_data))
+            )
 
     if post_visualize:
         # Visualizing the NetworkX Graph
@@ -36,3 +42,32 @@ def to_networkx(graph: Graph, post_visualize: bool = False) -> nx.Graph:
         plt.show()
 
     return G
+
+
+def to_personal_graph(network_graph: nx) -> KnowledgeGraph:
+    graph = KnowledgeGraph()
+
+    # Convert nodes
+    for node_id, node_data in network_graph.nodes(data=True):
+        node_attributes: Dict[str, Any] = node_data
+        node_label: str = node_attributes.pop("label", "")
+        node = Node(
+            id=str(node_id),
+            label=node_label[0] if node_label else "",
+            attributes=json.dumps(node_attributes),
+        )
+        graph.nodes.append(node)
+
+    # Convert edges
+    for source_id, target_id, edge_data in network_graph.edges(data=True):
+        edge_attributes: Dict[str, Any] = edge_data
+        edge_label: str = edge_attributes.pop("label", "")
+        edge = Edge(
+            source=str(source_id),
+            target=str(target_id),
+            label=edge_label[0] if edge_label else "",
+            attributes=json.dumps(edge_attributes),
+        )
+        graph.edges.append(edge)
+
+    return graph
