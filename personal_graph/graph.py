@@ -29,7 +29,8 @@ from .database import (
     nodes_list,
     vector_search_node,
     find_label,
-    find_edge_label,
+    find_outdegree_edges,
+    find_indegree_edges,
 )
 from .natural import insert_into_graph, search_from_graph, visualize_knowledge_graph
 from .visualizers import graphviz_visualize
@@ -136,9 +137,6 @@ class Graph(AbstractContextManager):
     def search_node_label(self, node_id: Any) -> Any:
         return atomic(find_label(node_id), self.db_url, self.auth_token)
 
-    def search_edge_label(self, source: Any, target: Any) -> Any:
-        return atomic(find_edge_label(source, target), self.db_url, self.auth_token)
-
     def traverse(
         self, source: Any, target: Optional[Any] = None, with_bodies: bool = False
     ) -> List:
@@ -177,6 +175,12 @@ class Graph(AbstractContextManager):
 
     def fetch_ids_from_db(self) -> List[str]:
         return atomic(nodes_list(), self.db_url, self.auth_token)
+
+    def search_indegree_edges(self, target) -> List[Any]:
+        return atomic(find_indegree_edges(target), self.db_url, self.auth_token)
+
+    def search_outdegree_edges(self, source) -> List[Any]:
+        return atomic(find_outdegree_edges(source), self.db_url, self.auth_token)
 
     def is_unique_prompt(self, text: str, threshold: float) -> bool:
         similar_nodes = atomic(

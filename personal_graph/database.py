@@ -549,16 +549,6 @@ def find_label(identifier: Any) -> CursorExecFunction:
     return _find_label
 
 
-def find_edge_label(source: Any, target: Any) -> CursorExecFunction:
-    def _find_edge_label(cursor, connection):
-        edge_label = cursor.execute(
-            "SELECT label from edges where source=? and target=?", (source, target)
-        ).fetchone()
-        return edge_label
-
-    return _find_edge_label
-
-
 def _parse_search_results(results: List[Tuple], idx: int = 0) -> List[Dict]:
     return [json.loads(item[idx]) for item in results]
 
@@ -818,6 +808,34 @@ def nodes_list() -> CursorExecFunction:
         return ids
 
     return _fetch_nodes_from_db
+
+
+def find_indegree_edges(target_id: Any) -> CursorExecFunction:
+    def _indegree_edges(cursor, connection):
+        indegree = cursor.execute(
+            "SELECT source, label, attributes from edges where target=? ", (target_id,)
+        )
+
+        if indegree:
+            indegree = indegree.fetchall()
+
+        return indegree
+
+    return _indegree_edges
+
+
+def find_outdegree_edges(source_id: Any) -> CursorExecFunction:
+    def _outdegree_edges(cursor, connection):
+        outdegree = cursor.execute(
+            "SELECT target, label, attributes from edges where source=? ", (source_id,)
+        )
+
+        if outdegree:
+            outdegree = outdegree.fetchall()
+
+        return outdegree
+
+    return _outdegree_edges
 
 
 def all_connected_nodes(node_or_edge: Union[Node | Edge]) -> CursorExecFunction:
