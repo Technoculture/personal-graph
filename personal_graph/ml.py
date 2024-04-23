@@ -35,7 +35,7 @@ def to_networkx(graph: Graph, *, post_visualize: bool = False) -> nx.Graph:
             print(node_id, "NODEID")
             node_data = graph.search_node(node_id)
             node_label = graph.search_node_label(node_id)
-            node_data["label"] = snode_label
+            node_data["label"] = node_label
             G.add_node(node_id, **node_data)
 
     if post_visualize:
