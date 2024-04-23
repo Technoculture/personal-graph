@@ -28,6 +28,8 @@ from .database import (
     find_similar_nodes,
     nodes_list,
     vector_search_node,
+    find_label,
+    find_edge_label,
 )
 from .natural import insert_into_graph, search_from_graph, visualize_knowledge_graph
 from .visualizers import graphviz_visualize
@@ -130,6 +132,12 @@ class Graph(AbstractContextManager):
 
     def search_node(self, node_id: Any) -> Any:
         return atomic(find_node(node_id), self.db_url, self.auth_token)
+
+    def search_node_label(self, node_id: Any) -> Any:
+        return atomic(find_label(node_id), self.db_url, self.auth_token)
+
+    def search_edge_label(self, source: Any, target: Any) -> Any:
+        return atomic(find_edge_label(source, target), self.db_url, self.auth_token)
 
     def traverse(
         self, source: Any, target: Optional[Any] = None, with_bodies: bool = False

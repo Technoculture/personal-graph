@@ -27,7 +27,6 @@ class Edge(BaseModel):
     )
     label: str = Field(
         ...,
-        min_length=2,
         description="Most related and unique name associated with the edge.",
     )
     attributes: Union[str, Dict[str, str]] = Field(
