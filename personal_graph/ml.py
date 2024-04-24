@@ -90,7 +90,7 @@ def from_networkx(network_graph: nx, *, post_visualize: bool = False) -> Knowled
             node_label: str = node_attributes.pop("label", "")
             node = Node(
                 id=str(node_id),
-                label=node_label[0] if node_label else "",
+                label=node_label if node_label else "",
                 attributes=json.dumps(node_attributes),
             )
             graph.nodes.append(node)
