@@ -1,7 +1,8 @@
 import pytest
 from unittest.mock import patch
 
-from personal_graph.models import KnowledgeGraph, Node, Edge
+from personal_graph.graph import Graph
+from personal_graph.models import KnowledgeGraph, Node, Edge, EdgeInput
 
 
 @pytest.fixture
@@ -82,3 +83,18 @@ def mock_generate_graph():
         "personal_graph.natural.generate_graph", return_value=mock_knowledge_graph
     ):
         yield mock_knowledge_graph
+
+
+@pytest.fixture
+def mock_personal_graph(mock_atomic, mock_db_connection_and_cursor):
+    graph = Graph()
+
+    node1 = Node(id=1, label="Sample Label", attributes={"Person": "scholar"})
+    node2 = Node(id=2, label="Researching", attributes={"University": "Stanford"})
+    graph.add_nodes([node1, node2])
+
+    edge1 = EdgeInput(
+        source=node1, target=node2, label="has", attributes={"Person": "University"}
+    )
+    graph.add_edge(edge1)
+    yield graph
