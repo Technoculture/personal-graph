@@ -16,9 +16,14 @@ def test_from_networkx(mock_personal_graph, mock_atomic, mock_db_connection_and_
     networkx_graph.add_node(
         "2", label="Researching", attribute={"University": "Stanford"}
     )
+    networkx_graph.add_node("3", label="value", attribute={"Body": "Sample Body"})
     networkx_graph.add_edge("1", "2", label="has", attribute={"Person": "University"})
 
     personal_graph = from_networkx(networkx_graph)
 
     # Check if the returned object is a KnowledgeGraph
     assert isinstance(personal_graph, KnowledgeGraph)
+    assert len(personal_graph.edges) == 1
+
+    # Isolated Nodes
+    assert len(personal_graph.nodes) == 1
