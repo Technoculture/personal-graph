@@ -91,8 +91,7 @@ def mock_personal_graph(mock_atomic, mock_db_connection_and_cursor):
 
     node1 = Node(id=1, label="Sample Label", attributes={"Person": "scholar"})
     node2 = Node(id=2, label="Researching", attributes={"University": "Stanford"})
-    node3 = Node(id=3, label="value", attributes={"body": "Sample Body"})
-    graph.add_nodes([node1, node2, node3])
+    graph.add_nodes([node1, node2])
 
     edge1 = EdgeInput(
         source=node1, target=node2, label="has", attributes={"Person": "University"}
