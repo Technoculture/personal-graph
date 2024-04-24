@@ -45,9 +45,9 @@ def to_networkx(graph: Graph, *, post_visualize: bool = False) -> nx.Graph:
             pos,
             with_labels=True,  # Show node labels
             node_color="skyblue",
-            edge_color="gray",
+            edge_color="black",
             font_size=10,  # Adjust font size as needed
-            node_size=500,  # Adjust node size as needed
+            node_size=600,  # Adjust node size as needed
             font_weight="bold",  # Make node labels bold
             font_color="black",  # Set node label color
         )
@@ -55,7 +55,7 @@ def to_networkx(graph: Graph, *, post_visualize: bool = False) -> nx.Graph:
             G, pos, edge_labels=nx.get_edge_attributes(G, "label")
         )
         plt.axis("on")  # Show the axes
-        plt.savefig("sample.png")
+        plt.savefig("networkX_graph.png")
 
     return G
 
@@ -87,7 +87,7 @@ def from_networkx(network_graph: nx, *, post_visualize: bool = False) -> Knowled
             node_label: str = node_attributes.pop("label", "")
             node = Node(
                 id=str(node_id),
-                label=node_label if node_label else "",
+                label=node_label[0] if node_label else "",
                 attributes=json.dumps(node_attributes),
             )
             graph.nodes.append(node)
