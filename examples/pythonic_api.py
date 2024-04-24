@@ -111,7 +111,7 @@ def main(url, token):
         logging.info(networkx)
 
         # NetworkX to Personal Graph
-        personal_graph = from_networkx(networkx, post_visualize=True)
+        personal_graph = from_networkx(networkx, post_visualize=True, override=False)
         logging.info("NetworkX Graph to Personal Graph")
         logging.info(personal_graph)
 
