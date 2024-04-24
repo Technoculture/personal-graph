@@ -29,10 +29,8 @@ def to_networkx(graph: Graph, *, post_visualize: bool = False) -> nx.Graph:
             G.add_edge(source_id, target_id, **edge_data)
 
     node_ids_with_edges = set([node for edge in G.edges() for node in edge])
-    print("nodeids", node_ids_with_edges)
     for node_id in node_ids:
         if node_id not in node_ids_with_edges:
-            print(node_id, "NODEID")
             node_data = graph.search_node(node_id)
             node_label = graph.search_node_label(node_id)
             node_data["label"] = node_label
