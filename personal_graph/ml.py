@@ -38,23 +38,26 @@ def to_networkx(graph: Graph, *, post_visualize: bool = False) -> nx.Graph:
 
     if post_visualize:
         # Visualizing the NetworkX Graph
-        plt.figure(figsize=(10, 8), dpi=100)  # Increase the figure size and resolution
-        pos = nx.spring_layout(G)  # Use spring layout for better node positioning
-        nx.draw(
+        plt.figure(figsize=(20, 20), dpi=100)  # Increase the figure size and resolution
+        pos = nx.spring_layout(
+            G, scale=6
+        )  # Use spring layout for better node positioning
+
+        nx.draw_networkx(
             G,
             pos,
-            with_labels=True,  # Show node labels
+            with_labels=True,
+            nodelist=G.nodes(),
+            edgelist=G.edges(),
+            node_size=600,
             node_color="skyblue",
-            edge_color="black",
-            font_size=10,  # Adjust font size as needed
-            node_size=600,  # Adjust node size as needed
-            font_weight="bold",  # Make node labels bold
-            font_color="black",  # Set node label color
+            edge_color="gray",
+            width=1.5,
         )
         nx.draw_networkx_edge_labels(
             G, pos, edge_labels=nx.get_edge_attributes(G, "label")
         )
-        plt.axis("on")  # Show the axes
+        plt.axis("off")  # Show the axes
         plt.savefig("networkX_graph.png")
 
     return G
