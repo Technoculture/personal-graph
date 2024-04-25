@@ -1,8 +1,14 @@
 import os
 import logging
-from personal_graph.graph import Graph
-from personal_graph.ml import to_networkx, from_networkx
-from personal_graph.models import Node, EdgeInput, KnowledgeGraph, Edge
+from personal_graph import (
+    Graph,
+    to_networkx,
+    from_networkx,
+    Node,
+    EdgeInput,
+    KnowledgeGraph,
+    Edge,
+)
 
 
 def main(url, token):
