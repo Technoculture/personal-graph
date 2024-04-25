@@ -229,11 +229,12 @@ def main():
             with st.status("Generating response..."):
                 is_unique = graph.is_unique_prompt(prompt, 0.6)
                 if is_unique and kg:
-                    sub_graph = graph.insert(prompt)
-                    for sg_node in sub_graph.nodes:
+                    question_graph = graph.insert(prompt)
+                    sub_graph = graph.search_query(response.answer)
+                    for sg_node in question_graph.nodes:
                         kg.nodes.append(sg_node)
 
-                    for sg_edge in sub_graph.edges:
+                    for sg_edge in question_graph.edges:
                         kg.edges.append(sg_edge)
 
                     # Update the backstory with the new prompt
