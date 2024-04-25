@@ -83,6 +83,31 @@ def from_networkx(
             node_ids_with_edges.add(str(source_id))
             node_ids_with_edges.add(str(target_id))
 
+            if not override:
+                # Check if the node with the given id exists, if not then firstly add the node.
+                source = graph.search_node(source_id)
+                if source is []:
+                    node_ids_with_edges.remove(str(source_id))
+                    graph.add_node(
+                        Node(
+                            id=str(source_id),
+                            label=edge_label if edge_label else "",
+                            attributes=edge_attributes,
+                        )
+                    )
+
+                target = graph.search_node(target_id)
+                if target is []:
+                    node_ids_with_edges.remove(str(target_id))
+                    graph.add_node(
+                        Node(
+                            id=str(target_id),
+                            label=edge_label if edge_label else "",
+                            attributes=edge_attributes,
+                        )
+                    )
+
+            # After adding the new nodes if exists , add an edge
             edge = Edge(
                 source=str(source_id),
                 target=str(target_id),
@@ -101,8 +126,16 @@ def from_networkx(
                     label=node_label[0] if node_label else "",
                     attributes=node_attributes,
                 )
+
+                if not override:
+                    # Check if the node exists
+                    if_node_exists = graph.search_node(node_id)
+
+                    if if_node_exists:
+                        graph.update_node(node)
+                    else:
+                        graph.add_node(node)
                 kg.nodes.append(node)
-                graph.add_node(node)
 
         for edge in kg.edges:
             source_node_attributes = graph.search_node(edge.source)

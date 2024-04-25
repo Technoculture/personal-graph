@@ -660,6 +660,9 @@ def pruning(threshold: float) -> CursorExecFunction:
                 cursor, connection
             )
 
+            if similar_nodes is None:
+                continue
+
             if len(similar_nodes) < 1:
                 continue
 
