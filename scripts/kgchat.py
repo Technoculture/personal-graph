@@ -251,7 +251,7 @@ def main():
                     st.graphviz_chart(graph.visualize_graph(sub_graph))
 
                 else:
-                    sub_graph = graph.search_query(prompt)
+                    sub_graph = graph.search_query(response.answer)
                     st.graphviz_chart(graph.visualize_graph(sub_graph))
                     st.sidebar.graphviz_chart(graph.visualize_graph(kg))
                     for idx, context in enumerate(
