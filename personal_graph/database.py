@@ -462,6 +462,7 @@ def remove_nodes(identifiers: List[Any]) -> CursorExecFunction:
             cursor.execute(read_sql("delete-node.sql"), (identifier,))
 
             cursor.execute(read_sql("delete-node-embedding.sql"), (node[0],))
+            connection.commit()
 
     return _remove_node
 
