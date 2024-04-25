@@ -87,7 +87,7 @@ def from_networkx(
                 source=str(source_id),
                 target=str(target_id),
                 label=edge_label if edge_label else "",
-                attributes=json.dumps(edge_attributes),
+                attributes=edge_attributes,
             )
             kg.edges.append(edge)
 
@@ -99,7 +99,7 @@ def from_networkx(
                 node = Node(
                     id=str(node_id),
                     label=node_label[0] if node_label else "",
-                    attributes=json.dumps(node_attributes),
+                    attributes=node_attributes,
                 )
                 kg.nodes.append(node)
                 graph.add_node(node)
@@ -115,7 +115,7 @@ def from_networkx(
                     label=source_node_label
                     if isinstance(source_node_label, str)
                     else "Sample label",
-                    attributes=json.dumps(source_node_attributes)
+                    attributes=source_node_attributes
                     if isinstance(source_node_attributes, Dict)
                     else "Sample Attributes",
                 ),
@@ -124,12 +124,12 @@ def from_networkx(
                     label=target_node_label
                     if isinstance(target_node_label, str)
                     else "Sample label",
-                    attributes=json.dumps(target_node_attributes)
+                    attributes=target_node_attributes
                     if isinstance(target_node_attributes, Dict)
                     else "Sample Attributes",
                 ),
                 label=edge.label if isinstance(edge.label, str) else "Sample label",
-                attributes=json.dumps(edge.attributes)
+                attributes=edge.attributes
                 if isinstance(edge_attributes, Dict)
                 else "Sample Attributes",
             )
