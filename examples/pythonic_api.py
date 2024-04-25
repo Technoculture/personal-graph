@@ -105,15 +105,13 @@ def main(url, token):
         )
         logging.info(graph.visualize_graph(kg))
 
-        # Personal Graph to NetworkX
-        networkx = to_networkx(graph, post_visualize=True)
-        logging.info("Personal Graph to NetworkX Graph")
-        logging.info(networkx)
-
-        # NetworkX to Personal Graph
-        personal_graph = from_networkx(networkx, post_visualize=True, override=False)
-        logging.info("NetworkX Graph to Personal Graph")
-        logging.info(personal_graph)
+        # Transforms to and from networkx do not alter the graph
+        g2 = from_networkx(
+            to_networkx(graph, post_visualize=True), post_visualize=True, override=False
+        )
+        if graph == g2:
+            logging.info("TRUE")
+        assert graph == g2
 
         graph.save()
 
