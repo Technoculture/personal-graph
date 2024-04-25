@@ -2,7 +2,7 @@ import json
 import os
 
 import networkx as nx  # type: ignore
-from typing import Dict, Any
+from typing import Dict, Any, Tuple
 import matplotlib.pyplot as plt
 from graphviz import Digraph  # type: ignore
 
@@ -124,7 +124,7 @@ def from_networkx(
                 node_label: str = node_attributes.pop("label", "")
                 node = Node(
                     id=str(node_id),
-                    label=node_label[0] if node_label else "Sample Label",
+                    label=node_label[0] if isinstance(node_label, Tuple) else "Sample Label",
                     attributes=node_attributes
                     if node_attributes
                     else {"body": "sample body"},

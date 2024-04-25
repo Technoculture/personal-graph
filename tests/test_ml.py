@@ -13,7 +13,7 @@ def test_to_networkx(mock_personal_graph, mock_atomic, mock_db_connection_and_cu
 
 def test_from_networkx(mock_personal_graph, mock_atomic, mock_db_connection_and_cursor):
     networkx_graph = nx.Graph()
-    networkx_graph.add_node("1", label="Sample Label", attribute={"Person": "scholar"})
+    networkx_graph.add_node("1", label="Sample Label", attribute=json.dumps({"Person": "scholar"}))
     networkx_graph.add_node(
         "2", label="Researching", attribute=json.dumps({"University": "Stanford"})
     )
