@@ -462,6 +462,7 @@ def remove_nodes(identifiers: List[Any]) -> CursorExecFunction:
             cursor.execute(read_sql("delete-node.sql"), (identifier,))
 
             cursor.execute(read_sql("delete-node-embedding.sql"), (node[0],))
+            connection.commit()
 
     return _remove_node
 
@@ -537,6 +538,16 @@ def find_node(identifier: Any) -> CursorExecFunction:
             return {}
 
     return _find_node
+
+
+def find_label(identifier: Any) -> CursorExecFunction:
+    def _find_label(cursor, connection):
+        node_label = cursor.execute(
+            "SELECT label from nodes where id=?", (identifier,)
+        ).fetchone()
+        return node_label
+
+    return _find_label
 
 
 def _parse_search_results(results: List[Tuple], idx: int = 0) -> List[Dict]:
@@ -649,6 +660,9 @@ def pruning(threshold: float) -> CursorExecFunction:
             similar_nodes = vector_search_node(node_data, threshold, 3)(
                 cursor, connection
             )
+
+            if similar_nodes is None:
+                continue
 
             if len(similar_nodes) < 1:
                 continue
@@ -798,6 +812,34 @@ def nodes_list() -> CursorExecFunction:
         return ids
 
     return _fetch_nodes_from_db
+
+
+def find_indegree_edges(target_id: Any) -> CursorExecFunction:
+    def _indegree_edges(cursor, connection):
+        indegree = cursor.execute(
+            "SELECT source, label, attributes from edges where target=? ", (target_id,)
+        )
+
+        if indegree:
+            indegree = indegree.fetchall()
+
+        return indegree
+
+    return _indegree_edges
+
+
+def find_outdegree_edges(source_id: Any) -> CursorExecFunction:
+    def _outdegree_edges(cursor, connection):
+        outdegree = cursor.execute(
+            "SELECT target, label, attributes from edges where source=? ", (source_id,)
+        )
+
+        if outdegree:
+            outdegree = outdegree.fetchall()
+
+        return outdegree
+
+    return _outdegree_edges
 
 
 def all_connected_nodes(node_or_edge: Union[Node | Edge]) -> CursorExecFunction:

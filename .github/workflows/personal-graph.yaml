@@ -62,5 +62,5 @@ jobs:
 
       - name: Test with pytest
         run: |
-         cd personal_graph 
+         cd tests 
          poetry run pytest -vvv

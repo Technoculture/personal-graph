@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "personal-graph"
-version = "0.1.7"
+version = "0.1.8"
 description = "Graph database in LibSQL"
 authors = ["Anubhuti Bhardwaj <anubhutibhardwaj11@gmail.com>"]
 license = "MIT"
@@ -27,6 +27,7 @@ streamlit = "^1.33.0"
 types-pygments = "^2.17.0.20240310"
 types-decorator = "^5.1.8.20240310"
 dspy-ai = "^2.4.5"
+networkx = {extras = ["default"], version = "^3.3"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.1.1"
