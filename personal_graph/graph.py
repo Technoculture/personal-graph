@@ -41,6 +41,11 @@ class Graph(AbstractContextManager):
         self.db_url = db_url
         self.auth_token = auth_token
 
+    def __eq__(self, other):
+        if not isinstance(other, Graph):
+            return "Not of Graph Type"
+        return self.db_url == other.db_url and self.auth_token == other.auth_token
+
     def __enter__(self, schema_file: str = "schema.sql") -> Graph:
         if not self.db_url:
             # Support for local SQLite database
