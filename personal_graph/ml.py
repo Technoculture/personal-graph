@@ -19,24 +19,24 @@ def to_networkx(graph: pg.Graph, *, post_visualize: bool = False) -> nx.Graph:
     node_ids = graph.fetch_ids_from_db()
     # Add edges to networkX
     for source_id in node_ids:
-        for target_id, edge_label, edge_data in graph.search_outdegree_edges(source_id):
+        outdegree_edges = graph.search_outdegree_edges(source_id)
+        for target_id, edge_label, edge_data in outdegree_edges:
             edge_data = json.loads(edge_data)
             edge_data["label"] = edge_label
             G.add_edge(source_id, target_id, **edge_data)
 
     for target_id in node_ids:
-        for source_id, edge_label, edge_data in graph.search_indegree_edges(target_id):
+        indegree_edges = graph.search_indegree_edges(target_id)
+        for source_id, edge_label, edge_data in indegree_edges:
             edge_data = json.loads(edge_data)
             edge_data["label"] = edge_label
             G.add_edge(source_id, target_id, **edge_data)
 
-    node_ids_with_edges = set([node for edge in G.edges() for node in edge])
     for node_id in node_ids:
-        if node_id not in node_ids_with_edges:
-            node_data = graph.search_node(node_id)
-            node_label = graph.search_node_label(node_id)
-            node_data["label"] = node_label
-            G.add_node(node_id, **node_data)
+        node_data = graph.search_node(node_id)
+        node_label = graph.search_node_label(node_id)
+        node_data["label"] = node_label
+        G.add_node(node_id, **node_data)
 
     if post_visualize:
         # Visualizing the NetworkX Graph
@@ -80,14 +80,11 @@ def from_networkx(
         for source_id, target_id, edge_data in network_graph.edges(data=True):
             edge_attributes: Dict[str, Any] = edge_data
             edge_label: str = edge_attributes["label"]
-            node_ids_with_edges.add(str(source_id))
-            node_ids_with_edges.add(str(target_id))
 
             if not override:
                 # Check if the node with the given id exists, if not then firstly add the node.
                 source = graph.search_node(source_id)
                 if source is []:
-                    node_ids_with_edges.remove(str(source_id))
                     graph.add_node(
                         Node(
                             id=str(source_id),
@@ -95,6 +92,8 @@ def from_networkx(
                             attributes=edge_attributes,
                         )
                     )
+                else:
+                    node_ids_with_edges.add(str(source_id))
 
                 target = graph.search_node(target_id)
                 if target is []:
@@ -106,6 +105,8 @@ def from_networkx(
                             attributes=edge_attributes,
                         )
                     )
+                else:
+                    node_ids_with_edges.add(str(target_id))
 
             # After adding the new nodes if exists , add an edge
             edge = Edge(
@@ -123,8 +124,10 @@ def from_networkx(
                 node_label: str = node_attributes.pop("label", "")
                 node = Node(
                     id=str(node_id),
-                    label=node_label[0] if node_label else "",
-                    attributes=node_attributes,
+                    label=node_label[0] if node_label else "Sample Label",
+                    attributes=node_attributes
+                    if node_attributes
+                    else {"body": "sample body"},
                 )
 
                 if not override:
@@ -135,6 +138,8 @@ def from_networkx(
                         graph.update_node(node)
                     else:
                         graph.add_node(node)
+                else:
+                    graph.add_node(node)
                 kg.nodes.append(node)
 
         for edge in kg.edges:
