@@ -16,7 +16,7 @@ from personal_graph.database import (
 
 load_dotenv()
 
-if os.getenv("OPEN_API_KEY"):
+if os.getenv("LITE_LLM_BASE_URL"):
     client = instructor.patch(
         OpenAI(
             api_key="",
