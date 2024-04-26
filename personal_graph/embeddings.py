@@ -15,12 +15,14 @@ class EmbeddingsModel(ABC):
 
 class OpenAIEmbeddingsModel(EmbeddingsModel):
     def __init__(self) -> None:
+        base_url = os.getenv("LITE_LLM_BASE_URL")
+        headers = {"Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN')}"}
         self.client = (
-            OpenAI(api_key=os.getenv("OPEN_API_KEY"))
-            if os.getenv("OPEN_API_KEY")
+            OpenAI(api_key="", base_url=base_url, default_headers=headers)
+            if base_url and headers
             else None
         )
-        self.model = "text-embedding-3-small"
+        self.model = "embeddings"
 
     def get_embedding(self, text: str) -> list[float]:
         if self.client is None:
