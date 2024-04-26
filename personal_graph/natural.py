@@ -17,7 +17,13 @@ from personal_graph.database import (
 load_dotenv()
 
 if os.getenv("OPEN_API_KEY"):
-    client = instructor.patch(OpenAI(api_key=os.getenv("OPEN_API_KEY")))
+    client = instructor.patch(
+        OpenAI(
+            api_key=os.getenv("OPEN_API_KEY"),
+            base_url=os.getenv("LITE_LLM_BASE_URL"),
+            default_headers={"Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN')}"},
+        )
+    )
 else:
     client = None
 
@@ -26,9 +32,15 @@ auth_token = os.getenv("LIBSQL_AUTH_TOKEN")
 
 
 def generate_graph(query: str) -> KnowledgeGraph:
-    client = instructor.patch(OpenAI(api_key=os.getenv("OPEN_API_KEY")))
+    client = instructor.patch(
+        OpenAI(
+            api_key=os.getenv("OPEN_API_KEY"),
+            base_url=os.getenv("LITE_LLM_BASE_URL"),
+            default_headers={"Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN')}"},
+        )
+    )
     knowledge_graph = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="function-calling",
         messages=[
             {
                 "role": "system",
