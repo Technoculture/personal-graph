@@ -1,8 +1,8 @@
 import os
 import uuid
 import instructor
+import openai
 from graphviz import Digraph  # type: ignore
-from openai import OpenAI
 from dotenv import load_dotenv
 from personal_graph.models import KnowledgeGraph, Node, Edge
 from personal_graph.database import (
@@ -17,30 +17,29 @@ from personal_graph.database import (
 load_dotenv()
 
 if os.getenv("LITE_LLM_BASE_URL"):
-    client = instructor.patch(
-        OpenAI(
-            api_key="",
-            base_url=os.getenv("LITE_LLM_BASE_URL"),
-            default_headers={"Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN')}"},
-        )
+    openai_client = openai.OpenAI(
+        api_key="",
+        base_url=os.getenv("LITE_LLM_BASE_URL"),
+        default_headers={"Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN')}"},
     )
+    client = instructor.from_openai(openai_client)
 else:
-    client = None
+    client = None  # type: ignore
 
 db_url = os.getenv("LIBSQL_URL")
 auth_token = os.getenv("LIBSQL_AUTH_TOKEN")
 
 
 def generate_graph(query: str) -> KnowledgeGraph:
-    client = instructor.patch(
-        OpenAI(
+    client = instructor.from_openai(
+        openai.OpenAI(
             api_key="",
             base_url=os.getenv("LITE_LLM_BASE_URL"),
             default_headers={"Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN')}"},
         )
     )
     knowledge_graph = client.chat.completions.create(
-        model="function-calling",
+        model="fast-70b",
         messages=[
             {
                 "role": "system",
