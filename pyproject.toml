@@ -29,6 +29,7 @@ types-decorator = "^5.1.8.20240310"
 dspy-ai = "^2.4.5"
 networkx = {extras = ["default"], version = "^3.3"}
 litellm = "^1.35.26"
+groq = "^0.5.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.1.1"
