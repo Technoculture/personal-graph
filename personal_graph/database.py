@@ -672,6 +672,9 @@ def pruning(threshold: float) -> CursorExecFunction:
                     "SELECT id from nodes where embed_id=?", (rowid,)
                 ).fetchone()
 
+                if similar_node_id is None:
+                    continue
+
                 # Skip the similar nodes to be merged
                 if similar_node_id[0] == node_id[0]:
                     continue

@@ -19,7 +19,7 @@ load_dotenv()
 if os.getenv("OPEN_API_KEY"):
     client = instructor.patch(
         OpenAI(
-            api_key=os.getenv("OPEN_API_KEY"),
+            api_key="",
             base_url=os.getenv("LITE_LLM_BASE_URL"),
             default_headers={"Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN')}"},
         )
@@ -34,7 +34,7 @@ auth_token = os.getenv("LIBSQL_AUTH_TOKEN")
 def generate_graph(query: str) -> KnowledgeGraph:
     client = instructor.patch(
         OpenAI(
-            api_key=os.getenv("OPEN_API_KEY"),
+            api_key="",
             base_url=os.getenv("LITE_LLM_BASE_URL"),
             default_headers={"Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN')}"},
         )
