@@ -12,7 +12,9 @@ def test_insert_into_graph(
     mock_openai_client.chat.completions.create.return_value = mock_generate_graph
 
     query = "Mock Node Insert"
-    result = insert_into_graph(query)
+    result = insert_into_graph(
+        query, llm_client=None, llm_model_name="", embed_client=None, embed_model=""
+    )
 
     assert result == mock_generate_graph
     assert isinstance(result, KnowledgeGraph)
@@ -25,7 +27,7 @@ def test_search_from_graph(
     mock_openai_client.chat.completions.create.return_value = mock_generate_graph
 
     query = "Mock Node Search"
-    result = search_from_graph(query)
+    result = search_from_graph(query, embed_client=None, embed_model="")
 
     assert isinstance(result, KnowledgeGraph)
     mock_cursor.execute.assert_called()
