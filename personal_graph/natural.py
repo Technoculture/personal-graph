@@ -54,7 +54,10 @@ def visualize_knowledge_graph(kg: KnowledgeGraph) -> Digraph:
 
 
 def insert_into_graph(
-    text: str, llm_client: Any, llm_model_name: str, embedding_model: OpenAIEmbeddingsModel
+    text: str,
+    llm_client: Any,
+    llm_model_name: str,
+    embedding_model: OpenAIEmbeddingsModel,
 ) -> KnowledgeGraph:
     uuid_dict = {}
     kg = generate_graph(text, llm_client, llm_model_name)
@@ -91,7 +94,9 @@ def insert_into_graph(
     return kg
 
 
-def search_from_graph(text: str, embedding_model: OpenAIEmbeddingsModel) -> KnowledgeGraph:
+def search_from_graph(
+    text: str, embedding_model: OpenAIEmbeddingsModel
+) -> KnowledgeGraph:
     try:
         similar_nodes = atomic(
             vector_search_node(embedding_model, {"body": text}, 0.9, 2),

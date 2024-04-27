@@ -31,7 +31,9 @@ def main(args):
         else None
     )
 
-    embedding_model = OpenAIEmbeddingsModel(embedding_client, args.embeddings_model_name)
+    embedding_model = OpenAIEmbeddingsModel(
+        embedding_client, args.embeddings_model_name
+    )
 
     # Testing insert query into graph db
     nl_query = "increased thirst, weight loss, increased hunger, frequent urination etc. are all symptoms of diabetes."

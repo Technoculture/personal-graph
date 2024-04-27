@@ -23,18 +23,14 @@ def insert_single_node(
         logging.info(f"Exception: {e}")
 
 
-def bulk_insert_operations(
-    db_url, auth_token, embedding_model, labels, nodes
-):
+def bulk_insert_operations(db_url, auth_token, embedding_model, labels, nodes):
     ids = []
     bodies = []
     for id, body in nodes.items():
         ids.append(id)
         bodies.append(body)
 
-    db.atomic(
-        db.add_nodes(embedding_model, bodies, labels, ids), db_url, auth_token
-    )
+    db.atomic(db.add_nodes(embedding_model, bodies, labels, ids), db_url, auth_token)
 
 
 def find_a_node(db_url, auth_token, node):
@@ -56,9 +52,7 @@ def bulk_upsert(db_url, auth_token, embedding_model, labels, nodes):
 
 
 def single_upsert(db_url, auth_token, embedding_model, label, body, id):
-    db.atomic(
-        db.upsert_node(embedding_model, id, label, body), db_url, auth_token
-    )
+    db.atomic(db.upsert_node(embedding_model, id, label, body), db_url, auth_token)
 
 
 def bulk_node_connect(db_url, auth_token, embedding_model, labels, edges):
@@ -76,9 +70,7 @@ def bulk_node_connect(db_url, auth_token, embedding_model, labels, edges):
                 attributes.append({})
 
     db.atomic(
-        db.connect_many_nodes(
-            embedding_model, sources, targets, labels, attributes
-        ),
+        db.connect_many_nodes(embedding_model, sources, targets, labels, attributes),
         db_url,
         auth_token,
     )
@@ -170,9 +162,7 @@ def main(args):
     edges_labels = ["Has", "Has"]
 
     # Connect bulk nodes
-    bulk_node_connect(
-        args.url, args.auth_token, embedding_model, edges_labels, edges
-    )
+    bulk_node_connect(args.url, args.auth_token, embedding_model, edges_labels, edges)
 
     source = 3
     target = 3

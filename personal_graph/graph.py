@@ -64,7 +64,9 @@ class Graph(AbstractContextManager):
         self.llm_client = llm_client
         self.llm_model_name = llm_model_name
 
-        self.embedding_model = OpenAIEmbeddingsModel(embedding_model_client, embedding_model_name)
+        self.embedding_model = OpenAIEmbeddingsModel(
+            embedding_model_client, embedding_model_name
+        )
 
     def __eq__(self, other):
         if not isinstance(other, Graph):
@@ -203,9 +205,7 @@ class Graph(AbstractContextManager):
         return kg
 
     def search_query(self, text: str) -> KnowledgeGraph:
-        kg: KnowledgeGraph = search_from_graph(
-            text, self.embedding_model
-        )
+        kg: KnowledgeGraph = search_from_graph(text, self.embedding_model)
         return kg
 
     def visualize_graph(self, kg: KnowledgeGraph) -> Digraph:
@@ -220,10 +220,7 @@ class Graph(AbstractContextManager):
 
     def find_nodes_like(self, label: str, threshold: float) -> List[Node]:
         return atomic(
-            find_similar_nodes(
-                self.embedding_model,
-            label, threshold
-            ),
+            find_similar_nodes(self.embedding_model, label, threshold),
             self.db_url,
             self.auth_token,
         )
