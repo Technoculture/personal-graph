@@ -59,7 +59,7 @@ def mock_dot_render():
 
 @pytest.fixture
 def mock_openai_client():
-    with patch("personal_graph.natural.client") as mock_client:
+    with patch("instructor.from_openai") as mock_client:
         yield mock_client
 
 

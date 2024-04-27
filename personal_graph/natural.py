@@ -3,7 +3,6 @@ import uuid
 from typing import Any
 
 import instructor
-import openai
 from graphviz import Digraph  # type: ignore
 from dotenv import load_dotenv
 from personal_graph.models import KnowledgeGraph, Node, Edge
@@ -17,19 +16,6 @@ from personal_graph.database import (
 )
 
 load_dotenv()
-
-if os.getenv("LITE_LLM_BASE_URL"):
-    openai_client = openai.OpenAI(
-        api_key="",
-        base_url=os.getenv("LITE_LLM_BASE_URL"),
-        default_headers={"Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN')}"},
-    )
-    client = instructor.from_openai(openai_client)
-else:
-    client = None  # type: ignore
-
-db_url = os.getenv("LIBSQL_URL")
-auth_token = os.getenv("LIBSQL_AUTH_TOKEN")
 
 
 def generate_graph(query: str, llm_client: Any, llm_model_name: str) -> KnowledgeGraph:
