@@ -5,10 +5,13 @@ Provide a higher level API to the database using Pydantic
 from __future__ import annotations
 
 import json
+import os
 from typing import Any, List, Optional, Union, Dict
 import libsql_experimental as libsql  # type: ignore
 from contextlib import AbstractContextManager
 from graphviz import Digraph  # type: ignore
+from litellm.llms import openai
+
 from .models import Node, EdgeInput, KnowledgeGraph
 from .database import (
     atomic,
@@ -37,9 +40,30 @@ from .visualizers import graphviz_visualize
 
 
 class Graph(AbstractContextManager):
-    def __init__(self, db_url: Optional[str] = None, auth_token: Optional[str] = None):
+    def __init__(
+        self,
+        db_url: Optional[str] = None,
+        auth_token: Optional[str] = None,
+        *,
+        llm_client: Optional[Any] = openai.OpenAI(
+            api_key="",
+            base_url=os.getenv("LITE_LLM_BASE_URL"),
+            default_headers={"Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN')}"},
+        ),
+        embedding_model_client: Optional[Any] = openai.OpenAI(
+            api_key="",
+            base_url=os.getenv("LITE_LLM_BASE_URL"),
+            default_headers={"Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN')}"},
+        ),
+        llm_model_name: Optional[str] = "openai/gpt-3.5-turbo",
+        embedding_model_name: Optional[str] = "openai/text-embedding-3-small",
+    ):
         self.db_url = db_url
         self.auth_token = auth_token
+        self.llm_client = llm_client
+        self.embedding_client = embedding_model_client
+        self.llm_model_name = llm_model_name
+        self.embedding_model_name = embedding_model_name
 
     def __eq__(self, other):
         if not isinstance(other, Graph):
