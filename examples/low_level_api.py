@@ -7,14 +7,15 @@ from openai import OpenAI
 
 from personal_graph import database as db
 from personal_graph import visualizers
+from personal_graph.embeddings import OpenAIEmbeddingsModel
 
 
 def insert_single_node(
-    db_url, auth_token, embed_client, embed_model, new_label, new_node, new_node_id
+    db_url, auth_token, embedding_model, new_label, new_node, new_node_id
 ):
     try:
         db.atomic(
-            db.add_node(embed_client, embed_model, new_label, new_node, new_node_id),
+            db.add_node(embedding_model, new_label, new_node, new_node_id),
             db_url,
             auth_token,
         )
@@ -23,7 +24,7 @@ def insert_single_node(
 
 
 def bulk_insert_operations(
-    db_url, auth_token, embed_client, embed_model, labels, nodes
+    db_url, auth_token, embedding_model, labels, nodes
 ):
     ids = []
     bodies = []
@@ -32,7 +33,7 @@ def bulk_insert_operations(
         bodies.append(body)
 
     db.atomic(
-        db.add_nodes(embed_client, embed_model, bodies, labels, ids), db_url, auth_token
+        db.add_nodes(embedding_model, bodies, labels, ids), db_url, auth_token
     )
 
 
@@ -40,7 +41,7 @@ def find_a_node(db_url, auth_token, node):
     return db.atomic(db.find_node(node), db_url, auth_token)
 
 
-def bulk_upsert(db_url, auth_token, embed_client, embed_model, labels, nodes):
+def bulk_upsert(db_url, auth_token, embedding_model, labels, nodes):
     ids = []
     bodies = []
     for id, body in nodes.items():
@@ -48,19 +49,19 @@ def bulk_upsert(db_url, auth_token, embed_client, embed_model, labels, nodes):
         bodies.append(body)
 
     db.atomic(
-        db.upsert_nodes(embed_client, embed_model, bodies, labels, ids),
+        db.upsert_nodes(embedding_model, bodies, labels, ids),
         db_url,
         auth_token,
     )
 
 
-def single_upsert(db_url, auth_token, embed_client, embed_model, label, body, id):
+def single_upsert(db_url, auth_token, embedding_model, label, body, id):
     db.atomic(
-        db.upsert_node(embed_client, embed_model, id, label, body), db_url, auth_token
+        db.upsert_node(embedding_model, id, label, body), db_url, auth_token
     )
 
 
-def bulk_node_connect(db_url, auth_token, embed_client, embed_model, labels, edges):
+def bulk_node_connect(db_url, auth_token, embedding_model, labels, edges):
     sources = []
     targets = []
     attributes = []
@@ -76,7 +77,7 @@ def bulk_node_connect(db_url, auth_token, embed_client, embed_model, labels, edg
 
     db.atomic(
         db.connect_many_nodes(
-            embed_client, embed_model, sources, targets, labels, attributes
+            embedding_model, sources, targets, labels, attributes
         ),
         db_url,
         auth_token,
@@ -84,10 +85,10 @@ def bulk_node_connect(db_url, auth_token, embed_client, embed_model, labels, edg
 
 
 def single_node_connect(
-    db_url, auth_token, embed_client, embed_model, source, target, label, attribute
+    db_url, auth_token, embedding_model, source, target, label, attribute
 ):
     db.atomic(
-        db.connect_nodes(embed_client, embed_model, source, target, label, attribute),
+        db.connect_nodes(embedding_model, source, target, label, attribute),
         db_url,
         auth_token,
     )
@@ -111,13 +112,14 @@ def main(args):
 
     # Embedding client and model name
     headers = {"Authorization": f"Bearer {args.token}"}
-    embed_client = (
+    embedding_client = (
         OpenAI(api_key="", base_url=args.base_url, default_headers=headers)
         if args.base_url and args.token
         else None
     )
-    print(embed_client)
-    embed_model = args.embedding_model_name
+    embedding_model_name = args.embedding_model_name
+
+    embedding_model = OpenAIEmbeddingsModel(embedding_client, embedding_model_name)
 
     new_node = {"subject": "MES", "type": ["person", "Dr"]}
     new_label = "Mechanical Engineer"
@@ -127,8 +129,7 @@ def main(args):
     insert_single_node(
         args.url,
         args.auth_token,
-        embed_client,
-        embed_model,
+        embedding_model,
         new_label,
         new_node,
         new_node_id,
@@ -143,7 +144,7 @@ def main(args):
 
     # Bulk Insert
     bulk_insert_operations(
-        args.url, args.auth_token, embed_client, embed_model, new_labels, new_nodes
+        args.url, args.auth_token, embedding_model, new_labels, new_nodes
     )
 
     # Search a node
@@ -154,7 +155,7 @@ def main(args):
     id = 2
 
     # Update a single node
-    single_upsert(args.url, args.auth_token, embed_client, embed_model, label, body, id)
+    single_upsert(args.url, args.auth_token, embedding_model, label, body, id)
 
     nodes = {
         1: {"name": "Stanley", "age": "30"},
@@ -163,14 +164,14 @@ def main(args):
     labels = ["Lunch Box", "Pop Singer"]
 
     # Bulk Update
-    bulk_upsert(args.url, args.auth_token, embed_client, embed_model, labels, nodes)
+    bulk_upsert(args.url, args.auth_token, embedding_model, labels, nodes)
 
     edges = {3: [(3, {"wealth": "1000 Billion"}), (2, {"balance": "1000 rupees"})]}
     edges_labels = ["Has", "Has"]
 
     # Connect bulk nodes
     bulk_node_connect(
-        args.url, args.auth_token, embed_client, embed_model, edges_labels, edges
+        args.url, args.auth_token, embedding_model, edges_labels, edges
     )
 
     source = 3
@@ -181,8 +182,7 @@ def main(args):
     single_node_connect(
         args.url,
         args.auth_token,
-        embed_client,
-        embed_model,
+        embedding_model,
         source,
         target,
         label,

@@ -12,6 +12,7 @@ from contextlib import AbstractContextManager
 from graphviz import Digraph  # type: ignore
 from litellm.llms import openai  # type: ignore
 
+from .embeddings import OpenAIEmbeddingsModel
 from .models import Node, EdgeInput, KnowledgeGraph
 from .database import (
     atomic,
@@ -65,6 +66,8 @@ class Graph(AbstractContextManager):
         self.llm_model_name = llm_model_name
         self.embedding_model_name = embedding_model_name
 
+        self.embedding_model = OpenAIEmbeddingsModel(self.embedding_client, self.embedding_model_name)
+
     def __eq__(self, other):
         if not isinstance(other, Graph):
             return "Not of Graph Type"
@@ -92,8 +95,7 @@ class Graph(AbstractContextManager):
     def add_node(self, node: Node) -> None:
         atomic(
             add_node(
-                self.embedding_client,
-                self.embedding_model_name,
+                self.embedding_model,
                 node.label,
                 json.loads(node.attributes)
                 if isinstance(node.attributes, str)
@@ -114,8 +116,7 @@ class Graph(AbstractContextManager):
         ]
         ids: List[Any] = [node.id for node in nodes]
         add_nodes_func = add_nodes(
-            self.embedding_client,
-            self.embedding_model_name,
+            self.embedding_model,
             nodes=attributes,
             labels=labels,
             ids=ids,
@@ -124,8 +125,7 @@ class Graph(AbstractContextManager):
 
     def add_edge(self, edge: EdgeInput) -> None:
         connect_nodes_func = connect_nodes(
-            self.embedding_client,
-            self.embedding_model_name,
+            self.embedding_model,
             edge.source.id,
             edge.target.id,
             edge.label,
@@ -146,8 +146,7 @@ class Graph(AbstractContextManager):
             for edge in edges
         ]
         connect_many_nodes_func = connect_many_nodes(
-            self.embedding_client,
-            self.embedding_model_name,
+            self.embedding_model,
             sources=sources,
             targets=targets,
             labels=labels,
@@ -157,8 +156,7 @@ class Graph(AbstractContextManager):
 
     def update_node(self, node: Node) -> None:
         upsert_node_func = upsert_node(
-            self.embedding_client,
-            self.embedding_model_name,
+            self.embedding_model,
             identifier=node.id,
             label=node.label,
             data=json.loads(node.attributes)
@@ -202,8 +200,7 @@ class Graph(AbstractContextManager):
             text,
             self.llm_client,
             self.llm_model_name,
-            self.embedding_client,
-            self.embedding_model_name,
+            self.embedding_model,
         )
         return kg
 
@@ -218,7 +215,7 @@ class Graph(AbstractContextManager):
 
     def merge_by_similarity(self, threshold) -> None:
         atomic(
-            pruning(self.embedding_client, self.embedding_model_name, threshold),
+            pruning(self.embedding_model, threshold),
             self.db_url,
             self.auth_token,
         )
@@ -226,7 +223,8 @@ class Graph(AbstractContextManager):
     def find_nodes_like(self, label: str, threshold: float) -> List[Node]:
         return atomic(
             find_similar_nodes(
-                self.embedding_client, self.embedding_model_name, label, threshold
+                self.embedding_model,
+            label, threshold
             ),
             self.db_url,
             self.auth_token,
@@ -247,8 +245,7 @@ class Graph(AbstractContextManager):
     def is_unique_prompt(self, text: str, threshold: float) -> bool:
         similar_nodes = atomic(
             vector_search_node(
-                self.embedding_client,
-                self.embedding_model_name,
+                self.embedding_model,
                 {"body": text},
                 threshold,
                 1,

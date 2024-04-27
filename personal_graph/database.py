@@ -22,10 +22,6 @@ from personal_graph.models import Node, Edge
 load_dotenv()
 
 
-def get_embeddings_model(embed_client: Any, embed_model: str):
-    return OpenAIEmbeddingsModel(embed_client, embed_model)
-
-
 CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
 
 
@@ -96,13 +92,11 @@ def _set_id(identifier: Any, data: Dict) -> Dict:
 def _insert_node(
     cursor: libsql.Cursor,
     connection: libsql.Connection,
-    embed_client: Any,
-    embed_model: str,
+    embedding_model: OpenAIEmbeddingsModel,
     identifier: Any,
     label: str,
     data: Dict,
 ) -> None:
-    embed_obj = get_embeddings_model(embed_client, embed_model)
     existing_node = cursor.execute(
         read_sql("existing-node.sql"), (identifier,)
     ).fetchone()
@@ -127,21 +121,19 @@ def _insert_node(
 
     cursor.execute(
         read_sql("insert-node-embedding.sql"),
-        (count, json.dumps(embed_obj.get_embedding(json.dumps(set_data)))),
+        (count, json.dumps(embedding_model.get_embedding(json.dumps(set_data)))),
     )
     connection.commit()
 
 
 def vector_search_node(
-    embed_client: Any,
-    embed_model: str,
+    embedding_model: OpenAIEmbeddingsModel,
     data: Dict,
     threshold: Optional[float] = None,
     k: int = 10,
 ) -> CursorExecFunction:
     def _search_node(cursor, connection):
-        embed_obj = get_embeddings_model(embed_client, embed_model)
-        embed = json.dumps(embed_obj.get_embedding(json.dumps(data)))
+        embed = json.dumps(embedding_model.get_embedding(json.dumps(data)))
         nodes = cursor.execute(
             read_sql("vector-search-node.sql"), (embed, k)
         ).fetchall()
@@ -159,16 +151,13 @@ def vector_search_node(
 
 
 def vector_search_edge(
-    embed_client: Any,
-    embed_model: str,
+    embedding_model: OpenAIEmbeddingsModel,
     data: Dict,
     threshold: Optional[float] = None,
     k: int = 10,
 ) -> CursorExecFunction:
     def _search_edge(cursor, connection):
-        embed_obj = get_embeddings_model(embed_client, embed_model)
-
-        embed = json.dumps(embed_obj.get_embedding(json.dumps(data)))
+        embed = json.dumps(embedding_model.get_embedding(json.dumps(data)))
         edges = cursor.execute(
             read_sql("vector-search-edge.sql"), (embed, k)
         ).fetchall()
@@ -186,26 +175,23 @@ def vector_search_edge(
 
 
 def add_node(
-    embed_client: Any, embed_model: str, label: str, data: Dict, identifier: Any = None
+    embedding_model: OpenAIEmbeddingsModel, label: str, data: Dict, identifier: Any = None
 ) -> CursorExecFunction:
     def _add_node(cursor, connection):
         _insert_node(
-            cursor, connection, embed_client, embed_model, identifier, label, data
+            cursor, connection, embedding_model, identifier, label, data
         )
 
     return _add_node
 
 
 def add_nodes(
-    embed_client: Any,
-    embed_model: str,
+    embedding_model: OpenAIEmbeddingsModel,
     nodes: List[Dict],
     labels: List[str],
     ids: List[Any],
 ) -> CursorExecFunction:
     def _add_nodes(cursor, connection):
-        embed_obj = get_embeddings_model(embed_client, embed_model)
-
         count = (
             cursor.execute("SELECT COALESCE(MAX(embed_id), 0) FROM nodes").fetchone()[0]
             + 1
@@ -233,7 +219,7 @@ def add_nodes(
                 (
                     count + i,
                     json.dumps(
-                        embed_obj.get_embedding(json.dumps(_set_id(x[0], x[2])))
+                        embedding_model.get_embedding(json.dumps(_set_id(x[0], x[2])))
                     ),
                 ),
             )
@@ -244,19 +230,17 @@ def add_nodes(
 def _upsert_node(
     cursor: libsql.Cursor,
     connection: libsql.Connection,
-    embed_client: Any,
-    embed_model: str,
+    embedding_model: OpenAIEmbeddingsModel,
     identifier: Any,
     label: str,
     data: Dict,
 ) -> None:
     current_data = find_node(identifier)(cursor, connection)
-    embed_obj = get_embeddings_model(embed_client, embed_model)
 
     if not current_data:
         # no prior record exists, so regular insert
         _insert_node(
-            cursor, connection, embed_client, embed_model, identifier, label, data
+            cursor, connection, embedding_model, identifier, label, data
         )
     else:
         current_id = current_data["id"]
@@ -274,7 +258,7 @@ def _upsert_node(
 
         cursor.execute(
             read_sql("insert-node-embedding.sql"),
-            (count, json.dumps(embed_obj.get_embedding(json.dumps(updated_data)))),
+            (count, json.dumps(embedding_model.get_embedding(json.dumps(updated_data)))),
         )
         cursor.execute(
             read_sql("update-node.sql"),
@@ -288,41 +272,38 @@ def _upsert_node(
 
 
 def upsert_node(
-    embed_client: Any, embed_model: str, identifier: Any, label: str, data: Dict
+        embedding_model: OpenAIEmbeddingsModel,
+        identifier: Any, label: str, data: Dict
 ) -> CursorExecFunction:
     def _upsert(cursor, connection):
         _upsert_node(
-            cursor, connection, embed_client, embed_model, identifier, label, data
+            cursor, connection, embedding_model, identifier, label, data
         )
 
     return _upsert
 
 
 def upsert_nodes(
-    embed_client: Any,
-    embed_model: str,
+    embedding_model: OpenAIEmbeddingsModel,
     nodes: List[Dict],
     labels: List[str],
     ids: List[Any],
 ) -> CursorExecFunction:
     def _upsert(cursor, connection):
         for id, label, node in zip(ids, labels, nodes):
-            _upsert_node(cursor, connection, embed_client, embed_model, id, label, node)
+            _upsert_node(cursor, connection, embedding_model, id, label, node)
 
     return _upsert
 
 
 def connect_nodes(
-    embed_client: Any,
-    embed_model: str,
+    embedding_model: OpenAIEmbeddingsModel,
     source_id: Any,
     target_id: Any,
     label: str,
     attributes: Dict = {},
 ) -> CursorExecFunction:
     def _connect_nodes(cursor, connection):
-        embed_obj = get_embeddings_model(embed_client, embed_model)
-
         existing_edge = cursor.execute(
             read_sql("existing-edge.sql"),
             (source_id, target_id, label, json.dumps(attributes)),
@@ -363,7 +344,7 @@ def connect_nodes(
 
         cursor.execute(
             read_sql("insert-edge-embedding.sql"),
-            (count, json.dumps(embed_obj.get_embedding(json.dumps(edge_data)))),
+            (count, json.dumps(embedding_model.get_embedding(json.dumps(edge_data)))),
         )
         connection.commit()
 
@@ -371,16 +352,13 @@ def connect_nodes(
 
 
 def connect_many_nodes(
-    embed_client: Any,
-    embed_model: str,
+    embedding_model: OpenAIEmbeddingsModel,
     sources: List[Any],
     targets: List[Any],
     labels: List[str],
     attributes: List[Dict],
 ) -> CursorExecFunction:
     def _connect_nodes(cursor, connection):
-        embed_obj = get_embeddings_model(embed_client, embed_model)
-
         count = (
             cursor.execute("SELECT COALESCE(MAX(embed_id), 0) FROM edges").fetchone()[0]
             + 1
@@ -419,7 +397,7 @@ def connect_many_nodes(
                 (
                     count + i,
                     json.dumps(
-                        embed_obj.get_embedding(
+                        embedding_model.get_embedding(
                             json.dumps(
                                 (
                                     x[0],
@@ -682,11 +660,10 @@ def get_connections(identifier: Any) -> CursorExecFunction:
 
 
 def pruning(
-    embed_client: Any, embed_model: str, threshold: float
+        embedding_model: OpenAIEmbeddingsModel,
+        threshold: float
 ) -> CursorExecFunction:
     def _merge(cursor, connection):
-        embed_obj = get_embeddings_model(embed_client, embed_model)
-
         nodes = cursor.execute("SELECT id from nodes").fetchall()
 
         for node_id in nodes:
@@ -700,7 +677,7 @@ def pruning(
             ).fetchone()
 
             similar_nodes = vector_search_node(
-                embed_client, embed_model, node_data, threshold, 3
+                embedding_model, node_data, threshold, 3
             )(cursor, connection)
 
             if similar_nodes is None:
@@ -769,7 +746,7 @@ def pruning(
                         read_sql("insert-edge-embedding.sql"),
                         (
                             count,
-                            json.dumps(embed_obj.get_embedding(json.dumps(edge_data))),
+                            json.dumps(embedding_model.get_embedding(json.dumps(edge_data))),
                         ),
                     )
                     connection.commit()
@@ -806,7 +783,7 @@ def pruning(
                         read_sql("insert-edge-embedding.sql"),
                         (
                             count,
-                            json.dumps(embed_obj.get_embedding(json.dumps(edge_data))),
+                            json.dumps(embedding_model.get_embedding(json.dumps(edge_data))),
                         ),
                     )
                     connection.commit()
@@ -824,7 +801,8 @@ def pruning(
 
 
 def find_similar_nodes(
-    embed_client: Any, embed_model: str, label: str, threshold: Optional[float] = None
+        embedding_model: OpenAIEmbeddingsModel,
+        label: str, threshold: Optional[float] = None
 ):
     def _identical_nodes(cursor, connection):
         nodes = cursor.execute(
@@ -834,7 +812,7 @@ def find_similar_nodes(
         similar_rows = []
         for node in nodes:
             similar_nodes = vector_search_node(
-                embed_client, embed_model, node, threshold, 2
+                embedding_model, node, threshold, 2
             )(cursor, connection)
 
             if len(similar_nodes) < 1:
