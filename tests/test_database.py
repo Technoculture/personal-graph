@@ -17,7 +17,7 @@ def test_add_node(mock_atomic, mock_db_connection_and_cursor, mock_embeddings_mo
     mock_connection, mock_cursor = mock_db_connection_and_cursor
     data = {"name": "Alice", "age": 30}
     label = "Teacher"
-    add_node(label, data, 1)(mock_cursor, mock_connection)
+    add_node(None, "", label, data, 1)(mock_cursor, mock_connection)
     mock_cursor.execute.assert_called()
 
 
@@ -26,7 +26,7 @@ def test_add_nodes(mock_atomic, mock_db_connection_and_cursor):
     data = [{"name": "Peri", "age": "90"}, {"name": "Pema", "age": "66"}]
     labels = ["Pop Singer", "Asthma Patient"]
     ids = [1, 2]
-    add_nodes(data, labels, ids)(mock_cursor, mock_connection)
+    add_nodes(None, "", data, labels, ids)(mock_cursor, mock_connection)
     mock_cursor.execute.assert_called()
 
 
@@ -34,7 +34,7 @@ def test_upsert_node(mock_atomic, mock_db_connection_and_cursor, mock_embeddings
     mock_connection, mock_cursor = mock_db_connection_and_cursor
     data = {"name": "Bob", "age": 35}
     label = "XYZ"
-    upsert_node(1, label, data)(mock_cursor, mock_connection)
+    upsert_node(None, "", 1, label, data)(mock_cursor, mock_connection)
     mock_cursor.execute.assert_called()
 
 
@@ -49,7 +49,7 @@ def test_upsert_nodes(
     ]
     labels = ["ABC", "XYZ", "PQR"]
     ids = [1, 2, 3]
-    upsert_nodes(data, labels, ids)(mock_cursor, mock_connection)
+    upsert_nodes(None, "", data, labels, ids)(mock_cursor, mock_connection)
     mock_cursor.execute.assert_called()
 
 
@@ -59,7 +59,9 @@ def test_connect_node(mock_atomic, mock_db_connection_and_cursor):
     target_id = 2
     label = "test label"
     attribute = {"weight": 0.5}
-    connect_nodes(source_id, target_id, label, attribute)(mock_cursor, mock_connection)
+    connect_nodes(None, "", source_id, target_id, label, attribute)(
+        mock_cursor, mock_connection
+    )
     mock_cursor.execute.assert_called()
 
 
@@ -69,7 +71,7 @@ def test_connect_many_nodes(mock_atomic, mock_db_connection_and_cursor):
     targets = [4, 5, 6]
     labels = ["XYZ", "ABC"]
     attributes = [{"weight": 0.5}, {"weight": 0.8}, {"weight": 0.6}]
-    connect_many_nodes(sources, targets, labels, attributes)(
+    connect_many_nodes(None, "", sources, targets, labels, attributes)(
         mock_cursor, mock_connection
     )
     mock_cursor.execute.assert_called()

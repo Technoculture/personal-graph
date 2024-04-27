@@ -49,7 +49,9 @@ def main(url, token):
         graph.remove_nodes([1, 2])
 
         graph.update_node(node3)
-        node5 = Node(id="18", label="Person", attributes={"name": "Charlie", "age": "35"})
+        node5 = Node(
+            id="18", label="Person", attributes={"name": "Charlie", "age": "35"}
+        )
         graph.update_nodes([node4, node5])
 
         logging.info(graph.search_node(1))
