@@ -198,11 +198,19 @@ class Graph(AbstractContextManager):
         return path
 
     def insert(self, text: str) -> KnowledgeGraph:
-        kg: KnowledgeGraph = insert_into_graph(text)
+        kg: KnowledgeGraph = insert_into_graph(
+            text,
+            self.llm_client,
+            self.llm_model_name,
+            self.embedding_client,
+            self.embedding_model_name,
+        )
         return kg
 
     def search_query(self, text: str) -> KnowledgeGraph:
-        kg: KnowledgeGraph = search_from_graph(text)
+        kg: KnowledgeGraph = search_from_graph(
+            text, self.embedding_client, self.embedding_model_name
+        )
         return kg
 
     def visualize_graph(self, kg: KnowledgeGraph) -> Digraph:
@@ -217,7 +225,11 @@ class Graph(AbstractContextManager):
 
     def find_nodes_like(self, label: str, threshold: float) -> List[Node]:
         return atomic(
-            find_similar_nodes(label, threshold), self.db_url, self.auth_token
+            find_similar_nodes(
+                self.embedding_client, self.embedding_model_name, label, threshold
+            ),
+            self.db_url,
+            self.auth_token,
         )
 
     def visualize(self, file: str, path: List[str]) -> Digraph:
