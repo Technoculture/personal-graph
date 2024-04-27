@@ -2,9 +2,8 @@
 Provide access to different embeddings models
 """
 
-import os
 from abc import ABC, abstractmethod
-from openai import OpenAI  # type: ignore
+from typing import Any
 
 
 class EmbeddingsModel(ABC):
@@ -14,15 +13,9 @@ class EmbeddingsModel(ABC):
 
 
 class OpenAIEmbeddingsModel(EmbeddingsModel):
-    def __init__(self) -> None:
-        base_url = os.getenv("LITE_LLM_BASE_URL")
-        headers = {"Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN')}"}
-        self.client = (
-            OpenAI(api_key="", base_url=base_url, default_headers=headers)
-            if base_url and headers
-            else None
-        )
-        self.model = "embeddings"
+    def __init__(self, embed_client: Any, embed_model: str) -> None:
+        self.client = embed_client if embed_client else None
+        self.model = embed_model
 
     def get_embedding(self, text: str) -> list[float]:
         if self.client is None:

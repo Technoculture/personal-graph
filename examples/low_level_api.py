@@ -3,46 +3,64 @@ import os
 import logging
 import argparse
 from dotenv import load_dotenv
+from openai import OpenAI
+
 from personal_graph import database as db
 from personal_graph import visualizers
 
 
-def insert_single_node(db_url, auth_token, new_label, new_node, new_node_id):
+def insert_single_node(
+    db_url, auth_token, embed_client, embed_model, new_label, new_node, new_node_id
+):
     try:
-        db.atomic(db.add_node(new_label, new_node, new_node_id), db_url, auth_token)
+        db.atomic(
+            db.add_node(embed_client, embed_model, new_label, new_node, new_node_id),
+            db_url,
+            auth_token,
+        )
     except Exception as e:
         logging.info(f"Exception: {e}")
 
 
-def bulk_insert_operations(db_url, auth_token, labels, nodes):
+def bulk_insert_operations(
+    db_url, auth_token, embed_client, embed_model, labels, nodes
+):
     ids = []
     bodies = []
     for id, body in nodes.items():
         ids.append(id)
         bodies.append(body)
 
-    db.atomic(db.add_nodes(bodies, labels, ids), db_url, auth_token)
+    db.atomic(
+        db.add_nodes(embed_client, embed_model, bodies, labels, ids), db_url, auth_token
+    )
 
 
 def find_a_node(db_url, auth_token, node):
     return db.atomic(db.find_node(node), db_url, auth_token)
 
 
-def bulk_upsert(db_url, auth_token, labels, nodes):
+def bulk_upsert(db_url, auth_token, embed_client, embed_model, labels, nodes):
     ids = []
     bodies = []
     for id, body in nodes.items():
         ids.append(id)
         bodies.append(body)
 
-    db.atomic(db.upsert_nodes(bodies, labels, ids), db_url, auth_token)
+    db.atomic(
+        db.upsert_nodes(embed_client, embed_model, bodies, labels, ids),
+        db_url,
+        auth_token,
+    )
 
 
-def single_upsert(db_url, auth_token, label, body, id):
-    db.atomic(db.upsert_node(id, label, body), db_url, auth_token)
+def single_upsert(db_url, auth_token, embed_client, embed_model, label, body, id):
+    db.atomic(
+        db.upsert_node(embed_client, embed_model, id, label, body), db_url, auth_token
+    )
 
 
-def bulk_node_connect(db_url, auth_token, labels, edges):
+def bulk_node_connect(db_url, auth_token, embed_client, embed_model, labels, edges):
     sources = []
     targets = []
     attributes = []
@@ -57,12 +75,22 @@ def bulk_node_connect(db_url, auth_token, labels, edges):
                 attributes.append({})
 
     db.atomic(
-        db.connect_many_nodes(sources, targets, labels, attributes), db_url, auth_token
+        db.connect_many_nodes(
+            embed_client, embed_model, sources, targets, labels, attributes
+        ),
+        db_url,
+        auth_token,
     )
 
 
-def single_node_connect(db_url, auth_token, source, target, label, attribute):
-    db.atomic(db.connect_nodes(source, target, label, attribute), db_url, auth_token)
+def single_node_connect(
+    db_url, auth_token, embed_client, embed_model, source, target, label, attribute
+):
+    db.atomic(
+        db.connect_nodes(embed_client, embed_model, source, target, label, attribute),
+        db_url,
+        auth_token,
+    )
 
 
 def remove_bulk_nodes(db_url, auth_token, ids):
@@ -81,22 +109,42 @@ def main(args):
     # Initialize the Database
     db.initialize(args.url, args.auth_token)
 
+    # Embedding client and model name
+    headers = {"Authorization": f"Bearer {args.token}"}
+    embed_client = (
+        OpenAI(api_key="", base_url=args.base_url, default_headers=headers)
+        if args.base_url and args.token
+        else None
+    )
+    print(embed_client)
+    embed_model = args.embedding_model_name
+
     new_node = {"subject": "MES", "type": ["person", "Dr"]}
     new_label = "Mechanical Engineer"
     new_node_id = 4
 
     # Insert a node into database
-    insert_single_node(args.url, args.auth_token, new_label, new_node, new_node_id)
+    insert_single_node(
+        args.url,
+        args.auth_token,
+        embed_client,
+        embed_model,
+        new_label,
+        new_node,
+        new_node_id,
+    )
 
     new_nodes = {
         3: {"name": "Peri", "age": "90"},
         4: {"name": "Pema", "age": "66"},
         5: {"name": "Ella", "age": "45"},
     }
-    new_labels = ["Retired Doctor", "Tuberculosis Patient", "Diabetes Pateint"]
+    new_labels = ["Retired Doctor", "Tuberculosis Patient", "Diabetes Patient"]
 
     # Bulk Insert
-    bulk_insert_operations(args.url, args.auth_token, new_labels, new_nodes)
+    bulk_insert_operations(
+        args.url, args.auth_token, embed_client, embed_model, new_labels, new_nodes
+    )
 
     # Search a node
     logging.info(f"Found Node: {find_a_node(args.url, args.auth_token, 4)}")
@@ -106,7 +154,7 @@ def main(args):
     id = 2
 
     # Update a single node
-    single_upsert(args.url, args.auth_token, label, body, id)
+    single_upsert(args.url, args.auth_token, embed_client, embed_model, label, body, id)
 
     nodes = {
         1: {"name": "Stanley", "age": "30"},
@@ -115,20 +163,31 @@ def main(args):
     labels = ["Lunch Box", "Pop Singer"]
 
     # Bulk Update
-    bulk_upsert(args.url, args.auth_token, labels, nodes)
+    bulk_upsert(args.url, args.auth_token, embed_client, embed_model, labels, nodes)
 
     edges = {3: [(3, {"wealth": "1000 Billion"}), (2, {"balance": "1000 rupees"})]}
     edges_labels = ["Has", "Has"]
 
     # Connect bulk nodes
-    bulk_node_connect(args.url, args.auth_token, edges_labels, edges)
+    bulk_node_connect(
+        args.url, args.auth_token, embed_client, embed_model, edges_labels, edges
+    )
 
     source = 3
     target = 3
     label = "related as an"
     attribute = {"relation": "enemy"}
 
-    single_node_connect(args.url, args.auth_token, source, target, label, attribute)
+    single_node_connect(
+        args.url,
+        args.auth_token,
+        embed_client,
+        embed_model,
+        source,
+        target,
+        label,
+        attribute,
+    )
 
     # Remove nodes
     remove_bulk_nodes(args.url, args.auth_token, [1, 2])
@@ -167,6 +226,11 @@ if __name__ == "__main__":
     parser.add_argument("--file-path", default="./dotfiles.dot", type=str)
     parser.add_argument(
         "--path-with-bodies", default="./path_with_bodies.dot", type=str
+    )
+    parser.add_argument("--base-url", default=os.getenv("LITE_LLM_BASE_URL"))
+    parser.add_argument("--token", default=os.getenv("LITE_LLM_TOKEN"), type=str)
+    parser.add_argument(
+        "--embedding-model-name", default="openai/text-embedding-3-small", type=str
     )
 
     arguments = parser.parse_args()
