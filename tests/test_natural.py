@@ -7,13 +7,17 @@ from personal_graph.natural import (
 
 
 def test_insert_into_graph(
-    mock_openai_client, mock_atomic, mock_generate_graph, mock_db_connection_and_cursor
+    mock_openai_client,
+    mock_atomic,
+    mock_generate_graph,
+    mock_db_connection_and_cursor,
+    embedding_model,
 ):
     mock_openai_client.chat.completions.create.return_value = mock_generate_graph
 
     query = "Mock Node Insert"
     result = insert_into_graph(
-        query, llm_client=None, llm_model_name="", embed_client=None, embed_model=""
+        query, llm_client=None, llm_model_name="", embedding_model=embedding_model
     )
 
     assert result == mock_generate_graph
@@ -21,13 +25,17 @@ def test_insert_into_graph(
 
 
 def test_search_from_graph(
-    mock_openai_client, mock_atomic, mock_generate_graph, mock_db_connection_and_cursor
+    mock_openai_client,
+    mock_atomic,
+    mock_generate_graph,
+    mock_db_connection_and_cursor,
+    embedding_model,
 ):
     mock_connection, mock_cursor = mock_db_connection_and_cursor
     mock_openai_client.chat.completions.create.return_value = mock_generate_graph
 
     query = "Mock Node Search"
-    result = search_from_graph(query, embed_client=None, embed_model="")
+    result = search_from_graph(query, embedding_model=embedding_model)
 
     assert isinstance(result, KnowledgeGraph)
     mock_cursor.execute.assert_called()
