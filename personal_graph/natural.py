@@ -5,6 +5,8 @@ from typing import Any
 import instructor
 from graphviz import Digraph  # type: ignore
 from dotenv import load_dotenv
+
+from personal_graph.embeddings import OpenAIEmbeddingsModel
 from personal_graph.models import KnowledgeGraph, Node, Edge
 from personal_graph.database import (
     add_node,
@@ -52,7 +54,7 @@ def visualize_knowledge_graph(kg: KnowledgeGraph) -> Digraph:
 
 
 def insert_into_graph(
-    text: str, llm_client: Any, llm_model_name: str, embed_client: Any, embed_model: str
+    text: str, llm_client: Any, llm_model_name: str, embedding_model: OpenAIEmbeddingsModel
 ) -> KnowledgeGraph:
     uuid_dict = {}
     kg = generate_graph(text, llm_client, llm_model_name)
@@ -62,8 +64,7 @@ def insert_into_graph(
             uuid_dict[node.id] = str(uuid.uuid4())
             atomic(
                 add_node(
-                    embed_client,
-                    embed_model,
+                    embedding_model,
                     node.label,
                     {"body": node.attributes},
                     uuid_dict[node.id],
@@ -75,8 +76,7 @@ def insert_into_graph(
         for edge in kg.edges:
             atomic(
                 connect_nodes(
-                    embed_client,
-                    embed_model,
+                    embedding_model,
                     uuid_dict[edge.source],
                     uuid_dict[edge.target],
                     edge.label,
@@ -91,15 +91,15 @@ def insert_into_graph(
     return kg
 
 
-def search_from_graph(text: str, embed_client: Any, embed_model: str) -> KnowledgeGraph:
+def search_from_graph(text: str, embedding_model: OpenAIEmbeddingsModel) -> KnowledgeGraph:
     try:
         similar_nodes = atomic(
-            vector_search_node(embed_client, embed_model, {"body": text}, 0.9, 2),
+            vector_search_node(embedding_model, {"body": text}, 0.9, 2),
             os.getenv("LIBSQL_URL"),
             os.getenv("LIBSQL_AUTH_TOKEN"),
         )
         similar_edges = atomic(
-            vector_search_edge(embed_client, embed_model, {"body": text}, k=2),
+            vector_search_edge(embedding_model, {"body": text}, k=2),
             os.getenv("LIBSQL_URL"),
             os.getenv("LIBSQL_AUTH_TOKEN"),
         )

@@ -6,6 +6,7 @@ import argparse
 from dotenv import load_dotenv
 from personal_graph import database as db
 from personal_graph import natural
+from personal_graph.embeddings import OpenAIEmbeddingsModel
 
 
 def main(args):
@@ -20,7 +21,7 @@ def main(args):
     )
 
     # Embedding client
-    embed_client = (
+    embedding_client = (
         openai.OpenAI(
             api_key="",
             base_url=args.embeddings_base_url,
@@ -30,14 +31,15 @@ def main(args):
         else None
     )
 
+    embedding_model = OpenAIEmbeddingsModel(embedding_client, args.embeddings_model_name)
+
     # Testing insert query into graph db
     nl_query = "increased thirst, weight loss, increased hunger, frequent urination etc. are all symptoms of diabetes."
     graph = natural.insert_into_graph(
         text=nl_query,
         llm_client=llm_client,
         llm_model_name=args.llm_model_name,
-        embed_client=embed_client,
-        embed_model=args.embeddings_model_name,
+        embedding_model=embedding_model,
     )
 
     logging.info("Nodes in the Knowledge Graph: \n")
@@ -55,7 +57,7 @@ def main(args):
     # Testing search query from graph db
     search_query = "I am losing my weight too frequent."
     knowledge_graph = natural.search_from_graph(
-        search_query, embed_client=embed_client, embed_model=args.embeddings_model_name
+        search_query, embedding_model=embedding_model
     )
 
     logging.info(f"Knowledge Graph: \n{knowledge_graph}")

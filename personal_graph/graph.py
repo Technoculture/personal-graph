@@ -62,11 +62,9 @@ class Graph(AbstractContextManager):
         self.db_url = db_url
         self.auth_token = auth_token
         self.llm_client = llm_client
-        self.embedding_client = embedding_model_client
         self.llm_model_name = llm_model_name
-        self.embedding_model_name = embedding_model_name
 
-        self.embedding_model = OpenAIEmbeddingsModel(self.embedding_client, self.embedding_model_name)
+        self.embedding_model = OpenAIEmbeddingsModel(embedding_model_client, embedding_model_name)
 
     def __eq__(self, other):
         if not isinstance(other, Graph):
@@ -206,7 +204,7 @@ class Graph(AbstractContextManager):
 
     def search_query(self, text: str) -> KnowledgeGraph:
         kg: KnowledgeGraph = search_from_graph(
-            text, self.embedding_client, self.embedding_model_name
+            text, self.embedding_model
         )
         return kg
 
