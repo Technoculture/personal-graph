@@ -14,15 +14,15 @@ from personal_graph import (
 def main(url, token):
     with Graph(url, token) as graph:
         # Define nodes and edges
-        node1 = Node(id=3, label="Person", attributes={"name": "Alice", "age": "30"})
-        node2 = Node(id=4, label="Person", attributes={"name": "Bob", "age": "25"})
+        node1 = Node(id="3", label="Person", attributes={"name": "Alice", "age": "30"})
+        node2 = Node(id="4", label="Person", attributes={"name": "Bob", "age": "25"})
         node3 = Node(
-            id=1,
+            id="1",
             label="Diabetes",
             attributes={"body": "Continuous urination and weight loss"},
         )
         node4 = Node(
-            id=2,
+            id="2",
             label="Dizziness",
             attributes={"body": "Jack is feeling stressed and feeling quite dizzy."},
         )
@@ -49,7 +49,7 @@ def main(url, token):
         graph.remove_nodes([1, 2])
 
         graph.update_node(node3)
-        node5 = Node(id=18, label="Person", attributes={"name": "Charlie", "age": "35"})
+        node5 = Node(id="18", label="Person", attributes={"name": "Charlie", "age": "35"})
         graph.update_nodes([node4, node5])
 
         logging.info(graph.search_node(1))
