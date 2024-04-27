@@ -10,7 +10,7 @@ from typing import Any, List, Optional, Union, Dict
 import libsql_experimental as libsql  # type: ignore
 from contextlib import AbstractContextManager
 from graphviz import Digraph  # type: ignore
-from litellm.llms import openai
+from litellm.llms import openai  # type: ignore
 
 from .models import Node, EdgeInput, KnowledgeGraph
 from .database import (
@@ -45,18 +45,18 @@ class Graph(AbstractContextManager):
         db_url: Optional[str] = None,
         auth_token: Optional[str] = None,
         *,
-        llm_client: Optional[Any] = openai.OpenAI(
+        llm_client: Any = openai.OpenAI(
             api_key="",
             base_url=os.getenv("LITE_LLM_BASE_URL"),
             default_headers={"Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN')}"},
         ),
-        embedding_model_client: Optional[Any] = openai.OpenAI(
+        embedding_model_client: Any = openai.OpenAI(
             api_key="",
             base_url=os.getenv("LITE_LLM_BASE_URL"),
             default_headers={"Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN')}"},
         ),
-        llm_model_name: Optional[str] = "openai/gpt-3.5-turbo",
-        embedding_model_name: Optional[str] = "openai/text-embedding-3-small",
+        llm_model_name: str = "openai/gpt-3.5-turbo",
+        embedding_model_name: str = "openai/text-embedding-3-small",
     ):
         self.db_url = db_url
         self.auth_token = auth_token
@@ -92,6 +92,8 @@ class Graph(AbstractContextManager):
     def add_node(self, node: Node) -> None:
         atomic(
             add_node(
+                self.embedding_client,
+                self.embedding_model_name,
                 node.label,
                 json.loads(node.attributes)
                 if isinstance(node.attributes, str)
@@ -111,11 +113,19 @@ class Graph(AbstractContextManager):
             for node in nodes
         ]
         ids: List[Any] = [node.id for node in nodes]
-        add_nodes_func = add_nodes(nodes=attributes, labels=labels, ids=ids)
+        add_nodes_func = add_nodes(
+            self.embedding_client,
+            self.embedding_model_name,
+            nodes=attributes,
+            labels=labels,
+            ids=ids,
+        )
         atomic(add_nodes_func, self.db_url, self.auth_token)
 
     def add_edge(self, edge: EdgeInput) -> None:
         connect_nodes_func = connect_nodes(
+            self.embedding_client,
+            self.embedding_model_name,
             edge.source.id,
             edge.target.id,
             edge.label,
@@ -136,12 +146,19 @@ class Graph(AbstractContextManager):
             for edge in edges
         ]
         connect_many_nodes_func = connect_many_nodes(
-            sources=sources, targets=targets, labels=labels, attributes=attributes
+            self.embedding_client,
+            self.embedding_model_name,
+            sources=sources,
+            targets=targets,
+            labels=labels,
+            attributes=attributes,
         )
         atomic(connect_many_nodes_func, self.db_url, self.auth_token)
 
     def update_node(self, node: Node) -> None:
         upsert_node_func = upsert_node(
+            self.embedding_client,
+            self.embedding_model_name,
             identifier=node.id,
             label=node.label,
             data=json.loads(node.attributes)
@@ -192,7 +209,11 @@ class Graph(AbstractContextManager):
         return visualize_knowledge_graph(kg)
 
     def merge_by_similarity(self, threshold) -> None:
-        atomic(pruning(threshold), self.db_url, self.auth_token)
+        atomic(
+            pruning(self.embedding_client, self.embedding_model_name, threshold),
+            self.db_url,
+            self.auth_token,
+        )
 
     def find_nodes_like(self, label: str, threshold: float) -> List[Node]:
         return atomic(
@@ -213,7 +234,13 @@ class Graph(AbstractContextManager):
 
     def is_unique_prompt(self, text: str, threshold: float) -> bool:
         similar_nodes = atomic(
-            vector_search_node({"body": text}, threshold, 1),
+            vector_search_node(
+                self.embedding_client,
+                self.embedding_model_name,
+                {"body": text},
+                threshold,
+                1,
+            ),
             self.db_url,
             self.auth_token,
         )
