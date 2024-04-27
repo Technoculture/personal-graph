@@ -1,5 +1,7 @@
 import os
 import uuid
+from typing import Any
+
 import instructor
 import openai
 from graphviz import Digraph  # type: ignore
@@ -30,16 +32,10 @@ db_url = os.getenv("LIBSQL_URL")
 auth_token = os.getenv("LIBSQL_AUTH_TOKEN")
 
 
-def generate_graph(query: str) -> KnowledgeGraph:
-    client = instructor.from_openai(
-        openai.OpenAI(
-            api_key="",
-            base_url=os.getenv("LITE_LLM_BASE_URL"),
-            default_headers={"Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN')}"},
-        )
-    )
+def generate_graph(query: str, llm_client: Any, llm_model_name: str) -> KnowledgeGraph:
+    client = instructor.from_openai(llm_client)
     knowledge_graph = client.chat.completions.create(
-        model="fast-70b",
+        model=llm_model_name,
         messages=[
             {
                 "role": "system",
@@ -69,15 +65,23 @@ def visualize_knowledge_graph(kg: KnowledgeGraph) -> Digraph:
     return dot
 
 
-def insert_into_graph(text: str) -> KnowledgeGraph:
+def insert_into_graph(
+    text: str, llm_client: Any, llm_model_name: str, embed_client: Any, embed_model: str
+) -> KnowledgeGraph:
     uuid_dict = {}
-    kg = generate_graph(text)
+    kg = generate_graph(text, llm_client, llm_model_name)
 
     try:
         for node in kg.nodes:
             uuid_dict[node.id] = str(uuid.uuid4())
             atomic(
-                add_node(node.label, {"body": node.attributes}, uuid_dict[node.id]),
+                add_node(
+                    embed_client,
+                    embed_model,
+                    node.label,
+                    {"body": node.attributes},
+                    uuid_dict[node.id],
+                ),
                 os.getenv("LIBSQL_URL"),
                 os.getenv("LIBSQL_AUTH_TOKEN"),
             )
@@ -85,6 +89,8 @@ def insert_into_graph(text: str) -> KnowledgeGraph:
         for edge in kg.edges:
             atomic(
                 connect_nodes(
+                    embed_client,
+                    embed_model,
                     uuid_dict[edge.source],
                     uuid_dict[edge.target],
                     edge.label,
@@ -99,15 +105,15 @@ def insert_into_graph(text: str) -> KnowledgeGraph:
     return kg
 
 
-def search_from_graph(text: str) -> KnowledgeGraph:
+def search_from_graph(text: str, embed_client: Any, embed_model: str) -> KnowledgeGraph:
     try:
         similar_nodes = atomic(
-            vector_search_node({"body": text}, 0.9, 2),
+            vector_search_node(embed_client, embed_model, {"body": text}, 0.9, 2),
             os.getenv("LIBSQL_URL"),
             os.getenv("LIBSQL_AUTH_TOKEN"),
         )
         similar_edges = atomic(
-            vector_search_edge({"body": text}, k=2),
+            vector_search_edge(embed_client, embed_model, {"body": text}, k=2),
             os.getenv("LIBSQL_URL"),
             os.getenv("LIBSQL_AUTH_TOKEN"),
         )

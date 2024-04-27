@@ -699,9 +699,9 @@ def pruning(
                 "SELECT label, attributes from nodes where id=?", (node_id[0],)
             ).fetchone()
 
-            similar_nodes = vector_search_node(node_data, threshold, 3)(
-                cursor, connection
-            )
+            similar_nodes = vector_search_node(
+                embed_client, embed_model, node_data, threshold, 3
+            )(cursor, connection)
 
             if similar_nodes is None:
                 continue
@@ -823,7 +823,9 @@ def pruning(
     return _merge
 
 
-def find_similar_nodes(label: str, threshold: Optional[float] = None):
+def find_similar_nodes(
+    embed_client: Any, embed_model: str, label: str, threshold: Optional[float] = None
+):
     def _identical_nodes(cursor, connection):
         nodes = cursor.execute(
             "SELECT * FROM nodes WHERE label LIKE ?", ("%" + label + "%",)
@@ -831,7 +833,9 @@ def find_similar_nodes(label: str, threshold: Optional[float] = None):
 
         similar_rows = []
         for node in nodes:
-            similar_nodes = vector_search_node(node, threshold, 2)(cursor, connection)
+            similar_nodes = vector_search_node(
+                embed_client, embed_model, node, threshold, 2
+            )(cursor, connection)
 
             if len(similar_nodes) < 1:
                 continue
