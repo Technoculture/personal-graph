@@ -9,6 +9,19 @@ from personal_graph import database as db
 from personal_graph import visualizers
 from personal_graph.embeddings import OpenAIEmbeddingsModel
 
+# Embedding model
+embedding_client = OpenAI(
+    api_key="",
+    base_url=os.getenv("LITE_LLM_BASE_URL", ""),
+    default_headers={"Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN', '')}"},
+)
+embedding_model_name = "openai/text-embedding-3-small"
+embedding_dimension = 384
+
+embedding_model = OpenAIEmbeddingsModel(
+    embedding_client, embedding_model_name, embedding_dimension
+)
+
 
 def insert_single_node(
     db_url, db_auth_token, embedding_model, new_label, new_node, new_node_id
@@ -101,20 +114,6 @@ def traverse_nodes(db_url, db_auth_token, src, tgt):
 def main(args):
     # Initialize the Database
     db.initialize(args.db_url, args.db_auth_token)
-
-    # Embedding client and model name
-    headers = {"Authorization": f"Bearer {args.embeddings_token}"}
-    embedding_client = (
-        OpenAI(api_key="", base_url=args.embeddings_base_url, default_headers=headers)
-        if args.embeddings_base_url and args.embeddings_token
-        else None
-    )
-    embedding_model_name = args.embeddings_model_name
-    embedding_dimension = args.embeddings_model_dimension
-
-    embedding_model = OpenAIEmbeddingsModel(
-        embedding_client, embedding_model_name, embedding_dimension
-    )
 
     new_node = {"subject": "MES", "type": ["person", "Dr"]}
     new_label = "Mechanical Engineer"
@@ -230,14 +229,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "--path-with-bodies", default="./path_with_bodies.dot", type=str
     )
-    parser.add_argument("--embeddings-base-url", default=os.getenv("LITE_LLM_BASE_URL"))
-    parser.add_argument(
-        "--embeddings-token", default=os.getenv("LITE_LLM_TOKEN"), type=str
-    )
-    parser.add_argument(
-        "--embeddings-model-name", default="openai/text-embedding-3-small", type=str
-    )
-    parser.add_argument("--embeddings-model-dimension", default=384, type=int)
 
     arguments = parser.parse_args()
 
