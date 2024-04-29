@@ -70,7 +70,7 @@ def from_networkx(
 ) -> pg.Graph:
     with pg.Graph(
         db_url=os.getenv("LIBSQL_URL", None),
-        auth_token=os.getenv("LIBSQL_AUTH_TOKEN", None),
+        db_auth_token=os.getenv("LIBSQL_AUTH_TOKEN", None),
     ) as graph:
         if override:
             node_ids = graph.fetch_ids_from_db()

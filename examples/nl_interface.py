@@ -11,7 +11,7 @@ from personal_graph.embeddings import OpenAIEmbeddingsModel
 
 def main(args):
     # Initialize the Database
-    db.initialize(args.url, args.auth_token)
+    db.initialize(args.db_url, args.db_auth_token)
 
     # LLM client
     llm_client = openai.OpenAI(
@@ -77,9 +77,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Shows simple example of natural language apis."
     )
-    parser.add_argument("--url", default=os.getenv("LIBSQL_URL"), type=str)
+    parser.add_argument("--db-url", default=os.getenv("LIBSQL_URL"), type=str)
     parser.add_argument(
-        "--auth-token", default=os.getenv("LIBSQL_AUTH_TOKEN"), type=str
+        "--db-auth-token", default=os.getenv("LIBSQL_AUTH_TOKEN"), type=str
     )
     parser.add_argument("--llm-base-url", default=os.getenv("LITE_LLM_BASE_URL"))
     parser.add_argument("--llm-token", default=os.getenv("LITE_LLM_TOKEN"), type=str)

@@ -52,14 +52,14 @@ traverse_template = env.get_template("traverse.template")
 def atomic(
     cursor_exec_fn: CursorExecFunction,
     db_url: Optional[str] = None,
-    auth_token: Optional[str] = None,
+    db_auth_token: Optional[str] = None,
 ) -> Any:
     connection = None
     try:
         if not db_url:
             connection = libsql.connect(":memory:")
         else:
-            connection = libsql.connect(database=db_url, auth_token=auth_token)
+            connection = libsql.connect(database=db_url, auth_token=db_auth_token)
 
         cursor = connection.cursor()
         cursor.execute("PRAGMA foreign_keys = TRUE;")
@@ -73,14 +73,14 @@ def atomic(
 
 def initialize(
     db_url: Optional[str] = None,
-    auth_token: Optional[str] = None,
+    db_auth_token: Optional[str] = None,
     schema_file: str = "schema.sql",
 ) -> Any:
     def _init(cursor, connection):
         schema_sql = read_sql(schema_file)
         connection.executescript(schema_sql)
 
-    return atomic(_init, db_url, auth_token)
+    return atomic(_init, db_url, db_auth_token)
 
 
 def _set_id(identifier: Any, data: Dict) -> Dict:
@@ -600,7 +600,7 @@ def find_inbound_neighbors(with_bodies: bool = False) -> str:
 
 def traverse(
     db_url: Optional[str] = None,
-    auth_token: Optional[str] = None,
+    db_auth_token: Optional[str] = None,
     src: Any = None,
     tgt: Any = None,
     neighbors_fn: Callable[[bool], str] = find_neighbors,
@@ -625,7 +625,7 @@ def traverse(
                             break
         return path
 
-    return atomic(_traverse, db_url, auth_token)  # type: ignore
+    return atomic(_traverse, db_url, db_auth_token)  # type: ignore
 
 
 def connections_in() -> str:

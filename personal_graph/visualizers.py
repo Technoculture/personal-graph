@@ -43,7 +43,7 @@ def _as_dot_node(
 
 def graphviz_visualize(
     db_url: Optional[str] = None,
-    auth_token: Optional[str] = None,
+    db_auth_token: Optional[str] = None,
     dot_file: Optional[str] = None,
     path: List[Any] = [],
     connections: Any = db.get_connections,
@@ -58,7 +58,7 @@ def graphviz_visualize(
     ids = []
     for i in path:
         ids.append(str(i))
-        for edge in db.atomic(connections(i), db_url, auth_token):  # type: ignore
+        for edge in db.atomic(connections(i), db_url, db_auth_token):  # type: ignore
             print("Here", edge)
             _, src, tgt, _, _, _, _ = edge
             if src not in ids:
@@ -72,10 +72,10 @@ def graphviz_visualize(
     edges = []
     for i in ids:
         if i not in visited:
-            node = db.atomic(db.find_node(i), db_url, auth_token)  # type: ignore
+            node = db.atomic(db.find_node(i), db_url, db_auth_token)  # type: ignore
             name, label = _as_dot_node(node, exclude_node_keys, hide_node_key, node_kv)
             dot.node(name, label=label)
-            for edge in db.atomic(connections(i), db_url, auth_token):  # type: ignore
+            for edge in db.atomic(connections(i), db_url, db_auth_token):  # type: ignore
                 if edge not in edges:
                     _, src, tgt, _, prps, _, _ = edge
                     props = json.loads(prps)

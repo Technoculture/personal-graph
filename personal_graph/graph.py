@@ -49,7 +49,7 @@ class Graph(AbstractContextManager):
         self,
         *,
         db_url: Optional[str] = None,
-        auth_token: Optional[str] = None,
+        db_auth_token: Optional[str] = None,
         llm_client: openai.OpenAI = openai.OpenAI(
             api_key="",
             base_url=os.getenv("LITE_LLM_BASE_URL", ""),
@@ -69,7 +69,7 @@ class Graph(AbstractContextManager):
         embedding_dimensions: int = 384,
     ):
         self.db_url = db_url
-        self.auth_token = auth_token
+        self.db_auth_token = db_auth_token
         self.llm_client = llm_client
         self.llm_model_name = llm_model_name
 
@@ -82,7 +82,7 @@ class Graph(AbstractContextManager):
     def __eq__(self, other):
         if not isinstance(other, Graph):
             return "Not of Graph Type"
-        return self.db_url == other.db_url and self.auth_token == other.auth_token
+        return self.db_url == other.db_url and self.db_auth_token == other.db_auth_token
 
     def __enter__(self, schema_file: str = "schema.sql") -> Graph:
         if not self.db_url:
@@ -90,10 +90,12 @@ class Graph(AbstractContextManager):
             self.connection = libsql.connect(":memory:")
         else:
             self.connection = libsql.connect(
-                database=self.db_url, auth_token=self.auth_token
+                database=self.db_url, auth_token=self.db_auth_token
             )
         initialize(
-            db_url=self.db_url, auth_token=self.auth_token, schema_file=schema_file
+            db_url=self.db_url,
+            db_auth_token=self.db_auth_token,
+            schema_file=schema_file,
         )
         return self
 
@@ -114,7 +116,7 @@ class Graph(AbstractContextManager):
                 node.id,
             ),
             self.db_url,
-            self.auth_token,
+            self.db_auth_token,
         )
 
     def add_nodes(self, nodes: List[Node]) -> None:
@@ -132,7 +134,7 @@ class Graph(AbstractContextManager):
             labels=labels,
             ids=ids,
         )
-        atomic(add_nodes_func, self.db_url, self.auth_token)
+        atomic(add_nodes_func, self.db_url, self.db_auth_token)
 
     def add_edge(self, edge: EdgeInput) -> None:
         connect_nodes_func = connect_nodes(
@@ -144,7 +146,7 @@ class Graph(AbstractContextManager):
             if isinstance(edge.attributes, str)
             else edge.attributes,
         )
-        atomic(connect_nodes_func, self.db_url, self.auth_token)
+        atomic(connect_nodes_func, self.db_url, self.db_auth_token)
 
     def add_edges(self, edges: List[EdgeInput]) -> None:
         sources: List[Any] = [edge.source.id for edge in edges]
@@ -163,7 +165,7 @@ class Graph(AbstractContextManager):
             labels=labels,
             attributes=attributes,
         )
-        atomic(connect_many_nodes_func, self.db_url, self.auth_token)
+        atomic(connect_many_nodes_func, self.db_url, self.db_auth_token)
 
     def update_node(self, node: Node) -> None:
         upsert_node_func = upsert_node(
@@ -174,23 +176,23 @@ class Graph(AbstractContextManager):
             if isinstance(node.attributes, str)
             else node.attributes,
         )
-        atomic(upsert_node_func, self.db_url, self.auth_token)
+        atomic(upsert_node_func, self.db_url, self.db_auth_token)
 
     def update_nodes(self, nodes: List[Node]) -> None:
         for node in nodes:
             self.update_node(node)
 
     def remove_node(self, id: Any) -> None:
-        atomic(remove_node(id), self.db_url, self.auth_token)
+        atomic(remove_node(id), self.db_url, self.db_auth_token)
 
     def remove_nodes(self, ids: List[Any]) -> None:
-        atomic(remove_nodes(ids), self.db_url, self.auth_token)
+        atomic(remove_nodes(ids), self.db_url, self.db_auth_token)
 
     def search_node(self, node_id: Any) -> Any:
-        return atomic(find_node(node_id), self.db_url, self.auth_token)
+        return atomic(find_node(node_id), self.db_url, self.db_auth_token)
 
     def search_node_label(self, node_id: Any) -> Any:
-        return atomic(find_label(node_id), self.db_url, self.auth_token)
+        return atomic(find_label(node_id), self.db_url, self.db_auth_token)
 
     def traverse(
         self, source: Any, target: Optional[Any] = None, with_bodies: bool = False
@@ -198,7 +200,7 @@ class Graph(AbstractContextManager):
         neighbors_fn = find_neighbors if with_bodies else find_outbound_neighbors
         path = traverse(
             db_url=self.db_url,
-            auth_token=self.auth_token,
+            db_auth_token=self.db_auth_token,
             src=source,
             tgt=target,
             neighbors_fn=neighbors_fn,
@@ -226,27 +228,27 @@ class Graph(AbstractContextManager):
         atomic(
             pruning(self.embedding_model, threshold),
             self.db_url,
-            self.auth_token,
+            self.db_auth_token,
         )
 
     def find_nodes_like(self, label: str, threshold: float) -> List[Node]:
         return atomic(
             find_similar_nodes(self.embedding_model, label, threshold),
             self.db_url,
-            self.auth_token,
+            self.db_auth_token,
         )
 
     def visualize(self, file: str, path: List[str]) -> Digraph:
-        return graphviz_visualize(self.db_url, self.auth_token, file, path)
+        return graphviz_visualize(self.db_url, self.db_auth_token, file, path)
 
     def fetch_ids_from_db(self) -> List[str]:
-        return atomic(nodes_list(), self.db_url, self.auth_token)
+        return atomic(nodes_list(), self.db_url, self.db_auth_token)
 
     def search_indegree_edges(self, target) -> List[Any]:
-        return atomic(find_indegree_edges(target), self.db_url, self.auth_token)
+        return atomic(find_indegree_edges(target), self.db_url, self.db_auth_token)
 
     def search_outdegree_edges(self, source) -> List[Any]:
-        return atomic(find_outdegree_edges(source), self.db_url, self.auth_token)
+        return atomic(find_outdegree_edges(source), self.db_url, self.db_auth_token)
 
     def is_unique_prompt(self, text: str, threshold: float) -> bool:
         similar_nodes = atomic(
@@ -257,7 +259,7 @@ class Graph(AbstractContextManager):
                 1,
             ),
             self.db_url,
-            self.auth_token,
+            self.db_auth_token,
         )
 
         if not similar_nodes:

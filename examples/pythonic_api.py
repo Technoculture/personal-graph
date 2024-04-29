@@ -13,7 +13,7 @@ from personal_graph import (
 
 
 def main(args):
-    with Graph(db_url=args.url, auth_token=args.auth_token) as graph:
+    with Graph(db_url=args.db_url, db_auth_token=args.db_auth_token) as graph:
         # Define nodes and edges
         node1 = Node(id="3", label="Person", attributes={"name": "Alice", "age": "30"})
         node2 = Node(id="4", label="Person", attributes={"name": "Bob", "age": "25"})
@@ -136,9 +136,9 @@ if __name__ == "__main__":
         description="Shows simple example of high level apis."
     )
 
-    parser.add_argument("--url", default=os.getenv("LIBSQL_URL"), type=str)
+    parser.add_argument("--db-url", default=os.getenv("LIBSQL_URL"), type=str)
     parser.add_argument(
-        "--auth-token", default=os.getenv("LIBSQL_AUTH_TOKEN"), type=str
+        "--db-auth-token", default=os.getenv("LIBSQL_AUTH_TOKEN"), type=str
     )
 
     arguments = parser.parse_args()

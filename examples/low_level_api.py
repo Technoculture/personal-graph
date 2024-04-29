@@ -11,33 +11,33 @@ from personal_graph.embeddings import OpenAIEmbeddingsModel
 
 
 def insert_single_node(
-    db_url, auth_token, embedding_model, new_label, new_node, new_node_id
+    db_url, db_auth_token, embedding_model, new_label, new_node, new_node_id
 ):
     try:
         db.atomic(
             db.add_node(embedding_model, new_label, new_node, new_node_id),
             db_url,
-            auth_token,
+            db_auth_token,
         )
     except Exception as e:
         logging.info(f"Exception: {e}")
 
 
-def bulk_insert_operations(db_url, auth_token, embedding_model, labels, nodes):
+def bulk_insert_operations(db_url, db_auth_token, embedding_model, labels, nodes):
     ids = []
     bodies = []
     for id, body in nodes.items():
         ids.append(id)
         bodies.append(body)
 
-    db.atomic(db.add_nodes(embedding_model, bodies, labels, ids), db_url, auth_token)
+    db.atomic(db.add_nodes(embedding_model, bodies, labels, ids), db_url, db_auth_token)
 
 
-def find_a_node(db_url, auth_token, node):
-    return db.atomic(db.find_node(node), db_url, auth_token)
+def find_a_node(db_url, db_auth_token, node):
+    return db.atomic(db.find_node(node), db_url, db_auth_token)
 
 
-def bulk_upsert(db_url, auth_token, embedding_model, labels, nodes):
+def bulk_upsert(db_url, db_auth_token, embedding_model, labels, nodes):
     ids = []
     bodies = []
     for id, body in nodes.items():
@@ -47,15 +47,15 @@ def bulk_upsert(db_url, auth_token, embedding_model, labels, nodes):
     db.atomic(
         db.upsert_nodes(embedding_model, bodies, labels, ids),
         db_url,
-        auth_token,
+        db_auth_token,
     )
 
 
-def single_upsert(db_url, auth_token, embedding_model, label, body, id):
-    db.atomic(db.upsert_node(embedding_model, id, label, body), db_url, auth_token)
+def single_upsert(db_url, db_auth_token, embedding_model, label, body, id):
+    db.atomic(db.upsert_node(embedding_model, id, label, body), db_url, db_auth_token)
 
 
-def bulk_node_connect(db_url, auth_token, embedding_model, labels, edges):
+def bulk_node_connect(db_url, db_auth_token, embedding_model, labels, edges):
     sources = []
     targets = []
     attributes = []
@@ -72,35 +72,35 @@ def bulk_node_connect(db_url, auth_token, embedding_model, labels, edges):
     db.atomic(
         db.connect_many_nodes(embedding_model, sources, targets, labels, attributes),
         db_url,
-        auth_token,
+        db_auth_token,
     )
 
 
 def single_node_connect(
-    db_url, auth_token, embedding_model, source, target, label, attribute
+    db_url, db_auth_token, embedding_model, source, target, label, attribute
 ):
     db.atomic(
         db.connect_nodes(embedding_model, source, target, label, attribute),
         db_url,
-        auth_token,
+        db_auth_token,
     )
 
 
-def remove_bulk_nodes(db_url, auth_token, ids):
-    db.atomic(db.remove_nodes(ids), db_url, auth_token)
+def remove_bulk_nodes(db_url, db_auth_token, ids):
+    db.atomic(db.remove_nodes(ids), db_url, db_auth_token)
 
 
-def remove_single_node(db_url, auth_token, id):
-    db.atomic(db.remove_node(id), db_url, auth_token)
+def remove_single_node(db_url, db_auth_token, id):
+    db.atomic(db.remove_node(id), db_url, db_auth_token)
 
 
-def traverse_nodes(db_url, auth_token, src, tgt):
-    return db.traverse(db_url, auth_token, src, tgt)
+def traverse_nodes(db_url, db_auth_token, src, tgt):
+    return db.traverse(db_url, db_auth_token, src, tgt)
 
 
 def main(args):
     # Initialize the Database
-    db.initialize(args.url, args.auth_token)
+    db.initialize(args.db_url, args.db_auth_token)
 
     # Embedding client and model name
     headers = {"Authorization": f"Bearer {args.embeddings_token}"}
@@ -122,8 +122,8 @@ def main(args):
 
     # Insert a node into database
     insert_single_node(
-        args.url,
-        args.auth_token,
+        args.db_url,
+        args.db_auth_token,
         embedding_model,
         new_label,
         new_node,
@@ -139,18 +139,18 @@ def main(args):
 
     # Bulk Insert
     bulk_insert_operations(
-        args.url, args.auth_token, embedding_model, new_labels, new_nodes
+        args.db_url, args.db_auth_token, embedding_model, new_labels, new_nodes
     )
 
     # Search a node
-    logging.info(f"Found Node: {find_a_node(args.url, args.auth_token, 4)}")
+    logging.info(f"Found Node: {find_a_node(args.db_url, args.db_auth_token, 4)}")
 
     body = {"name": "Sheeran", "type": ["singer", "rich"]}
     label = "related as an"
     id = 2
 
     # Update a single node
-    single_upsert(args.url, args.auth_token, embedding_model, label, body, id)
+    single_upsert(args.db_url, args.db_auth_token, embedding_model, label, body, id)
 
     nodes = {
         1: {"name": "Stanley", "age": "30"},
@@ -159,13 +159,15 @@ def main(args):
     labels = ["Lunch Box", "Pop Singer"]
 
     # Bulk Update
-    bulk_upsert(args.url, args.auth_token, embedding_model, labels, nodes)
+    bulk_upsert(args.db_url, args.db_auth_token, embedding_model, labels, nodes)
 
     edges = {3: [(3, {"wealth": "1000 Billion"}), (2, {"balance": "1000 rupees"})]}
     edges_labels = ["Has", "Has"]
 
     # Connect bulk nodes
-    bulk_node_connect(args.url, args.auth_token, embedding_model, edges_labels, edges)
+    bulk_node_connect(
+        args.db_url, args.db_auth_token, embedding_model, edges_labels, edges
+    )
 
     source = 3
     target = 3
@@ -173,8 +175,8 @@ def main(args):
     attribute = {"relation": "enemy"}
 
     single_node_connect(
-        args.url,
-        args.auth_token,
+        args.db_url,
+        args.db_auth_token,
         embedding_model,
         source,
         target,
@@ -183,27 +185,35 @@ def main(args):
     )
 
     # Remove nodes
-    remove_bulk_nodes(args.url, args.auth_token, [1, 2])
-    remove_single_node(args.url, args.auth_token, 4)
+    remove_bulk_nodes(args.db_url, args.db_auth_token, [1, 2])
+    remove_single_node(args.db_url, args.db_auth_token, 4)
 
-    logging.info(f"Traversal result: {traverse_nodes(args.url, args.auth_token, 3, 2)}")
+    logging.info(
+        f"Traversal result: {traverse_nodes(args.db_url, args.db_auth_token, 3, 2)}"
+    )
 
     # To generate a query clause and find nodes
     kv_name_like = db._generate_clause("name", predicate="LIKE")
     logging.info(
-        (db.atomic(db.find_nodes([kv_name_like], ("Pe%",)), args.url, args.auth_token))
+        (
+            db.atomic(
+                db.find_nodes([kv_name_like], ("Pe%",)), args.db_url, args.db_auth_token
+            )
+        )
     )
 
     # Graph visualization
-    visualizers.graphviz_visualize(args.url, args.auth_token, args.file_path, ["3"])
-    with_bodies = db.traverse(args.url, args.auth_token, 2, with_bodies=True)
+    visualizers.graphviz_visualize(
+        args.db_url, args.db_auth_token, args.file_path, ["3"]
+    )
+    with_bodies = db.traverse(args.db_url, args.db_auth_token, 2, with_bodies=True)
     visualizers.graphviz_visualize_bodies(args.path_with_bodies, with_bodies)
 
 
 if __name__ == "__main__":
     load_dotenv()
     db_url = os.getenv("LIBSQL_URL", None)
-    auth_token = os.getenv("LIBSQL_AUTH_TOKEN", None)
+    db_auth_token = os.getenv("LIBSQL_AUTH_TOKEN", None)
 
     logging.basicConfig(
         level=logging.DEBUG,
@@ -214,8 +224,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Shows simple example of low level apis."
     )
-    parser.add_argument("--url", default=db_url, type=str)
-    parser.add_argument("--auth-token", default=auth_token, type=str)
+    parser.add_argument("--db-url", default=db_url, type=str)
+    parser.add_argument("--db-auth-token", default=db_auth_token, type=str)
     parser.add_argument("--file-path", default="./dotfiles.dot", type=str)
     parser.add_argument(
         "--path-with-bodies", default="./path_with_bodies.dot", type=str

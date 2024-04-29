@@ -16,7 +16,7 @@ def test_graphviz_visualize(
 
     graphviz_visualize(
         db_url=None,
-        auth_token=None,
+        db_auth_token=None,
         dot_file="mock_dot_file.dot",
         path=[1, 2, 3],
         format="png",
