@@ -12,9 +12,9 @@ from contextlib import AbstractContextManager
 from graphviz import Digraph  # type: ignore
 from litellm.llms import openai  # type: ignore
 
-from .embeddings import OpenAIEmbeddingsModel
-from .models import Node, EdgeInput, KnowledgeGraph
-from .database import (
+from personal_graph.embeddings import OpenAIEmbeddingsModel
+from personal_graph.models import Node, EdgeInput, KnowledgeGraph
+from personal_graph.database import (
     atomic,
     connect_nodes,
     initialize,
@@ -36,8 +36,12 @@ from .database import (
     find_outdegree_edges,
     find_indegree_edges,
 )
-from .natural import insert_into_graph, search_from_graph, visualize_knowledge_graph
-from .visualizers import graphviz_visualize
+from personal_graph.natural import (
+    insert_into_graph,
+    search_from_graph,
+    visualize_knowledge_graph,
+)
+from personal_graph.visualizers import graphviz_visualize
 
 
 class Graph(AbstractContextManager):
