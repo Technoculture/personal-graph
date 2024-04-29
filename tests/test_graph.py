@@ -86,20 +86,16 @@ def test_add_edges(mock_atomic, mock_db_connection_and_cursor):
     assert graph.add_edges([edge1, edge2, edge3]) is None
 
 
-def test_update_node(mock_atomic, mock_db_connection_and_cursor):
-    graph = Graph()
-
-    node = Node(id=1, attributes={"name": "Jack"}, label="relative")
+def test_update_node(graph, mock_atomic, mock_db_connection_and_cursor):
+    node = Node(id=1, attributes={"name": "Alice", "age": "30"}, label="relative")
 
     assert graph.update_node(node) is None
 
 
-def test_update_nodes(mock_atomic, mock_db_connection_and_cursor):
-    graph = Graph()
-
+def test_update_nodes(graph, mock_atomic, mock_db_connection_and_cursor):
     nodes = [
-        Node(id=1, attributes={"name": "Jack"}, label="relative"),
-        Node(id=2, attributes={"name": "Jill"}, label="relative"),
+        Node(id=1, attributes={"name": "Peri", "age": "90"}, label="relative"),
+        Node(id=2, attributes={"name": "Peri", "age": "90"}, label="relative"),
     ]
 
     assert graph.update_nodes(nodes) is None
@@ -142,10 +138,13 @@ def test_insert(
 
 
 def test_search_query(
-    mock_openai_client, mock_generate_graph, mock_atomic, mock_db_connection_and_cursor
+    graph,
+    mock_openai_client,
+    mock_generate_graph,
+    mock_atomic,
+    mock_db_connection_and_cursor,
 ):
     mock_openai_client.chat.completions.create.return_value = mock_generate_graph
-    graph = Graph()
     test_insert(
         mock_openai_client,
         mock_generate_graph,

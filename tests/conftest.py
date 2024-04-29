@@ -1,5 +1,6 @@
+import json
 import pytest
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 from personal_graph.embeddings import OpenAIEmbeddingsModel
 from personal_graph.graph import Graph
@@ -50,6 +51,43 @@ def mock_dot_render():
 def mock_openai_client():
     with patch("instructor.from_openai") as mock_client:
         yield mock_client
+
+
+class MockEmbeddingsModel(Mock):
+    def get_embedding(self, data):
+        fixed_embeddings = {
+            '{"name": "Alice", "age": "30"}': [0.1, 0.2, 0.3],
+            '{"name": "Peri", "age": "90"}': [0.4, 0.5, 0.6],
+            '{"name": "Pema", "age": "66"}': [0.7, 0.8, 0.9],
+            '{"name": "Bob", "age": 35}': [0.11, 0.22, 0.33],
+        }
+        return fixed_embeddings.get(json.dumps(data), [])
+
+
+@pytest.fixture
+def mock_embeddings_model():
+    mock_embeddings_model = MockEmbeddingsModel()
+    with patch(
+        "personal_graph.embeddings.OpenAIEmbeddingsModel",
+        return_value=mock_embeddings_model,
+    ):
+        yield mock_embeddings_model
+
+
+@pytest.fixture
+def graph(mock_openai_client, mock_embeddings_model):
+    with patch("openai.OpenAI", return_value=mock_openai_client):
+        with patch(
+            "personal_graph.embeddings.OpenAIEmbeddingsModel",
+            return_value=mock_embeddings_model,
+        ):
+            graph = Graph(
+                llm_client=None,
+                embedding_model_client=None,
+                llm_model_name="",
+                embedding_model_name="",
+            )
+            yield graph
 
 
 @pytest.fixture
