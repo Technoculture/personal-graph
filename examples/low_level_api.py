@@ -221,7 +221,9 @@ if __name__ == "__main__":
         "--path-with-bodies", default="./path_with_bodies.dot", type=str
     )
     parser.add_argument("--embeddings-base-url", default=os.getenv("LITE_LLM_BASE_URL"))
-    parser.add_argument("--embeddings-token", default=os.getenv("LITE_LLM_TOKEN"), type=str)
+    parser.add_argument(
+        "--embeddings-token", default=os.getenv("LITE_LLM_TOKEN"), type=str
+    )
     parser.add_argument(
         "--embedding-model-name", default="openai/text-embedding-3-small", type=str
     )
