@@ -43,9 +43,9 @@ from .visualizers import graphviz_visualize
 class Graph(AbstractContextManager):
     def __init__(
         self,
+        *,
         db_url: Optional[str] = None,
         auth_token: Optional[str] = None,
-        *,
         llm_client: Any = openai.OpenAI(
             api_key="",
             base_url=os.getenv("LITE_LLM_BASE_URL"),

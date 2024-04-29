@@ -12,7 +12,7 @@ from personal_graph import (
 
 
 def main(url, token):
-    with Graph(url, token) as graph:
+    with Graph(db_url=url, auth_token=token) as graph:
         # Define nodes and edges
         node1 = Node(id="3", label="Person", attributes={"name": "Alice", "age": "30"})
         node2 = Node(id="4", label="Person", attributes={"name": "Bob", "age": "25"})
