@@ -3,7 +3,7 @@ Provide access to different embeddings models
 """
 
 from abc import ABC, abstractmethod
-from typing import Any
+import openai
 
 
 class EmbeddingsModel(ABC):
@@ -13,7 +13,7 @@ class EmbeddingsModel(ABC):
 
 
 class OpenAIEmbeddingsModel(EmbeddingsModel):
-    def __init__(self, embed_client: Any, embed_model: str) -> None:
+    def __init__(self, embed_client: openai.OpenAI, embed_model: str) -> None:
         self.client = embed_client if embed_client else None
         self.model = embed_model
 

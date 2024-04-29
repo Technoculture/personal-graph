@@ -46,12 +46,12 @@ class Graph(AbstractContextManager):
         *,
         db_url: Optional[str] = None,
         auth_token: Optional[str] = None,
-        llm_client: Any = openai.OpenAI(
+        llm_client: openai.OpenAI = openai.OpenAI(
             api_key="",
             base_url=os.getenv("LITE_LLM_BASE_URL"),
             default_headers={"Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN')}"},
         ),
-        embedding_model_client: Any = openai.OpenAI(
+        embedding_model_client: openai.OpenAI = openai.OpenAI(
             api_key="",
             base_url=os.getenv("LITE_LLM_BASE_URL"),
             default_headers={"Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN')}"},
