@@ -61,6 +61,8 @@ def insert_into_graph(
 ) -> KnowledgeGraph:
     uuid_dict = {}
     kg = generate_graph(text, llm_client, llm_model_name)
+    url = os.getenv("LIBSQL_URL", None)
+    token = os.getenv("LIBSQL_AUTH_TOKEN", None)
 
     try:
         for node in kg.nodes:
@@ -72,8 +74,8 @@ def insert_into_graph(
                     {"body": node.attributes},
                     uuid_dict[node.id],
                 ),
-                os.getenv("LIBSQL_URL"),
-                os.getenv("LIBSQL_AUTH_TOKEN"),
+                url,
+                token,
             )
 
         for edge in kg.edges:
@@ -85,8 +87,8 @@ def insert_into_graph(
                     edge.label,
                     {"body": edge.attributes},
                 ),
-                os.getenv("LIBSQL_URL"),
-                os.getenv("LIBSQL_AUTH_TOKEN"),
+                url,
+                token,
             )
     except KeyError:
         return KnowledgeGraph()
@@ -97,16 +99,14 @@ def insert_into_graph(
 def search_from_graph(
     text: str, embedding_model: OpenAIEmbeddingsModel
 ) -> KnowledgeGraph:
+    url = os.getenv("LIBSQL_URL", None)
+    token = os.getenv("LIBSQL_AUTH_TOKEN", None)
     try:
         similar_nodes = atomic(
-            vector_search_node(embedding_model, {"body": text}, 0.9, 2),
-            os.getenv("LIBSQL_URL"),
-            os.getenv("LIBSQL_AUTH_TOKEN"),
+            vector_search_node(embedding_model, {"body": text}, 0.9, 2), url, token
         )
         similar_edges = atomic(
-            vector_search_edge(embedding_model, {"body": text}, k=2),
-            os.getenv("LIBSQL_URL"),
-            os.getenv("LIBSQL_AUTH_TOKEN"),
+            vector_search_edge(embedding_model, {"body": text}, k=2), url, token
         )
 
         resultant_subgraph = KnowledgeGraph()
@@ -121,11 +121,7 @@ def search_from_graph(
 
         for node in similar_nodes:
             similar_node = Node(id=node[1], label=node[2], attributes=node[3])
-            nodes = atomic(
-                all_connected_nodes(similar_node),
-                os.getenv("LIBSQL_URL"),
-                os.getenv("LIBSQL_AUTH_TOKEN"),
-            )
+            nodes = atomic(all_connected_nodes(similar_node), url, token)
 
             if not nodes:
                 continue
@@ -145,11 +141,7 @@ def search_from_graph(
                 label=edge[3],
                 attributes=edge[4],
             )
-            nodes = atomic(
-                all_connected_nodes(similar_edge),
-                os.getenv("LIBSQL_URL"),
-                os.getenv("LIBSQL_AUTH_TOKEN"),
-            )
+            nodes = atomic(all_connected_nodes(similar_edge), url, token)
 
             if not nodes:
                 continue

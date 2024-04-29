@@ -48,13 +48,17 @@ class Graph(AbstractContextManager):
         auth_token: Optional[str] = None,
         llm_client: openai.OpenAI = openai.OpenAI(
             api_key="",
-            base_url=os.getenv("LITE_LLM_BASE_URL"),
-            default_headers={"Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN')}"},
+            base_url=os.getenv("LITE_LLM_BASE_URL", ""),
+            default_headers={
+                "Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN', '')}"
+            },
         ),
         embedding_model_client: openai.OpenAI = openai.OpenAI(
             api_key="",
-            base_url=os.getenv("LITE_LLM_BASE_URL"),
-            default_headers={"Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN')}"},
+            base_url=os.getenv("LITE_LLM_BASE_URL", ""),
+            default_headers={
+                "Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN', '')}"
+            },
         ),
         llm_model_name: str = "openai/gpt-3.5-turbo",
         embedding_model_name: str = "openai/text-embedding-3-small",

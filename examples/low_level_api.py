@@ -103,14 +103,14 @@ def main(args):
     db.initialize(args.url, args.auth_token)
 
     # Embedding client and model name
-    headers = {"Authorization": f"Bearer {args.embedding_token}"}
+    headers = {"Authorization": f"Bearer {args.embeddings_token}"}
     embedding_client = (
-        OpenAI(api_key="", base_url=args.embedding_base_url, default_headers=headers)
-        if args.base_url and args.token
+        OpenAI(api_key="", base_url=args.embeddings_base_url, default_headers=headers)
+        if args.embeddings_base_url and args.embeddings_token
         else None
     )
-    embedding_model_name = args.embedding_model_name
-    embedding_dimension = args.embedding_model_dimension
+    embedding_model_name = args.embeddings_model_name
+    embedding_dimension = args.embeddings_model_dimension
 
     embedding_model = OpenAIEmbeddingsModel(
         embedding_client, embedding_model_name, embedding_dimension
@@ -202,8 +202,8 @@ def main(args):
 
 if __name__ == "__main__":
     load_dotenv()
-    db_url = os.getenv("LIBSQL_URL")
-    auth_token = os.getenv("LIBSQL_AUTH_TOKEN")
+    db_url = os.getenv("LIBSQL_URL", None)
+    auth_token = os.getenv("LIBSQL_AUTH_TOKEN", None)
 
     logging.basicConfig(
         level=logging.DEBUG,
@@ -225,9 +225,9 @@ if __name__ == "__main__":
         "--embeddings-token", default=os.getenv("LITE_LLM_TOKEN"), type=str
     )
     parser.add_argument(
-        "--embedding-model-name", default="openai/text-embedding-3-small", type=str
+        "--embeddings-model-name", default="openai/text-embedding-3-small", type=str
     )
-    parser.add_argument("--embedding-model-dimension", default=384, type=int)
+    parser.add_argument("--embeddings-model-dimension", default=384, type=int)
 
     arguments = parser.parse_args()
 
