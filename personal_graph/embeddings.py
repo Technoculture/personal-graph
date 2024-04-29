@@ -13,9 +13,12 @@ class EmbeddingsModel(ABC):
 
 
 class OpenAIEmbeddingsModel(EmbeddingsModel):
-    def __init__(self, embed_client: openai.OpenAI, embed_model: str) -> None:
+    def __init__(
+        self, embed_client: openai.OpenAI, embed_model: str, embed_dimension: int
+    ) -> None:
         self.client = embed_client if embed_client else None
         self.model = embed_model
+        self.dimension = embed_dimension
 
     def get_embedding(self, text: str) -> list[float]:
         if self.client is None:
@@ -23,7 +26,10 @@ class OpenAIEmbeddingsModel(EmbeddingsModel):
         text = text.replace("\n", " ")
         return (
             self.client.embeddings.create(
-                input=[text], model=self.model, dimensions=384, encoding_format="float"
+                input=[text],
+                model=self.model,
+                dimensions=self.dimension,
+                encoding_format="float",
             )
             .data[0]
             .embedding

@@ -58,6 +58,7 @@ class Graph(AbstractContextManager):
         ),
         llm_model_name: str = "openai/gpt-3.5-turbo",
         embedding_model_name: str = "openai/text-embedding-3-small",
+        embedding_dimensions: int = 384,
     ):
         self.db_url = db_url
         self.auth_token = auth_token
@@ -65,7 +66,9 @@ class Graph(AbstractContextManager):
         self.llm_model_name = llm_model_name
 
         self.embedding_model = OpenAIEmbeddingsModel(
-            embedding_model_client, embedding_model_name
+            embedding_model_client,
+            embedding_model_name,
+            embedding_dimensions,
         )
 
     def __eq__(self, other):
