@@ -1,3 +1,4 @@
+import argparse
 import os
 import logging
 from personal_graph import (
@@ -11,8 +12,8 @@ from personal_graph import (
 )
 
 
-def main(url, token):
-    with Graph(db_url=url, auth_token=token) as graph:
+def main(args):
+    with Graph(db_url=args.url, auth_token=args.auth_token) as graph:
         # Define nodes and edges
         node1 = Node(id="3", label="Person", attributes={"name": "Alice", "age": "30"})
         node2 = Node(id="4", label="Person", attributes={"name": "Bob", "age": "25"})
@@ -131,7 +132,14 @@ if __name__ == "__main__":
         filename="./log/pythonic_api.log",
     )
 
-    db_url = os.getenv("LIBSQL_URL")
-    auth_token = os.getenv("LIBSQL_AUTH_TOKEN")
+    parser = argparse.ArgumentParser(
+        description="Shows simple example of high level apis."
+    )
 
-    main(db_url, auth_token)
+    parser.add_argument("--url", default=os.getenv("LIBSQL_URL"), type=str)
+    parser.add_argument(
+        "--auth-token", default=os.getenv("LIBSQL_AUTH_TOKEN"), type=str
+    )
+
+    arguments = parser.parse_args()
+    main(arguments)

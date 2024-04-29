@@ -103,15 +103,18 @@ def main(args):
     db.initialize(args.url, args.auth_token)
 
     # Embedding client and model name
-    headers = {"Authorization": f"Bearer {args.token}"}
+    headers = {"Authorization": f"Bearer {args.embedding_token}"}
     embedding_client = (
-        OpenAI(api_key="", base_url=args.base_url, default_headers=headers)
+        OpenAI(api_key="", base_url=args.embedding_base_url, default_headers=headers)
         if args.base_url and args.token
         else None
     )
     embedding_model_name = args.embedding_model_name
+    embedding_dimension = args.embedding_model_dimension
 
-    embedding_model = OpenAIEmbeddingsModel(embedding_client, embedding_model_name)
+    embedding_model = OpenAIEmbeddingsModel(
+        embedding_client, embedding_model_name, embedding_dimension
+    )
 
     new_node = {"subject": "MES", "type": ["person", "Dr"]}
     new_label = "Mechanical Engineer"
@@ -217,11 +220,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--path-with-bodies", default="./path_with_bodies.dot", type=str
     )
-    parser.add_argument("--base-url", default=os.getenv("LITE_LLM_BASE_URL"))
-    parser.add_argument("--token", default=os.getenv("LITE_LLM_TOKEN"), type=str)
+    parser.add_argument("--embeddings-base-url", default=os.getenv("LITE_LLM_BASE_URL"))
+    parser.add_argument("--embeddings-token", default=os.getenv("LITE_LLM_TOKEN"), type=str)
     parser.add_argument(
         "--embedding-model-name", default="openai/text-embedding-3-small", type=str
     )
+    parser.add_argument("--embedding-model-dimension", default=384, type=int)
 
     arguments = parser.parse_args()
 

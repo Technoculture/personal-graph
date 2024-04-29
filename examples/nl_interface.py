@@ -32,7 +32,7 @@ def main(args):
     )
 
     embedding_model = OpenAIEmbeddingsModel(
-        embedding_client, args.embeddings_model_name
+        embedding_client, args.embeddings_model_name, args.embedding_model_dimension
     )
 
     # Testing insert query into graph db
@@ -91,6 +91,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--embeddings-model-name", default="openai/text-embedding-3-small", type=str
     )
+    parser.add_argument("--embedding-model-dimension", default=384, type=int)
 
     arguments = parser.parse_args()
 

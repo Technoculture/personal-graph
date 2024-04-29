@@ -23,7 +23,7 @@ def mock_db_connection_and_cursor():
 
 @pytest.fixture
 def embedding_model():
-    return OpenAIEmbeddingsModel(None, "")
+    return OpenAIEmbeddingsModel(None, "", 384)
 
 
 @pytest.fixture
@@ -86,6 +86,7 @@ def graph(mock_openai_client, mock_embeddings_model):
                 embedding_model_client=None,
                 llm_model_name="",
                 embedding_model_name="",
+                embedding_dimensions=384,
             )
             yield graph
 
