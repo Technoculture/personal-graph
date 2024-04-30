@@ -93,7 +93,9 @@ class MessageAnalyzerModule(dspy.Module):
 def create_and_save_cache(rag):
     list_of_context = []
 
-    with Graph(os.getenv("LIBSQL_URL"), os.getenv("LIBSQL_AUTH_TOKEN")) as graph:
+    with Graph(
+        db_url=os.getenv("LIBSQL_URL"), db_auth_token=os.getenv("LIBSQL_AUTH_TOKEN")
+    ) as graph:
         turbo = dspy.OpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPEN_API_KEY"))
 
         kg = graph.insert("DEFAULT_BACKSTORY")
@@ -144,7 +146,9 @@ def main():
 
     st.title("Knowledge Graph Chat")
 
-    with Graph(os.getenv("LIBSQL_URL"), os.getenv("LIBSQL_AUTH_TOKEN")) as graph:
+    with Graph(
+        db_url=os.getenv("LIBSQL_URL"), db_auth_token=os.getenv("LIBSQL_AUTH_TOKEN")
+    ) as graph:
         turbo = dspy.OpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPEN_API_KEY"))
         cached_backstory, cached_kg, cached_context = load_cache()
 
