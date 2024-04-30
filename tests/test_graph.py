@@ -2,12 +2,13 @@
 Unit test for high level apis
 """
 
+import networkx as nx  # type: ignore
+
 from personal_graph.models import Node, EdgeInput, KnowledgeGraph
 from personal_graph.graph import Graph
 
 
-def test_add_node(mock_atomic, mock_db_connection_and_cursor):
-    graph = Graph()
+def test_add_node(graph, mock_atomic, mock_db_connection_and_cursor):
     node = Node(
         id=1,
         attributes={"name": "Jack", "body": "Jack is Joe's cousin brother"},
@@ -16,8 +17,7 @@ def test_add_node(mock_atomic, mock_db_connection_and_cursor):
     assert graph.add_node(node) is None
 
 
-def test_add_nodes(mock_atomic, mock_db_connection_and_cursor):
-    graph = Graph()
+def test_add_nodes(graph, mock_atomic, mock_db_connection_and_cursor):
     nodes = [
         Node(
             id=1,
@@ -34,9 +34,7 @@ def test_add_nodes(mock_atomic, mock_db_connection_and_cursor):
     assert graph.add_nodes(nodes) is None
 
 
-def test_add_edge(mock_atomic, mock_db_connection_and_cursor):
-    graph = Graph()
-
+def test_add_edge(graph, mock_atomic, mock_db_connection_and_cursor):
     node1 = Node(
         id=3,
         label="relative",
@@ -56,9 +54,7 @@ def test_add_edge(mock_atomic, mock_db_connection_and_cursor):
     assert graph.add_edge(edge) is None
 
 
-def test_add_edges(mock_atomic, mock_db_connection_and_cursor):
-    graph = Graph()
-
+def test_add_edges(graph, mock_atomic, mock_db_connection_and_cursor):
     node1 = Node(id=3, label="Person", attributes={"name": "Alice", "age": "30"})
     node2 = Node(id=4, label="Person", attributes={"name": "Bob", "age": "25"})
     node3 = Node(
@@ -101,37 +97,32 @@ def test_update_nodes(graph, mock_atomic, mock_db_connection_and_cursor):
     assert graph.update_nodes(nodes) is None
 
 
-def test_remove_node(mock_atomic, mock_db_connection_and_cursor):
-    graph = Graph()
-
+def test_remove_node(graph, mock_atomic, mock_db_connection_and_cursor):
     assert graph.remove_node(1) is None
 
 
-def test_remove_nodes(mock_atomic, mock_db_connection_and_cursor):
-    graph = Graph()
-
+def test_remove_nodes(graph, mock_atomic, mock_db_connection_and_cursor):
     assert graph.remove_node([1, 6, 8]) is None
 
 
-def test_search_node(mock_atomic, mock_db_connection_and_cursor):
-    graph = Graph()
-
+def test_search_node(graph, mock_atomic, mock_db_connection_and_cursor):
     assert graph.search_node(1) is not None
 
 
-def test_traverse(mock_atomic, mock_db_connection_and_cursor):
-    graph = Graph()
-
+def test_traverse(graph, mock_atomic, mock_db_connection_and_cursor):
     assert graph.traverse(1, 2) is not None
 
 
 def test_insert(
-    mock_openai_client, mock_generate_graph, mock_atomic, mock_db_connection_and_cursor
+    graph,
+    mock_openai_client,
+    mock_generate_graph,
+    mock_atomic,
+    mock_db_connection_and_cursor,
 ):
     mock_openai_client.chat.completions.create.return_value = mock_generate_graph
 
-    graph = Graph()
-    test_add_nodes(mock_atomic, mock_db_connection_and_cursor)
+    test_add_nodes(graph, mock_atomic, mock_db_connection_and_cursor)
 
     result = graph.insert("Alice has suffocation at night.")
     assert result == mock_generate_graph
@@ -146,6 +137,7 @@ def test_search_query(
 ):
     mock_openai_client.chat.completions.create.return_value = mock_generate_graph
     test_insert(
+        graph,
         mock_openai_client,
         mock_generate_graph,
         mock_atomic,
@@ -156,14 +148,33 @@ def test_search_query(
     assert isinstance(result, KnowledgeGraph)
 
 
-def test_merge_by_similarity(mock_atomic, mock_db_connection_and_cursor):
-    graph = Graph()
-    test_add_nodes(mock_atomic, mock_db_connection_and_cursor)
+def test_merge_by_similarity(graph, mock_atomic, mock_db_connection_and_cursor):
+    test_add_nodes(graph, mock_atomic, mock_db_connection_and_cursor)
 
     assert graph.merge_by_similarity(0.9) is None
 
 
-def test_find_nodes_like(mock_atomic, mock_db_connection_and_cursor):
-    graph = Graph()
-
+def test_find_nodes_like(graph, mock_atomic, mock_db_connection_and_cursor):
     assert graph.find_nodes_like("relative", 0.9) is not None
+
+
+def test_to_networkx(mock_personal_graph, mock_atomic, mock_db_connection_and_cursor):
+    networkx_graph = mock_personal_graph.pg_to_networkx()
+
+    # Check if the returned object is a NetworkX graph
+    assert isinstance(networkx_graph, nx.Graph)
+
+    return networkx_graph
+
+
+def test_from_networkx(
+    graph, mock_personal_graph, mock_atomic, mock_db_connection_and_cursor
+):
+    personal_graph = mock_personal_graph.networkx_to_pg(
+        test_to_networkx(
+            mock_personal_graph, mock_atomic, mock_db_connection_and_cursor
+        )
+    )
+
+    # Check if the returned object is a Personal Graph
+    assert isinstance(personal_graph, Graph)

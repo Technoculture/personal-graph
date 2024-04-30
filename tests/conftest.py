@@ -2,6 +2,7 @@ import json
 import pytest
 from unittest.mock import patch, Mock
 
+from personal_graph.graph import LLMClient, EmbeddingClient
 from personal_graph.embeddings import OpenAIEmbeddingsModel
 from personal_graph.graph import Graph
 from personal_graph.models import KnowledgeGraph, Node, Edge, EdgeInput
@@ -82,11 +83,12 @@ def graph(mock_openai_client, mock_embeddings_model):
             return_value=mock_embeddings_model,
         ):
             graph = Graph(
-                llm_client=None,
-                embedding_model_client=None,
-                llm_model_name="",
-                embedding_model_name="",
-                embedding_dimensions=384,
+                db_url=None,
+                db_auth_token=None,
+                llm_client=LLMClient(client=None, model_name=""),
+                embedding_model_client=EmbeddingClient(
+                    client=None, model_name="", dimensions=384
+                ),
             )
             yield graph
 
@@ -114,8 +116,15 @@ def mock_generate_graph():
 
 
 @pytest.fixture
-def mock_personal_graph(mock_atomic, mock_db_connection_and_cursor):
-    graph = Graph()
+def mock_personal_graph(mock_openai_client, mock_atomic, mock_db_connection_and_cursor):
+    graph = Graph(
+        db_url=None,
+        db_auth_token=None,
+        llm_client=LLMClient(client=mock_openai_client, model_name=""),
+        embedding_model_client=EmbeddingClient(
+            client=mock_openai_client, model_name="", dimensions=384
+        ),
+    )
 
     node1 = Node(id=1, label="Sample Label", attributes={"Person": "scholar"})
     node2 = Node(id=2, label="Researching", attributes={"University": "Stanford"})
