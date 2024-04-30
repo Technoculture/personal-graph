@@ -4,10 +4,18 @@ import logging
 import argparse
 from dotenv import load_dotenv
 from personal_graph import Graph
+from personal_graph.graph import LLMClient, EmbeddingClient
 
 
 def main(args):
-    with Graph(db_url=args.db_url, db_auth_token=args.db_auth_token) as graph:
+    llm_client = LLMClient()
+    embedding_client = EmbeddingClient()
+    with Graph(
+        db_url=args.db_url,
+        db_auth_token=args.db_auth_token,
+        llm_client=llm_client,
+        embedding_model_client=embedding_client,
+    ) as graph:
         # Testing insert query into graph db
         nl_query = "increased thirst, weight loss, increased hunger, frequent urination etc. are all symptoms of diabetes."
         kg = graph.insert(text=nl_query)

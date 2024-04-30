@@ -3,17 +3,21 @@ import os
 import logging
 from personal_graph import (
     Graph,
-    to_networkx,
-    from_networkx,
     Node,
     EdgeInput,
     KnowledgeGraph,
     Edge,
 )
+from personal_graph.graph import LLMClient, EmbeddingClient
 
 
 def main(args):
-    with Graph(db_url=args.db_url, db_auth_token=args.db_auth_token) as graph:
+    with Graph(
+        db_url=args.db_url,
+        db_auth_token=args.db_auth_token,
+        llm_client=LLMClient(),
+        embedding_model_client=EmbeddingClient(),
+    ) as graph:
         # Define nodes and edges
         node1 = Node(id="3", label="Person", attributes={"name": "Alice", "age": "30"})
         node2 = Node(id="4", label="Person", attributes={"name": "Bob", "age": "25"})
@@ -115,8 +119,10 @@ def main(args):
         logging.info(graph.visualize_graph(kg))
 
         # Transforms to and from networkx do not alter the graph
-        g2 = from_networkx(
-            to_networkx(graph, post_visualize=True), post_visualize=True, override=False
+        g2 = graph.networkx_to_pg(
+            graph.pg_to_networkx(post_visualize=True),
+            post_visualize=True,
+            override=True,
         )
         if graph == g2:
             logging.info("TRUE")
