@@ -6,14 +6,18 @@ from __future__ import annotations
 
 import json
 import os
+from dataclasses import dataclass
 from typing import Any, List, Optional, Union, Dict
 import libsql_experimental as libsql  # type: ignore
 from contextlib import AbstractContextManager
+
+import networkx as nx  # type: ignore
 from graphviz import Digraph  # type: ignore
 from litellm.llms import openai  # type: ignore
+from matplotlib import pyplot as plt
 
 from personal_graph.embeddings import OpenAIEmbeddingsModel
-from personal_graph.models import Node, EdgeInput, KnowledgeGraph
+from personal_graph.models import Node, EdgeInput, KnowledgeGraph, Edge
 from personal_graph.database import (
     atomic,
     connect_nodes,
@@ -44,39 +48,43 @@ from personal_graph.natural import (
 from personal_graph.visualizers import graphviz_visualize
 
 
+@dataclass
+class OpenAIClient:
+    client: openai.OpenAI = openai.OpenAI(
+        api_key="",
+        base_url=os.getenv("LITE_LLM_BASE_URL", ""),
+        default_headers={"Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN', '')}"},
+    )
+
+
+@dataclass
+class EmbeddingClient(OpenAIClient):
+    model_name: str = "openai/text-embedding-3-small"
+    dimensions: int = 384
+
+
+@dataclass
+class LLMClient(OpenAIClient):
+    model_name: str = "openai/gpt-3.5-turbo"
+
+
 class Graph(AbstractContextManager):
     def __init__(
         self,
         *,
         db_url: Optional[str] = None,
         db_auth_token: Optional[str] = None,
-        llm_client: openai.OpenAI = openai.OpenAI(
-            api_key="",
-            base_url=os.getenv("LITE_LLM_BASE_URL", ""),
-            default_headers={
-                "Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN', '')}"
-            },
-        ),
-        embedding_model_client: openai.OpenAI = openai.OpenAI(
-            api_key="",
-            base_url=os.getenv("LITE_LLM_BASE_URL", ""),
-            default_headers={
-                "Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN', '')}"
-            },
-        ),
-        llm_model_name: str = "openai/gpt-3.5-turbo",
-        embedding_model_name: str = "openai/text-embedding-3-small",
-        embedding_dimensions: int = 384,
+        llm_client: LLMClient,
+        embedding_model_client: EmbeddingClient,
     ):
         self.db_url = db_url
         self.db_auth_token = db_auth_token
         self.llm_client = llm_client
-        self.llm_model_name = llm_model_name
 
         self.embedding_model = OpenAIEmbeddingsModel(
-            embedding_model_client,
-            embedding_model_name,
-            embedding_dimensions,
+            embedding_model_client.client,
+            embedding_model_client.model_name,
+            embedding_model_client.dimensions,
         )
 
     def __eq__(self, other):
@@ -104,6 +112,179 @@ class Graph(AbstractContextManager):
 
     def save(self):
         self.connection.commit()
+
+    def to_networkx(self, post_visualize: bool) -> nx.Graph:
+        """
+        Convert the graph database to a NetworkX DiGraph object.
+        """
+        G = nx.Graph()  # Empty Graph with no nodes and edges
+
+        node_ids = self.fetch_ids_from_db()
+        # Add edges to networkX
+        for source_id in node_ids:
+            outdegree_edges = self.search_outdegree_edges(source_id)
+            for target_id, edge_label, edge_data in outdegree_edges:
+                edge_data = json.loads(edge_data)
+                edge_data["label"] = edge_label
+                G.add_edge(source_id, target_id, **edge_data)
+
+        for target_id in node_ids:
+            indegree_edges = self.search_indegree_edges(target_id)
+            for source_id, edge_label, edge_data in indegree_edges:
+                edge_data = json.loads(edge_data)
+                edge_data["label"] = edge_label
+                G.add_edge(source_id, target_id, **edge_data)
+
+        for node_id in node_ids:
+            node_data = self.search_node(node_id)
+            node_label = self.search_node_label(node_id)
+            node_data["label"] = node_label
+            G.add_node(node_id, **node_data)
+
+        if post_visualize:
+            # Visualizing the NetworkX Graph
+            plt.figure(
+                figsize=(20, 20), dpi=100
+            )  # Increase the figure size and resolution
+            pos = nx.spring_layout(
+                G, scale=6
+            )  # Use spring layout for better node positioning
+
+            nx.draw_networkx(
+                G,
+                pos,
+                with_labels=True,
+                nodelist=G.nodes(),
+                edgelist=G.edges(),
+                node_size=600,
+                node_color="skyblue",
+                edge_color="gray",
+                width=1.5,
+            )
+            nx.draw_networkx_edge_labels(
+                G, pos, edge_labels=nx.get_edge_attributes(G, "label")
+            )
+            plt.axis("off")  # Show the axes
+            plt.savefig("networkX_graph.png")
+
+        return G
+
+    def from_networkx(
+        self, network_graph: nx, post_visualize: bool, override: bool
+    ) -> Graph:
+        if override:
+            node_ids = self.fetch_ids_from_db()
+            self.remove_nodes(node_ids)
+
+        node_ids_with_edges = set()
+        kg = KnowledgeGraph()
+
+        # Convert networkX edges to personal graph edges
+        for source_id, target_id, edge_data in network_graph.edges(data=True):
+            edge_attributes: Dict[str, Any] = edge_data
+            edge_label: str = edge_attributes["label"]
+
+            if not override:
+                # Check if the node with the given id exists, if not then firstly add the node.
+                source = self.search_node(source_id)
+                if source is []:
+                    self.add_node(
+                        Node(
+                            id=str(source_id),
+                            label=edge_label if edge_label else "",
+                            attributes=edge_attributes,
+                        )
+                    )
+                else:
+                    node_ids_with_edges.add(str(source_id))
+
+                target = self.search_node(target_id)
+                if target is []:
+                    node_ids_with_edges.remove(str(target_id))
+                    self.add_node(
+                        Node(
+                            id=str(target_id),
+                            label=edge_label if edge_label else "",
+                            attributes=edge_attributes,
+                        )
+                    )
+                else:
+                    node_ids_with_edges.add(str(target_id))
+
+            # After adding the new nodes if exists , add an edge
+            edge = Edge(
+                source=str(source_id),
+                target=str(target_id),
+                label=edge_label if edge_label else "",
+                attributes=edge_attributes,
+            )
+            kg.edges.append(edge)
+
+        # Convert networkX nodes to personal graph nodes
+        for node_id, node_data in network_graph.nodes(data=True):
+            if str(node_id) not in node_ids_with_edges:
+                node_attributes: Dict[str, Any] = node_data
+                node_label: str = node_attributes.pop("label", "")
+                node = Node(
+                    id=str(node_id), label=node_label[0], attributes=node_attributes
+                )
+
+                if not override:
+                    # Check if the node exists
+                    if_node_exists = self.search_node(node_id)
+
+                    if if_node_exists:
+                        self.update_node(node)
+                    else:
+                        self.add_node(node)
+                else:
+                    self.add_node(node)
+                kg.nodes.append(node)
+
+        for edge in kg.edges:
+            source_node_attributes = self.search_node(edge.source)
+            source_node_label = self.search_node_label(edge.source)
+            target_node_attributes = self.search_node(edge.target)
+            target_node_label = self.search_node_label(edge.target)
+            final_edge_to_be_inserted = EdgeInput(
+                source=Node(
+                    id=edge.source,
+                    label=source_node_label
+                    if isinstance(source_node_label, str)
+                    else "Sample label",
+                    attributes=source_node_attributes
+                    if isinstance(source_node_attributes, Dict)
+                    else "Sample Attributes",
+                ),
+                target=Node(
+                    id=edge.target,
+                    label=target_node_label
+                    if isinstance(target_node_label, str)
+                    else "Sample label",
+                    attributes=target_node_attributes
+                    if isinstance(target_node_attributes, Dict)
+                    else "Sample Attributes",
+                ),
+                label=edge.label if isinstance(edge.label, str) else "Sample label",
+                attributes=edge.attributes
+                if isinstance(edge.attributes, Dict)
+                else "Sample Attributes",
+            )
+            self.add_edge(final_edge_to_be_inserted)
+
+        if post_visualize:
+            # Visualize the personal graph using graphviz
+            dot = Digraph()
+
+            for node in kg.nodes:
+                dot.node(node.id, label=f"{node.label}: {node.id}")
+
+            for edge in kg.edges:
+                dot.edge(edge.source, edge.target, label=edge.label)
+
+            dot.render("personal_graph.gv", view=True)
+
+        return self
 
     def add_node(self, node: Node) -> None:
         atomic(
@@ -211,8 +392,8 @@ class Graph(AbstractContextManager):
     def insert(self, text: str) -> KnowledgeGraph:
         kg: KnowledgeGraph = insert_into_graph(
             text,
-            self.llm_client,
-            self.llm_model_name,
+            self.llm_client.client,
+            self.llm_client.model_name,
             self.embedding_model,
         )
         return kg
@@ -265,3 +446,15 @@ class Graph(AbstractContextManager):
         if not similar_nodes:
             return True
         return False
+
+    def pg_to_networkx(self, *, post_visualize: bool = False):
+        nx = self.to_networkx(post_visualize=post_visualize)
+        return nx
+
+    def networkx_to_pg(
+        self, networkx_graph: nx, *, post_visualize: bool = False, override: bool = True
+    ):
+        pg = self.from_networkx(
+            networkx_graph, post_visualize=post_visualize, override=override
+        )
+        return pg
