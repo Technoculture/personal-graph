@@ -1,22 +1,27 @@
 import logging
 import os
 from dotenv import load_dotenv
+
+from personal_graph import Graph
+from personal_graph.graph import LLMClient, EmbeddingClient
 from personal_graph.retriever import PersonalRM
 
 
 def main(db_url, db_auth_token):
-    query = "What is the similarity between Jack and Ronaldo?"
-
-    retriever = PersonalRM(
+    with Graph(
         db_url=db_url,
         db_auth_token=db_auth_token,
-    )
+        llm_client=LLMClient(),
+        embedding_model_client=EmbeddingClient(),
+    ) as graph:
+        query = "What is the similarity between Jack and Ronaldo?"
+        retriever = PersonalRM(graph)
 
-    passages = retriever.forward(query)
+        passages = retriever.forward(query)
 
-    logging.info("Retrieved Results: ")
-    for passage in passages:
-        logging.info(passage)
+        logging.info("Retrieved Results: ")
+        for passage in passages:
+            logging.info(passage)
 
 
 if __name__ == "__main__":
