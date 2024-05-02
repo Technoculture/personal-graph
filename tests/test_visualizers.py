@@ -1,32 +1,4 @@
-from personal_graph.visualizers import graphviz_visualize, graphviz_visualize_bodies
-
-
-def test_graphviz_visualize(
-    mock_atomic,
-    mock_db_connection_and_cursor,
-    mock_find_node,
-    mock_get_connections,
-    mock_dot_render,
-):
-    mock_find_node.return_value = {"id": 1, "name": "Alice", "age": 30}
-    mock_get_connections.return_value = [
-        (1, 2, {"weight": 0.5}),
-        (2, 3, {"weight": 0.7}),
-    ]
-
-    graphviz_visualize(
-        db_url=None,
-        db_auth_token=None,
-        dot_file="mock_dot_file.dot",
-        path=[1, 2, 3],
-        format="png",
-        exclude_node_keys=[],
-        hide_node_key=False,
-        node_kv=" ",
-        exclude_edge_keys=[],
-        hide_edge_key=False,
-        edge_kv=" ",
-    )
+from personal_graph.visualizers import graphviz_visualize_bodies
 
 
 def test_graphviz_visualize_bodies(

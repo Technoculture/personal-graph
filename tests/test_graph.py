@@ -158,6 +158,10 @@ def test_find_nodes_like(graph, mock_atomic, mock_db_connection_and_cursor):
     assert graph.find_nodes_like("relative", 0.9) is not None
 
 
+def test_get_connections(graph, mock_atomic, mock_db_connection_and_cursor):
+    assert graph._get_connections(1) is not None
+
+
 def test_to_networkx(mock_personal_graph, mock_atomic, mock_db_connection_and_cursor):
     networkx_graph = mock_personal_graph.pg_to_networkx()
 
@@ -178,3 +182,23 @@ def test_from_networkx(
 
     # Check if the returned object is a Personal Graph
     assert isinstance(personal_graph, Graph)
+
+
+def test_graphviz_visualize(
+    graph,
+    mock_atomic,
+    mock_db_connection_and_cursor,
+    mock_find_node,
+    mock_get_connections,
+    mock_dot_render,
+):
+    mock_find_node.return_value = {"id": 1, "name": "Alice", "age": 30}
+    mock_get_connections.return_value = [
+        (1, 2, {"weight": 0.5}),
+        (2, 3, {"weight": 0.7}),
+    ]
+
+    graph.visualize(
+        file="mock_dot_file.dot",
+        path=[1, 2, 3],
+    )
