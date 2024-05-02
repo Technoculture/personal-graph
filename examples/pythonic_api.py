@@ -128,8 +128,6 @@ def main(args):
             logging.info("TRUE")
         assert graph == g2
 
-        graph.save()
-
 
 if __name__ == "__main__":
     logging.basicConfig(
