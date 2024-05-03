@@ -1091,7 +1091,7 @@ class Graph(AbstractContextManager):
                 node_attributes: Dict[str, Any] = node_data
                 node_label: str = node_attributes.pop("label", "")
                 node = Node(
-                    id=str(node_id), label=node_label[0], attributes=node_attributes
+                    id=str(node_id), label=node_label[0], attributes=json.dumps(node_attributes)
                 )
 
                 if not override:
@@ -1423,15 +1423,12 @@ class Graph(AbstractContextManager):
     def insert(
         self,
         text: str,
-        label: str,
         attributes: Dict,
     ) -> None:
-        updated_attributes = attributes.copy()
-        updated_attributes.update({"body": text})
         node = Node(
             id=str(uuid.uuid4()),
-            label=label,
-            attributes=json.dumps(updated_attributes),
+            label=text,
+            attributes=json.dumps(attributes),
         )
         self.add_node(node)
 

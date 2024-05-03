@@ -56,7 +56,6 @@ def main(args):
         # Insert information about conversations with the user over time
         graph.insert(
             text="User discussed their fears and insecurities in their current relationship.",
-            label="relationship fears",
             attributes={
                 "date": "2023-02-28",
                 "topic": "relationship fears",
@@ -76,7 +75,7 @@ def main(args):
 
         logging.info(graph.find_nodes_like(label="relative", threshold=0.9))
 
-        graph.visualize("sample.dot", ["2"])
+        graph.visualize("sample.dot", ["4"])
         kg = KnowledgeGraph(
             nodes=[
                 Node(
