@@ -1183,19 +1183,17 @@ class Graph(AbstractContextManager):
 
         return dot
 
-    def _insert_into_graph(self, text: str, attributes: Dict[str, str]) -> KnowledgeGraph:
+    def _insert_into_graph(self, text: str) -> KnowledgeGraph:
         uuid_dict = {}
         kg = self._generate_graph(text)
 
         try:
             for node in kg.nodes:
                 uuid_dict[node.id] = str(uuid.uuid4())
-                updated_attributes = attributes.copy()  # Create a copy of attributes
-                updated_attributes.update({"body": node.attributes})
                 self._atomic(
                     self._add_node(
                         node.label,
-                        updated_attributes,
+                        {"body": node.attributes},
                         uuid_dict[node.id],
                     )
                 )
@@ -1418,11 +1416,26 @@ class Graph(AbstractContextManager):
         )
         return path
 
-    def insert(self, text: str, attributes: Dict[str, str]) -> KnowledgeGraph:
-        kg: KnowledgeGraph = self._insert_into_graph(text, attributes)
+    def insert_natural_query(self, text: str) -> KnowledgeGraph:
+        kg: KnowledgeGraph = self._insert_into_graph(text)
         return kg
 
-    def search(self, text: str) -> KnowledgeGraph:
+    def insert(
+        self,
+        text: str,
+        label: str,
+        attributes: Dict,
+    ) -> None:
+        updated_attributes = attributes.copy()
+        updated_attributes.update({"body": text})
+        node = Node(
+            id=str(uuid.uuid4()),
+            label=label,
+            attributes=json.dumps(updated_attributes),
+        )
+        self.add_node(node)
+
+    def search_natural_query(self, text: str) -> KnowledgeGraph:
         kg: KnowledgeGraph = self._search_from_graph(text)
         return kg
 

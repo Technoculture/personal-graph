@@ -24,7 +24,7 @@ class PersonalRM(dspy.Retrieve):
             return passages
 
         for query in queries:
-            kg = self.graph.search_query(query)
+            kg = self.graph.search_natural_query(query)
             passages.extend(kg.nodes)
         return passages
 
