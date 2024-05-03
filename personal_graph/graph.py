@@ -1091,7 +1091,9 @@ class Graph(AbstractContextManager):
                 node_attributes: Dict[str, Any] = node_data
                 node_label: str = node_attributes.pop("label", "")
                 node = Node(
-                    id=str(node_id), label=node_label[0], attributes=json.dumps(node_attributes)
+                    id=str(node_id),
+                    label=node_label[0],
+                    attributes=json.dumps(node_attributes),
                 )
 
                 if not override:
