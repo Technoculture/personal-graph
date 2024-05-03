@@ -68,7 +68,7 @@ def main(args):
         graph.insert(
             text="My brother is actually pretty interested in coral reefs near Sri Lanka."
         )
-        logging.info(graph.search_query(text="Who is more interested in coral refs"))
+        logging.info(graph.search(text="Who is more interested in coral refs"))
 
         logging.info(graph.find_nodes_like(label="relative", threshold=0.9))
 
