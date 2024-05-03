@@ -63,6 +63,21 @@ def main(args):
             },
         )
 
+        query = "Varanasi is my birth place, my sister used be home maker during those days. We went to central Hindu Boys school"
+
+        results = graph.search(
+            query,
+            descending=True,
+            limit=5,
+        )
+        if results:
+            logging.info(results)
+        else:
+            logging.info(f"Question: {query}")
+            logging.info(
+                "Answer: I apologize, but I don't have enough information to determine our deepest conversation."
+            )
+
         # Insert natural language query into graph db
         graph.insert_natural_query(
             text="My brother is actually pretty interested in coral reefs near Sri Lanka."

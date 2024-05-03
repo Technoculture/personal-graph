@@ -191,13 +191,20 @@ class Graph(AbstractContextManager):
         self,
         data: Dict,
         threshold: Optional[float] = None,
+        desc: bool = False,
         k: int = 10,
     ) -> CursorExecFunction:
         def _search_node(cursor, connection):
             embed = json.dumps(self.embedding_model.get_embedding(json.dumps(data)))
-            nodes = cursor.execute(
-                read_sql("vector-search-node.sql"), (embed, k)
-            ).fetchall()
+            if desc:
+                nodes = cursor.execute(
+                    read_sql("vector-search-node-desc.sql"), (embed, k)
+                ).fetchall()
+
+            else:
+                nodes = cursor.execute(
+                    read_sql("vector-search-node.sql"), (embed, k)
+                ).fetchall()
 
             if not nodes:
                 return None
@@ -214,13 +221,20 @@ class Graph(AbstractContextManager):
         self,
         data: Dict,
         threshold: Optional[float] = None,
+        desc: bool = False,
         k: int = 10,
     ) -> CursorExecFunction:
         def _search_edge(cursor, connection):
             embed = json.dumps(self.embedding_model.get_embedding(json.dumps(data)))
-            edges = cursor.execute(
-                read_sql("vector-search-edge.sql"), (embed, k)
-            ).fetchall()
+            if desc:
+                edges = cursor.execute(
+                    read_sql("vector-search-edge-desc.sql"), (embed, k)
+                ).fetchall()
+
+            else:
+                edges = cursor.execute(
+                    read_sql("vector-search-edge.sql"), (embed, k)
+                ).fetchall()
 
             if not edges:
                 return None
@@ -739,9 +753,9 @@ class Graph(AbstractContextManager):
                     "SELECT label, attributes from nodes where id=?", (node_id[0],)
                 ).fetchone()
 
-                similar_nodes = self._vector_search_node(node_data, threshold, 3)(
-                    cursor, connection
-                )
+                similar_nodes = self._vector_search_node(
+                    node_data, threshold, False, 3
+                )(cursor, connection)
 
                 if similar_nodes is None:
                     continue
@@ -884,7 +898,7 @@ class Graph(AbstractContextManager):
 
             similar_rows = []
             for node in nodes:
-                similar_nodes = self._vector_search_node(node, threshold, 2)(
+                similar_nodes = self._vector_search_node(node, threshold, False, 2)(
                     cursor, connection
                 )
 
@@ -1214,12 +1228,16 @@ class Graph(AbstractContextManager):
 
         return kg
 
-    def _search_from_graph(self, text: str) -> KnowledgeGraph:
+    def _search_from_graph(
+        self, text: str, *, limit: int = 5, descending: bool = False
+    ) -> KnowledgeGraph:
         try:
             similar_nodes = self._atomic(
-                self._vector_search_node({"body": text}, 0.9, 2)
+                self._vector_search_node({"body": text}, 0.9, descending, limit)
             )
-            similar_edges = self._atomic(self._vector_search_edge({"body": text}, k=2))
+            similar_edges = self._atomic(
+                self._vector_search_edge({"body": text}, 0.9, descending, limit)
+            )
 
             resultant_subgraph = KnowledgeGraph()
 
@@ -1422,18 +1440,6 @@ class Graph(AbstractContextManager):
         kg: KnowledgeGraph = self._insert_into_graph(text)
         return kg
 
-    def insert(
-        self,
-        text: str,
-        attributes: Dict,
-    ) -> None:
-        node = Node(
-            id=str(uuid.uuid4()),
-            label=text,
-            attributes=json.dumps(attributes),
-        )
-        self.add_node(node)
-
     def search_natural_query(self, text: str) -> KnowledgeGraph:
         kg: KnowledgeGraph = self._search_from_graph(text)
         return kg
@@ -1461,11 +1467,7 @@ class Graph(AbstractContextManager):
 
     def is_unique_prompt(self, text: str, threshold: float) -> bool:
         similar_nodes = self._atomic(
-            self._vector_search_node(
-                {"body": text},
-                threshold,
-                1,
-            )
+            self._vector_search_node({"body": text}, threshold, False, 1)
         )
 
         if not similar_nodes:
@@ -1483,3 +1485,19 @@ class Graph(AbstractContextManager):
             networkx_graph, post_visualize=post_visualize, override=override
         )
         return pg
+
+    def insert(
+        self,
+        text: str,
+        attributes: Dict,
+    ) -> None:
+        node = Node(
+            id=str(uuid.uuid4()),
+            label=text,
+            attributes=json.dumps(attributes),
+        )
+        self.add_node(node)
+
+    def search(self, text: str, *, descending: bool = False, limit: int = 1):
+        results = self._search_from_graph(text, limit=limit, descending=descending)
+        return results
