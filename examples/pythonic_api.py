@@ -53,22 +53,26 @@ def main(args):
         graph.remove_node(3)
         graph.remove_nodes([1, 2])
 
-        graph.update_node(node3)
-        node5 = Node(
-            id="18", label="Person", attributes={"name": "Charlie", "age": "35"}
-        )
-        graph.update_nodes([node4, node5])
-
-        logging.info(graph.search_node(1))
-
-        graph.merge_by_similarity(threshold=0.9)
-        logging.info("Merged nodes")
-
-        # Insert query into graph db
+        # Insert information about conversations with the user over time
         graph.insert(
+            text="User discussed their fears and insecurities in their current relationship.",
+            label="relationship fears",
+            attributes={
+                "date": "2023-02-28",
+                "topic": "relationship fears",
+                "depth_score": 4,
+            },
+        )
+
+        # Insert natural language query into graph db
+        graph.insert_natural_query(
             text="My brother is actually pretty interested in coral reefs near Sri Lanka."
         )
-        logging.info(graph.search(text="Who is more interested in coral refs"))
+
+        # Search natural language query from graph db
+        logging.info(
+            graph.search_natural_query(text="Who is more interested in coral refs")
+        )
 
         logging.info(graph.find_nodes_like(label="relative", threshold=0.9))
 
