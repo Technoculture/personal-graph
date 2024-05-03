@@ -739,9 +739,9 @@ class Graph(AbstractContextManager):
                     "SELECT label, attributes from nodes where id=?", (node_id[0],)
                 ).fetchone()
 
-                similar_nodes = self._vector_search_node(
-                    self.embedding_model, node_data, threshold, 3
-                )(cursor, connection)
+                similar_nodes = self._vector_search_node(node_data, threshold, 3)(
+                    cursor, connection
+                )
 
                 if similar_nodes is None:
                     continue
@@ -884,9 +884,9 @@ class Graph(AbstractContextManager):
 
             similar_rows = []
             for node in nodes:
-                similar_nodes = self._vector_search_node(
-                    self.embedding_model, node, threshold, 2
-                )(cursor, connection)
+                similar_nodes = self._vector_search_node(node, threshold, 2)(
+                    cursor, connection
+                )
 
                 if len(similar_nodes) < 1:
                     continue

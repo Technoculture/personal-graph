@@ -124,7 +124,7 @@ def test_insert(
 
     test_add_nodes(graph, mock_atomic, mock_db_connection_and_cursor)
 
-    result = graph.insert("Alice has suffocation at night.")
+    result = graph.insert_natural_query("Alice has suffocation at night.")
     assert result == mock_generate_graph
 
 
@@ -144,7 +144,7 @@ def test_search_query(
         mock_db_connection_and_cursor,
     )
 
-    result = graph.search_query("Suffocation problem.")
+    result = graph.search_natural_query("Suffocation problem.")
     assert isinstance(result, KnowledgeGraph)
 
 
