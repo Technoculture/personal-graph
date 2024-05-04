@@ -4,7 +4,7 @@ from typing import List
 import dspy  # type: ignore
 import joblib  # type: ignore
 import streamlit as st
-from personal_graph.graph import Graph
+from personal_graph.graph import Graph, LLMClient, EmbeddingClient
 from personal_graph.models import Node, Edge, KnowledgeGraph
 from personal_graph.retriever import PersonalRM
 
@@ -94,11 +94,14 @@ def create_and_save_cache(rag):
     list_of_context = []
 
     with Graph(
-        db_url=os.getenv("LIBSQL_URL"), db_auth_token=os.getenv("LIBSQL_AUTH_TOKEN")
+        db_url=os.getenv("LIBSQL_URL"),
+        db_auth_token=os.getenv("LIBSQL_AUTH_TOKEN"),
+        llm_client=LLMClient(),
+        embedding_model_client=EmbeddingClient(),
     ) as graph:
         turbo = dspy.OpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPEN_API_KEY"))
 
-        kg = graph.insert("DEFAULT_BACKSTORY")
+        kg = graph.insert_into_graph("DEFAULT_BACKSTORY")
         retriever = PersonalRM(graph=graph, k=2)
         dspy.settings.configure(lm=turbo, rm=retriever)
 
@@ -147,7 +150,10 @@ def main():
     st.title("Knowledge Graph Chat")
 
     with Graph(
-        db_url=os.getenv("LIBSQL_URL"), db_auth_token=os.getenv("LIBSQL_AUTH_TOKEN")
+        db_url=os.getenv("LIBSQL_URL"),
+        db_auth_token=os.getenv("LIBSQL_AUTH_TOKEN"),
+        llm_client=LLMClient(),
+        embedding_model_client=EmbeddingClient(),
     ) as graph:
         turbo = dspy.OpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPEN_API_KEY"))
         cached_backstory, cached_kg, cached_context = load_cache()
@@ -187,7 +193,7 @@ def main():
         if len(backstory) < 2000:
             st.sidebar.warning("Please enter a backstory with at least 2000 tokens.")
         else:
-            kg = graph.insert(backstory)
+            kg = graph.insert_into_graph(backstory)
             st.session_state["kg"] = kg
             st.session_state["backstory"] = backstory
             with st.sidebar.status("Retrieved knowledge graph visualization:"):
@@ -233,8 +239,8 @@ def main():
             with st.status("Generating response..."):
                 is_unique = graph.is_unique_prompt(prompt, 0.6)
                 if is_unique and kg:
-                    question_graph = graph.insert(prompt)
-                    sub_graph = graph.search_query(response.answer)
+                    question_graph = graph.insert_into_graph(prompt)
+                    sub_graph = graph.search_from_graph(response.answer)
                     for sg_node in question_graph.nodes:
                         kg.nodes.append(sg_node)
 
@@ -255,7 +261,7 @@ def main():
                     st.graphviz_chart(graph.visualize_graph(sub_graph))
 
                 else:
-                    sub_graph = graph.search_query(response.answer)
+                    sub_graph = graph.search_from_graph(response.answer)
                     st.graphviz_chart(graph.visualize_graph(sub_graph))
                     st.sidebar.graphviz_chart(graph.visualize_graph(kg))
                     for idx, context in enumerate(
