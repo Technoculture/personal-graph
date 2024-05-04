@@ -23,9 +23,12 @@ pip install personal-graph
 ### Building a Working Memory for an AI
 
 ```python
-from personal_graph import Graph
+from personal_graph.graph import Graph
 
-graph = Graph("your_db_url", "your_auth_token")
+your-litellm-client = LLMClient(client="llm-client", model_name="llm-model-name")
+your-embedding-client = EmbeddingClient(client="embedding-client", model_name="embedding-model-name", dimensions="model-dimension")
+
+graph = Graph("your_db_url", "your_auth_token", your-litellm-client, your-embedding-client)
 
 # Insert information into the graph
 graph.insert(text="Alice is Bob's sister. Bob works at Google.")
@@ -48,9 +51,12 @@ In this example, we insert information about Alice and Bob into the knowledge gr
 
 ### Building Long-Term Memory
 ```python
-from personal_graph import Graph
+from personal_graph.graph import Graph
 
-graph = Graph("your_db_url", "your_auth_token")
+your-litellm-client = LLMClient(client="llm-client", model_name="llm-model-name")
+your-embedding-client = EmbeddingClient(client="embedding-client", model_name="embedding-model-name", dimensions="model-dimension")
+
+graph = Graph("your_db_url", "your_auth_token", your-litellm-client, your-embedding-client)
 
 # Insert information about conversations with the user over time
 graph.insert(
@@ -91,7 +97,7 @@ query = "What was the deepest conversation we've ever had?"
 results = graph.search(query, sort_by="depth_score", descending=True, limit=1)
 
 if results:
-    deepest_conversation = results[0]
+    deepest_conversation = results[0][3]
     print(f"Question: {query}")
     print(f"Answer: Our deepest conversation was on {deepest_conversation['date']} when we discussed {deepest_conversation['topic']}.")
 else:
@@ -108,15 +114,18 @@ This example demonstrates how Personal-Graph can be used to build long-term memo
 
 ### Creating and Querying a Knowledge Graph
 ```py
-from personal_graph import Graph, natural
+from personal_graph.graph import Graph
 
-graph = Graph("your_db_url", "your_auth_token")
+your-litellm-client = LLMClient(client="llm-client", model_name="llm-model-name")
+your-embedding-client = EmbeddingClient(client="embedding-client", model_name="embedding-model-name", dimensions="model-dimension")
+
+graph = Graph("your_db_url", "your_auth_token", your-litellm-client, your-embedding-client)
 
 nl_query = "Increased thirst, weight loss, increased hunger, and frequent urination are all symptoms of diabetes."
-graph = natural.insert(text=nl_query)
+graph = graph.insert_into_graph(text=nl_query)
 
 search_query = "I am losing weight too frequently."
-knowledge_graph = natural.search_from_graph(search_query)
+knowledge_graph = graph.search_from_graph(search_query)
 
 print(knowledge_graph)
 ```
@@ -127,7 +136,10 @@ import dspy
 from personal_graph.graph import Graph
 from personal_graph.retriever import PersonalRM
 
-graph = Graph("your_db_url", "your_auth_token")
+your-litellm-client = LLMClient(client="llm-client", model_name="llm-model-name")
+your-embedding-client = EmbeddingClient(client="embedding-client", model_name="embedding-model-name", dimensions="model-dimension")
+
+graph = Graph("your_db_url", "your_auth_token", your-litellm-client, your-embedding-client)
 retriever = PersonalRM(graph=graph, k=2)
 
 class RAG(dspy.Module):
