@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 import logging
 from personal_graph import (
@@ -88,9 +89,14 @@ def main(args):
 
         query = "User talked about his fears, achievements, hobbies and beliefs."
 
-        results = graph.search(query, descending=True, limit=5, sort_by="depth_score")
+        results = graph.search(query, descending=True, limit=1, sort_by="depth_score")
+
         if results:
-            logging.info(results)
+            deepest_conversation = json.loads(results[0][3])
+            logging.info(f"Question: {query}")
+            logging.info(
+                f"Answer: Our deepest conversation was on {deepest_conversation['date']} when we discussed {deepest_conversation['topic']}."
+            )
         else:
             logging.info(f"Question: {query}")
             logging.info(
@@ -98,13 +104,13 @@ def main(args):
             )
 
         # Insert natural language query into graph db
-        graph.insert_natural_query(
+        graph.insert_into_graph(
             text="My brother is actually pretty interested in coral reefs near Sri Lanka."
         )
 
         # Search natural language query from graph db
         logging.info(
-            graph.search_natural_query(text="Who is more interested in coral refs")
+            graph.search_from_graph(text="Who is more interested in coral refs")
         )
 
         logging.info(graph.find_nodes_like(label="relative", threshold=0.9))

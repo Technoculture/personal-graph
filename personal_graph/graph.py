@@ -1449,11 +1449,11 @@ class Graph(AbstractContextManager):
         )
         return path
 
-    def insert_natural_query(self, text: str) -> KnowledgeGraph:
+    def insert_into_graph(self, text: str) -> KnowledgeGraph:
         kg: KnowledgeGraph = self._insert_into_graph(text)
         return kg
 
-    def search_natural_query(self, text: str) -> KnowledgeGraph:
+    def search_from_graph(self, text: str) -> KnowledgeGraph:
         kg: KnowledgeGraph = self._search_from_graph(text)
         return kg
 
