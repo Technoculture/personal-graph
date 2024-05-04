@@ -154,8 +154,8 @@ class RAG(dspy.Module):
         return dspy.Prediction(context=context, answer=prediction.answer)
 
 rag = RAG(depth=2)
-answer = rag("How is Jack related to James?")
-print(answer)
+response = rag("How is Jack related to James?")
+print(response.answer)
 ```
 
 For more details and API documentation, see the Personal-Graph Documentation.

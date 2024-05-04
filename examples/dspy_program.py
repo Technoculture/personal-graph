@@ -38,4 +38,5 @@ class RAG(dspy.Module):
 
 rag = RAG(depth=2)
 
-rag("How is Jack related to James?")
+response = rag("How is Jack related to James?")
+print(response.answer)
