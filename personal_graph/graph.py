@@ -191,39 +191,25 @@ class Graph(AbstractContextManager):
         self,
         data: Dict,
         threshold: Optional[float] = None,
-        desc: bool = False,
+        desc: Optional[bool] = False,
         k: int = 10,
-        sort_by: Optional[str] = None,
+        sort_by: Optional[str] = "",
     ) -> CursorExecFunction:
         def _search_node(cursor, connection):
-            embed = json.dumps(self.embedding_model.get_embedding(json.dumps(data)))
-            if sort_by:
-                if desc:
-                    nodes = cursor.execute(
-                        read_sql("vector-search-node-sort-desc.sql"),
-                        (embed, k, sort_by),
-                    ).fetchall()
-                else:
-                    nodes = cursor.execute(
-                        read_sql("vector-search-node-sort.sql"), (embed, k, sort_by)
-                    ).fetchall()
+            embed_json = json.dumps(
+                self.embedding_model.get_embedding(json.dumps(data))
+            )
 
-            else:
-                if desc:
-                    nodes = cursor.execute(
-                        read_sql("vector-search-node-desc.sql"), (embed, k)
-                    ).fetchall()
-                else:
-                    nodes = cursor.execute(
-                        read_sql("vector-search-node.sql"), (embed, k)
-                    ).fetchall()
+            nodes = cursor.execute(
+                read_sql("vector-search-node.sql"),
+                (embed_json, k, sort_by, desc, sort_by, sort_by, desc, sort_by),
+            ).fetchall()
 
             if not nodes:
                 return None
 
             if threshold is not None:
-                filtered_results = [node for node in nodes if node[4] < threshold]
-                return filtered_results[:k]
+                return [node for node in nodes if node[4] < threshold][:k]
             else:
                 return nodes[:k]
 
@@ -1351,7 +1337,7 @@ class Graph(AbstractContextManager):
         dot.render(dot_file, format=format)
         return dot
 
-    def _search_node_by_text(
+    def _attribute_search_node(
         self, text: str, limit: int, descending: bool, sort_by: Optional[str]
     ):
         try:
@@ -1531,9 +1517,9 @@ class Graph(AbstractContextManager):
         *,
         descending: bool = False,
         limit: int = 1,
-        sort_by: Optional[str] = None,
+        sort_by: Optional[str] = "",
     ):
-        results = self._search_node_by_text(
+        results = self._attribute_search_node(
             text, limit=limit, descending=descending, sort_by=sort_by
         )
         return results

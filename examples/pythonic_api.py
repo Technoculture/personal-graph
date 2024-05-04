@@ -55,6 +55,15 @@ def main(args):
 
         # Insert information about conversations with the user over time
         graph.insert(
+            text="User talked about their childhood dreams and aspirations.",
+            attributes={
+                "date": "2023-01-15",
+                "topic": "childhood dreams",
+                "depth_score": 3,
+            },
+        )
+
+        graph.insert(
             text="User discussed their fears and insecurities in their current relationship.",
             attributes={
                 "date": "2023-02-28",
@@ -63,9 +72,23 @@ def main(args):
             },
         )
 
-        query = "Varanasi is my birth place, my sister used be home maker during those days. We went to central Hindu Boys school"
+        graph.insert(
+            text="User shared their spiritual beliefs and existential questions.",
+            attributes={
+                "date": "2023-03-10",
+                "topic": "spirituality and existence",
+                "depth_score": 5,
+            },
+        )
 
-        results = graph.search(query, descending=False, limit=5, sort_by="depth_score")
+        graph.insert(
+            text="User mentioned their favorite hobbies and weekend activities.",
+            attributes={"date": "2023-04-02", "topic": "hobbies", "depth_score": 2},
+        )
+
+        query = "User talked about his fears, achievements, hobbies and beliefs."
+
+        results = graph.search(query, descending=True, limit=5, sort_by="depth_score")
         if results:
             logging.info(results)
         else:
