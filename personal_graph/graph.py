@@ -193,18 +193,30 @@ class Graph(AbstractContextManager):
         threshold: Optional[float] = None,
         desc: bool = False,
         k: int = 10,
+        sort_by: Optional[str] = None,
     ) -> CursorExecFunction:
         def _search_node(cursor, connection):
             embed = json.dumps(self.embedding_model.get_embedding(json.dumps(data)))
-            if desc:
-                nodes = cursor.execute(
-                    read_sql("vector-search-node-desc.sql"), (embed, k)
-                ).fetchall()
+            if sort_by:
+                if desc:
+                    nodes = cursor.execute(
+                        read_sql("vector-search-node-sort-desc.sql"),
+                        (embed, k, sort_by),
+                    ).fetchall()
+                else:
+                    nodes = cursor.execute(
+                        read_sql("vector-search-node-sort.sql"), (embed, k, sort_by)
+                    ).fetchall()
 
             else:
-                nodes = cursor.execute(
-                    read_sql("vector-search-node.sql"), (embed, k)
-                ).fetchall()
+                if desc:
+                    nodes = cursor.execute(
+                        read_sql("vector-search-node-desc.sql"), (embed, k)
+                    ).fetchall()
+                else:
+                    nodes = cursor.execute(
+                        read_sql("vector-search-node.sql"), (embed, k)
+                    ).fetchall()
 
             if not nodes:
                 return None
@@ -1339,6 +1351,21 @@ class Graph(AbstractContextManager):
         dot.render(dot_file, format=format)
         return dot
 
+    def _search_node_by_text(
+        self, text: str, limit: int, descending: bool, sort_by: Optional[str]
+    ):
+        try:
+            similar_nodes = self._atomic(
+                self._vector_search_node(
+                    {"body": text}, 0.9, descending, limit, sort_by
+                )
+            )
+
+        except KeyError:
+            return []
+
+        return similar_nodes
+
     # High level apis
     def add_node(self, node: Node) -> None:
         self._atomic(
@@ -1498,6 +1525,15 @@ class Graph(AbstractContextManager):
         )
         self.add_node(node)
 
-    def search(self, text: str, *, descending: bool = False, limit: int = 1):
-        results = self._search_from_graph(text, limit=limit, descending=descending)
+    def search(
+        self,
+        text: str,
+        *,
+        descending: bool = False,
+        limit: int = 1,
+        sort_by: Optional[str] = None,
+    ):
+        results = self._search_node_by_text(
+            text, limit=limit, descending=descending, sort_by=sort_by
+        )
         return results

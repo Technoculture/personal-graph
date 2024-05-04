@@ -65,11 +65,7 @@ def main(args):
 
         query = "Varanasi is my birth place, my sister used be home maker during those days. We went to central Hindu Boys school"
 
-        results = graph.search(
-            query,
-            descending=True,
-            limit=5,
-        )
+        results = graph.search(query, descending=False, limit=5, sort_by="depth_score")
         if results:
             logging.info(results)
         else:
