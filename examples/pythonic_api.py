@@ -54,6 +54,15 @@ def main(args):
         graph.remove_node(3)
         graph.remove_nodes([1, 2])
 
+        graph.update_node(node3)
+        node5 = Node(id=18, label="Person", attributes={"name": "Charlie", "age": "35"})
+        graph.update_nodes([node4, node5])
+
+        logging.info(graph.search_node(1))
+
+        graph.merge_by_similarity(threshold=0.9)
+        logging.info("Merged nodes")
+
         # Insert information about conversations with the user over time
         graph.insert(
             text="User talked about their childhood dreams and aspirations.",
@@ -115,7 +124,7 @@ def main(args):
 
         logging.info(graph.find_nodes_like(label="relative", threshold=0.9))
 
-        graph.visualize("sample.dot", ["4"])
+        # graph.visualize("sample.dot", ["4"])
         kg = KnowledgeGraph(
             nodes=[
                 Node(
