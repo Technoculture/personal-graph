@@ -43,25 +43,6 @@ def main(args):
             source=node1, target=node4, label="KNOWS", attributes={"since": "2015"}
         )
 
-        graph.add_node(node1)
-        graph.add_nodes([node1, node2])
-        graph.add_edge(edge1)
-
-        graph.add_edges([edge2, edge3])
-
-        logging.info(graph.traverse("3"))
-        graph.remove_node(3)
-        graph.remove_nodes([1, 2])
-
-        graph.update_node(node3)
-        node5 = Node(id=18, label="Person", attributes={"name": "Charlie", "age": "35"})
-        graph.update_nodes([node4, node5])
-
-        logging.info(graph.search_node(1))
-
-        graph.merge_by_similarity(threshold=0.9)
-        logging.info("Merged nodes")
-
         # Insert information about conversations with the user over time
         graph.insert(
             text="User talked about their childhood dreams and aspirations.",
@@ -112,6 +93,37 @@ def main(args):
                 "Answer: I apologize, but I don't have enough information to determine our deepest conversation."
             )
 
+        graph.insert_into_graph(text="Alice is Bob's sister. Bob works at Google.")
+
+        # Retrieve relevant information from the graph
+        query = "Who is Alice?"
+        results = graph.search(query, limit=1)
+        logging.info(results["body"])
+
+        query = "Where does Bob work?"
+        results = graph.search(query, limit=1)
+        logging.info(results)
+        logging.info(results["body"])
+
+        graph.add_node(node1)
+        graph.add_nodes([node1, node2])
+        graph.add_edge(edge1)
+
+        graph.add_edges([edge2, edge3])
+
+        logging.info(graph.traverse("3"))
+        graph.remove_node(3)
+        graph.remove_nodes([1, 2])
+
+        graph.update_node(node3)
+        node5 = Node(id=18, label="Person", attributes={"name": "Charlie", "age": "35"})
+        graph.update_nodes([node4, node5])
+
+        logging.info(graph.search_node(1))
+
+        # graph.merge_by_similarity(threshold=0.9)
+        # logging.info("Merged nodes")
+
         # Insert natural language query into graph db
         graph.insert_into_graph(
             text="My brother is actually pretty interested in coral reefs near Sri Lanka."
@@ -124,7 +136,7 @@ def main(args):
 
         logging.info(graph.find_nodes_like(label="relative", threshold=0.9))
 
-        # graph.visualize("sample.dot", ["4"])
+        graph.visualize("sample.dot", ["4"])
         kg = KnowledgeGraph(
             nodes=[
                 Node(
@@ -169,18 +181,6 @@ def main(args):
             ],
         )
         logging.info(graph.visualize_graph(kg))
-
-        graph.insert_into_graph(text="Alice is Bob's sister. Bob works at Google.")
-
-        # Retrieve relevant information from the graph
-        query = "Who is Alice?"
-        results = graph.search(query, limit=1)
-        logging.info(results["body"])
-
-        query = "Where does Bob work?"
-        results = graph.search(query, limit=1)
-        logging.info(results)
-        logging.info(results["body"])
 
         # Transforms to and from networkx do not alter the graph
         g2 = graph.networkx_to_pg(

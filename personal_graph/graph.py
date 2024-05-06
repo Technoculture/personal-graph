@@ -109,26 +109,22 @@ class Graph(AbstractContextManager):
         pass
 
     # Low level database apis
-    def _atomic(
-        self,
-        cursor_exec_fn: CursorExecFunction,
-    ) -> Any:
-        connection = None
-        try:
+    def _atomic(self, cursor_exec_fn: CursorExecFunction) -> Any:
+        if not hasattr(self, "_connection"):
             if not self.db_url:
-                connection = libsql.connect(":memory:")
+                self._connection = libsql.connect(":memory:")
             else:
-                connection = libsql.connect(
+                self._connection = libsql.connect(
                     database=self.db_url, auth_token=self.db_auth_token
                 )
 
-            cursor = connection.cursor()
+        try:
+            cursor = self._connection.cursor()
             cursor.execute("PRAGMA foreign_keys = TRUE;")
-            results = cursor_exec_fn(cursor, connection)
-            connection.commit()
+            results = cursor_exec_fn(cursor, self._connection)
+            self._connection.commit()
         finally:
-            if connection:
-                pass
+            pass
         return results
 
     def _initialize(
