@@ -1522,4 +1522,11 @@ class Graph(AbstractContextManager):
         results = self._attribute_search_node(
             text, limit=limit, descending=descending, sort_by=sort_by
         )
+
+        if results is None:
+            return None
+
+        if limit == 1:
+            return json.loads(results[0][3])
+
         return results

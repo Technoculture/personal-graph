@@ -98,10 +98,11 @@ def main(args):
 
         query = "User talked about his fears, achievements, hobbies and beliefs."
 
-        results = graph.search(query, descending=True, limit=1, sort_by="depth_score")
+        deepest_conversation = graph.search(
+            query, descending=True, limit=1, sort_by="depth_score"
+        )
 
-        if results:
-            deepest_conversation = json.loads(results[0][3])
+        if deepest_conversation:
             logging.info(f"Question: {query}")
             logging.info(
                 f"Answer: Our deepest conversation was on {deepest_conversation['date']} when we discussed {deepest_conversation['topic']}."
@@ -169,6 +170,18 @@ def main(args):
             ],
         )
         logging.info(graph.visualize_graph(kg))
+
+        graph.insert_into_graph(text="Alice is Bob's sister. Bob works at Google.")
+
+        # Retrieve relevant information from the graph
+        query = "Who is Alice?"
+        results = graph.search(query, limit=1)
+        logging.info(results["body"])
+
+        query = "Where does Bob work?"
+        results = graph.search(query, limit=1)
+        logging.info(results)
+        logging.info(results["body"])
 
         # Transforms to and from networkx do not alter the graph
         g2 = graph.networkx_to_pg(

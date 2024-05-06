@@ -31,18 +31,20 @@ your-embedding-client = EmbeddingClient(client="embedding-client", model_name="e
 graph = Graph("your_db_url", "your_auth_token", your-litellm-client, your-embedding-client)
 
 # Insert information into the graph
-graph.insert(text="Alice is Bob's sister. Bob works at Google.")
+graph.insert_into_graph(text="Alice is Bob's sister. Bob works at Google.")
 
 # Retrieve relevant information from the graph
 query = "Who is Alice?"
-results = graph.search(query)
+results = graph.search(query, limit=1)
+print(results["body"])
 
 # Use the retrieved information to answer questions
 print(f"Question: {query}")
 print(f"Answer: Alice is Bob's sister.")
 
 query = "Where does Bob work?"
-results = graph.search(query)
+results = graph.search(query, limit=1)
+print(results["body"])
 print(f"Question: {query}")
 print(f"Answer: Bob works at Google.")
 ```
@@ -94,10 +96,9 @@ graph.insert(
 # User queries about the deepest conversation
 query = "What was the deepest conversation we've ever had?"
 
-results = graph.search(query, sort_by="depth_score", descending=True, limit=1)
+deepest_conversation = graph.search(query, sort_by="depth_score", descending=True, limit=1)
 
-if results:
-    deepest_conversation = results[0][3]
+if deepest_conversation:
     print(f"Question: {query}")
     print(f"Answer: Our deepest conversation was on {deepest_conversation['date']} when we discussed {deepest_conversation['topic']}.")
 else:
