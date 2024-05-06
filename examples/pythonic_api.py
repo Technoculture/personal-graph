@@ -1,5 +1,4 @@
 import argparse
-import json
 import os
 import logging
 from personal_graph import (
