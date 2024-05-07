@@ -56,7 +56,7 @@ class LLMClient(OpenAIClient):
 class DatabaseConfig:
     db_url: Optional[str] = None
     db_auth_token: Optional[str] = None
-    use_in_memory: Optional[bool] = False
+    use_in_memory: Optional[bool] = True
 
 
 @lru_cache(maxsize=None)
