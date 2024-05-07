@@ -1,7 +1,6 @@
 import os
 import dspy  # type: ignore
-from personal_graph.graph import Graph, LLMClient, EmbeddingClient
-from personal_graph.retriever import PersonalRM
+from personal_graph import Graph, LLMClient, EmbeddingClient, PersonalRM
 
 graph = Graph(
     db_url=os.getenv("LIBSQL_URL"),

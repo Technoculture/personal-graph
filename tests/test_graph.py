@@ -4,8 +4,7 @@ Unit test for high level apis
 
 import networkx as nx  # type: ignore
 
-from personal_graph.models import Node, EdgeInput, KnowledgeGraph
-from personal_graph.graph import Graph
+from personal_graph import Graph, Node, EdgeInput, KnowledgeGraph
 
 
 def test_add_node(graph, mock_atomic, mock_db_connection_and_cursor):

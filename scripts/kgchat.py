@@ -4,9 +4,15 @@ from typing import List
 import dspy  # type: ignore
 import joblib  # type: ignore
 import streamlit as st
-from personal_graph.graph import Graph, LLMClient, EmbeddingClient
-from personal_graph.models import Node, Edge, KnowledgeGraph
-from personal_graph.retriever import PersonalRM
+from personal_graph import (
+    Graph,
+    LLMClient,
+    EmbeddingClient,
+    Node,
+    Edge,
+    KnowledgeGraph,
+    PersonalRM,
+)
 
 try:
     import streamlit_scrollable_textbox as stx  # type: ignore

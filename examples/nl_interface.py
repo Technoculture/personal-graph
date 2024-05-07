@@ -3,8 +3,7 @@ import os
 import logging
 import argparse
 from dotenv import load_dotenv
-from personal_graph import Graph
-from personal_graph.graph import LLMClient, EmbeddingClient
+from personal_graph import Graph, LLMClient, EmbeddingClient
 
 
 def main(args):
@@ -18,7 +17,7 @@ def main(args):
     ) as graph:
         # Testing insert query into graph db
         nl_query = "increased thirst, weight loss, increased hunger, frequent urination etc. are all symptoms of diabetes."
-        kg = graph.insert(text=nl_query)
+        kg = graph.insert_into_graph(text=nl_query)
 
         logging.info("Nodes in the Knowledge Graph: \n")
         for node in kg.nodes:
@@ -34,7 +33,7 @@ def main(args):
 
         # Testing search query from graph db
         search_query = "I am losing my weight too frequent."
-        knowledge_graph = graph.search_query(search_query)
+        knowledge_graph = graph.search_from_graph(search_query)
 
         logging.info(f"Knowledge Graph: \n{knowledge_graph}")
 

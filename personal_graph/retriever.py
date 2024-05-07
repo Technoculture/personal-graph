@@ -1,7 +1,6 @@
 import dspy  # type: ignore
 from typing import List, Optional, Union
-from personal_graph.graph import Graph
-from personal_graph.models import Node
+from personal_graph.graph import Graph, Node
 from dotenv import load_dotenv
 
 load_dotenv()

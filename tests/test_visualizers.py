@@ -1,4 +1,4 @@
-from personal_graph.visualizers import graphviz_visualize_bodies
+from personal_graph import graphviz_visualize_bodies
 
 
 def test_graphviz_visualize_bodies(

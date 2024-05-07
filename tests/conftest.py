@@ -1,11 +1,16 @@
 import json
 import pytest
 from unittest.mock import patch, Mock
-
-from personal_graph.graph import LLMClient, EmbeddingClient
-from personal_graph.embeddings import OpenAIEmbeddingsModel
-from personal_graph.graph import Graph
-from personal_graph.models import KnowledgeGraph, Node, Edge, EdgeInput
+from personal_graph.graph import (
+    Graph,
+    LLMClient,
+    EmbeddingClient,
+    OpenAIEmbeddingsModel,
+    KnowledgeGraph,
+    Node,
+    Edge,
+    EdgeInput,
+)
 
 
 @pytest.fixture

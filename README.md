@@ -23,7 +23,7 @@ pip install personal-graph
 ### Building a Working Memory for an AI
 
 ```python
-from personal_graph.graph import Graph, LLMClient, EmbeddingClient
+from personal_graph import Graph, LLMClient, EmbeddingClient
 
 graph = Graph("your_db_url", "your_auth_token", LLMClient(), EmbeddingClient())
 
@@ -50,7 +50,7 @@ In this example, we insert information about Alice and Bob into the knowledge gr
 
 ### Building Long-Term Memory
 ```python
-from personal_graph.graph import Graph, LLMClient, EmbeddingClient
+from personal_graph import Graph, LLMClient, EmbeddingClient
 
 graph = Graph("your_db_url", "your_auth_token", LLMClient(), EmbeddingClient())
 
@@ -109,7 +109,7 @@ This example demonstrates how Personal-Graph can be used to build long-term memo
 
 ### Creating and Querying a Knowledge Graph
 ```py
-from personal_graph.graph import Graph, LLMClient, EmbeddingClient
+from personal_graph import Graph, LLMClient, EmbeddingClient
 
 graph = Graph("your_db_url", "your_auth_token", LLMClient(), EmbeddingClient())
 
@@ -125,8 +125,7 @@ print(knowledge_graph)
 ### Retrieval and Question-Answering
 ```py
 import dspy
-from personal_graph.graph import Graph, LLMClient, EmbeddingClient
-from personal_graph.retriever import PersonalRM
+from personal_graph import Graph, LLMClient, EmbeddingClient, PersonalRM
 
 graph = Graph("your_db_url", "your_auth_token", LLMClient(), EmbeddingClient())
 retriever = PersonalRM(graph=graph, k=2)

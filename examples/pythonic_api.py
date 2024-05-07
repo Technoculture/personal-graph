@@ -7,8 +7,9 @@ from personal_graph import (
     EdgeInput,
     KnowledgeGraph,
     Edge,
+    LLMClient,
+    EmbeddingClient,
 )
-from personal_graph.graph import LLMClient, EmbeddingClient
 
 
 def main(args):
@@ -121,8 +122,8 @@ def main(args):
 
         logging.info(graph.search_node(1))
 
-        # graph.merge_by_similarity(threshold=0.9)
-        # logging.info("Merged nodes")
+        graph.merge_by_similarity(threshold=0.9)
+        logging.info("Merged nodes")
 
         # Insert natural language query into graph db
         graph.insert_into_graph(
