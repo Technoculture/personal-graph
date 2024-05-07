@@ -23,12 +23,9 @@ pip install personal-graph
 ### Building a Working Memory for an AI
 
 ```python
-from personal_graph.graph import Graph
+from personal_graph.graph import Graph, LLMClient, EmbeddingClient
 
-your-litellm-client = LLMClient(client="llm-client", model_name="llm-model-name")
-your-embedding-client = EmbeddingClient(client="embedding-client", model_name="embedding-model-name", dimensions="model-dimension")
-
-graph = Graph("your_db_url", "your_auth_token", your-litellm-client, your-embedding-client)
+graph = Graph("your_db_url", "your_auth_token", LLMClient(), EmbeddingClient())
 
 # Insert information into the graph
 graph.insert_into_graph(text="Alice is Bob's sister. Bob works at Google.")
@@ -53,12 +50,9 @@ In this example, we insert information about Alice and Bob into the knowledge gr
 
 ### Building Long-Term Memory
 ```python
-from personal_graph.graph import Graph
+from personal_graph.graph import Graph, LLMClient, EmbeddingClient
 
-your-litellm-client = LLMClient(client="llm-client", model_name="llm-model-name")
-your-embedding-client = EmbeddingClient(client="embedding-client", model_name="embedding-model-name", dimensions="model-dimension")
-
-graph = Graph("your_db_url", "your_auth_token", your-litellm-client, your-embedding-client)
+graph = Graph("your_db_url", "your_auth_token", LLMClient(), EmbeddingClient())
 
 # Insert information about conversations with the user over time
 graph.insert(
@@ -115,12 +109,9 @@ This example demonstrates how Personal-Graph can be used to build long-term memo
 
 ### Creating and Querying a Knowledge Graph
 ```py
-from personal_graph.graph import Graph
+from personal_graph.graph import Graph, LLMClient, EmbeddingClient
 
-your-litellm-client = LLMClient(client="llm-client", model_name="llm-model-name")
-your-embedding-client = EmbeddingClient(client="embedding-client", model_name="embedding-model-name", dimensions="model-dimension")
-
-graph = Graph("your_db_url", "your_auth_token", your-litellm-client, your-embedding-client)
+graph = Graph("your_db_url", "your_auth_token", LLMClient(), EmbeddingClient())
 
 nl_query = "Increased thirst, weight loss, increased hunger, and frequent urination are all symptoms of diabetes."
 graph = graph.insert_into_graph(text=nl_query)
@@ -134,13 +125,10 @@ print(knowledge_graph)
 ### Retrieval and Question-Answering
 ```py
 import dspy
-from personal_graph.graph import Graph
+from personal_graph.graph import Graph, LLMClient, EmbeddingClient
 from personal_graph.retriever import PersonalRM
 
-your-litellm-client = LLMClient(client="llm-client", model_name="llm-model-name")
-your-embedding-client = EmbeddingClient(client="embedding-client", model_name="embedding-model-name", dimensions="model-dimension")
-
-graph = Graph("your_db_url", "your_auth_token", your-litellm-client, your-embedding-client)
+graph = Graph("your_db_url", "your_auth_token", LLMClient(), EmbeddingClient())
 retriever = PersonalRM(graph=graph, k=2)
 
 class RAG(dspy.Module):
@@ -157,6 +145,19 @@ class RAG(dspy.Module):
 rag = RAG(depth=2)
 response = rag("How is Jack related to James?")
 print(response.answer)
+```
+
+### Providing an LiteLLM Client
+
+```py
+from personal_graph.graph import Graph, LLMClient, EmbeddingClient
+
+your_litellm_client = LLMClient(client="llm-client", model_name="llm-model-name")
+your_embedding_client = EmbeddingClient(client="embedding-client", model_name="embedding-model-name", dimensions="model-dimension")
+
+graph = Graph("your_db_url", "your_auth_token", your_litellm_client, your_embedding_client)
+
+
 ```
 
 For more details and API documentation, see the Personal-Graph Documentation.
