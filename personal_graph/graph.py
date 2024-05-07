@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import json
 import os
-import pathlib
+from pathlib import Path
 import uuid
 from dataclasses import dataclass
 from functools import lru_cache
@@ -56,24 +56,29 @@ class LLMClient(OpenAIClient):
 class DatabaseConfig:
     db_url: Optional[str] = None
     db_auth_token: Optional[str] = None
-    use_in_memory: Optional[bool] = True
+    use_in_memory: Optional[bool] = False
 
 
 @lru_cache(maxsize=None)
-def read_sql(sql_file: str) -> str:
-    with open(pathlib.Path(__file__).parent.resolve() / "sql" / sql_file) as f:
+def read_sql(sql_file: Path) -> str:
+    with open(Path(__file__).parent.resolve() / "sql" / sql_file) as f:
         return f.read()
 
 
 class SqlTemplateLoader(BaseLoader):
+    def __init__(self, templates_dir: Path):
+        self.templates_dir = templates_dir
+
     def get_source(
         self, environment: Environment, template: str
     ) -> Tuple[str, str, Callable[[], bool]]:
         def uptodate() -> bool:
             return True
 
+        template_path = self.templates_dir / template
+
         # Return the source code, the template name, and the uptodate function
-        return read_sql(template), template, uptodate
+        return read_sql(template_path), template, uptodate
 
 
 class Graph(AbstractContextManager):
@@ -92,8 +97,10 @@ class Graph(AbstractContextManager):
             embedding_model_client.model_name,
             embedding_model_client.dimensions,
         )
+
         self.env = Environment(
-            loader=SqlTemplateLoader(), autoescape=select_autoescape()
+            loader=SqlTemplateLoader(Path(__file__).parent / "sql"),
+            autoescape=select_autoescape(),
         )
         self.clause_template = self.env.get_template("search-where.template")
         self.search_template = self.env.get_template("search-node.template")
@@ -108,7 +115,7 @@ class Graph(AbstractContextManager):
             == other.database_config.db_auth_token
         )
 
-    def __enter__(self, schema_file: str = "schema.sql") -> Graph:
+    def __enter__(self, schema_file: Path = Path("schema.sql")) -> Graph:
         self._initialize(
             schema_file=schema_file,
         )
@@ -137,10 +144,7 @@ class Graph(AbstractContextManager):
             pass
         return results
 
-    def _initialize(
-        self,
-        schema_file: str = "schema.sql",
-    ) -> Any:
+    def _initialize(self, schema_file: Path) -> Any:
         def _init(cursor, connection):
             schema_sql = read_sql(schema_file)
             connection.executescript(schema_sql)
@@ -162,7 +166,7 @@ class Graph(AbstractContextManager):
         data: Dict,
     ) -> None:
         existing_node = cursor.execute(
-            read_sql("existing-node.sql"), (identifier,)
+            read_sql(Path("existing-node.sql")), (identifier,)
         ).fetchone()
 
         if existing_node:
@@ -176,7 +180,7 @@ class Graph(AbstractContextManager):
         set_data = self._set_id(identifier, data)
 
         cursor.execute(
-            read_sql("insert-node.sql"),
+            read_sql(Path("insert-node.sql")),
             (
                 count,
                 label,
@@ -185,7 +189,7 @@ class Graph(AbstractContextManager):
         )
 
         cursor.execute(
-            read_sql("insert-node-embedding.sql"),
+            read_sql(Path("insert-node-embedding.sql")),
             (
                 count,
                 json.dumps(self.embedding_model.get_embedding(json.dumps(set_data))),
@@ -207,7 +211,7 @@ class Graph(AbstractContextManager):
             )
 
             nodes = cursor.execute(
-                read_sql("vector-search-node.sql"),
+                read_sql(Path("vector-search-node.sql")),
                 (embed_json, k, sort_by, desc, sort_by, sort_by, desc, sort_by),
             ).fetchall()
 
@@ -232,12 +236,12 @@ class Graph(AbstractContextManager):
             embed = json.dumps(self.embedding_model.get_embedding(json.dumps(data)))
             if desc:
                 edges = cursor.execute(
-                    read_sql("vector-search-edge-desc.sql"), (embed, k)
+                    read_sql(Path("vector-search-edge-desc.sql")), (embed, k)
                 ).fetchall()
 
             else:
                 edges = cursor.execute(
-                    read_sql("vector-search-edge.sql"), (embed, k)
+                    read_sql(Path("vector-search-edge.sql")), (embed, k)
                 ).fetchall()
 
             if not edges:
@@ -278,7 +282,7 @@ class Graph(AbstractContextManager):
 
             for i, x in enumerate(zip(ids, labels, nodes)):
                 existing_node = cursor.execute(
-                    read_sql("existing-node.sql"), (x[0],)
+                    read_sql(Path("existing-node.sql")), (x[0],)
                 ).fetchone()
 
                 if existing_node:
@@ -286,7 +290,7 @@ class Graph(AbstractContextManager):
                     continue
 
                 cursor.execute(
-                    read_sql("insert-node.sql"),
+                    read_sql(Path("insert-node.sql")),
                     (
                         count + i,
                         x[1],
@@ -294,7 +298,7 @@ class Graph(AbstractContextManager):
                     ),
                 )
                 cursor.execute(
-                    read_sql("insert-node-embedding.sql"),
+                    read_sql(Path("insert-node-embedding.sql")),
                     (
                         count + i,
                         json.dumps(
@@ -327,7 +331,9 @@ class Graph(AbstractContextManager):
             ).fetchone()[0]
             updated_data = {**current_data, **data}
 
-            cursor.execute(read_sql("delete-node-embedding.sql"), (id_to_be_updated,))
+            cursor.execute(
+                read_sql(Path("delete-node-embedding.sql")), (id_to_be_updated,)
+            )
 
             count = (
                 cursor.execute(
@@ -337,7 +343,7 @@ class Graph(AbstractContextManager):
             )
 
             cursor.execute(
-                read_sql("insert-node-embedding.sql"),
+                read_sql(Path("insert-node-embedding.sql")),
                 (
                     count,
                     json.dumps(
@@ -346,7 +352,7 @@ class Graph(AbstractContextManager):
                 ),
             )
             cursor.execute(
-                read_sql("update-node.sql"),
+                read_sql(Path("update-node.sql")),
                 (
                     label,
                     json.dumps(self._set_id(identifier, updated_data)),
@@ -384,15 +390,15 @@ class Graph(AbstractContextManager):
     ) -> CursorExecFunction:
         def _connect_single_nodes(cursor, connection):
             existing_edge = cursor.execute(
-                read_sql("existing-edge.sql"),
+                read_sql(Path("existing-edge.sql")),
                 (source_id, target_id, label, json.dumps(attributes)),
             ).fetchone()
 
             existing_source_node = cursor.execute(
-                read_sql("existing-node.sql"), (source_id,)
+                read_sql(Path("existing-node.sql")), (source_id,)
             ).fetchone()
             existing_target_node = cursor.execute(
-                read_sql("existing-node.sql"), (target_id,)
+                read_sql(Path("existing-node.sql")), (target_id,)
             ).fetchone()
 
             if existing_edge or not existing_source_node or not existing_target_node:
@@ -406,7 +412,7 @@ class Graph(AbstractContextManager):
             )
 
             cursor.execute(
-                read_sql("insert-edge.sql"),
+                read_sql(Path("insert-edge.sql")),
                 (
                     count,
                     source_id,
@@ -424,7 +430,7 @@ class Graph(AbstractContextManager):
             }
 
             cursor.execute(
-                read_sql("insert-edge-embedding.sql"),
+                read_sql(Path("insert-edge-embedding.sql")),
                 (
                     count,
                     json.dumps(
@@ -453,15 +459,15 @@ class Graph(AbstractContextManager):
 
             for i, x in enumerate(zip(sources, targets, labels, attributes)):
                 existing_edge = cursor.execute(
-                    read_sql("existing-edge.sql"),
+                    read_sql(Path("existing-edge.sql")),
                     (x[0], x[1], x[2], json.dumps(x[3])),
                 ).fetchone()
 
                 existing_source_node = cursor.execute(
-                    read_sql("existing-node.sql"), (x[0],)
+                    read_sql(Path("existing-node.sql")), (x[0],)
                 ).fetchone()
                 existing_target_node = cursor.execute(
-                    read_sql("existing-node.sql"), (x[1],)
+                    read_sql(Path("existing-node.sql")), (x[1],)
                 ).fetchone()
 
                 if (
@@ -473,7 +479,7 @@ class Graph(AbstractContextManager):
                     continue
 
                 cursor.execute(
-                    read_sql("insert-edge.sql"),
+                    read_sql(Path("insert-edge.sql")),
                     (
                         count + i,
                         x[0],
@@ -484,7 +490,7 @@ class Graph(AbstractContextManager):
                 )
 
                 cursor.execute(
-                    read_sql("insert-edge-embedding.sql"),
+                    read_sql(Path("insert-edge-embedding.sql")),
                     (
                         count + i,
                         json.dumps(
@@ -523,7 +529,7 @@ class Graph(AbstractContextManager):
                 edge_ids = [i[0] for i in rows]
 
             cursor.execute(
-                read_sql("delete-edge.sql"),
+                read_sql(Path("delete-edge.sql")),
                 (
                     identifier,
                     identifier,
@@ -531,11 +537,11 @@ class Graph(AbstractContextManager):
             )
 
             for id in edge_ids:
-                cursor.execute(read_sql("delete-edge-embedding.sql"), (id,))
+                cursor.execute(read_sql(Path("delete-edge-embedding.sql")), (id,))
 
-            cursor.execute(read_sql("delete-node.sql"), (identifier,))
+            cursor.execute(read_sql(Path("delete-node.sql")), (identifier,))
 
-            cursor.execute(read_sql("delete-node-embedding.sql"), (node[0],))
+            cursor.execute(read_sql(Path("delete-node-embedding.sql")), (node[0],))
 
         return _remove_single_node
 
@@ -556,7 +562,7 @@ class Graph(AbstractContextManager):
                 edge_ids = [i[0] for i in rows]
 
                 cursor.execute(
-                    read_sql("delete-edge.sql"),
+                    read_sql(Path("delete-edge.sql")),
                     (
                         identifier,
                         identifier,
@@ -564,11 +570,11 @@ class Graph(AbstractContextManager):
                 )
 
                 for id in edge_ids:
-                    cursor.execute(read_sql("delete-edge-embedding.sql"), (id,))
+                    cursor.execute(read_sql(Path("delete-edge-embedding.sql")), (id,))
 
-                cursor.execute(read_sql("delete-node.sql"), (identifier,))
+                cursor.execute(read_sql(Path("delete-node.sql")), (identifier,))
 
-                cursor.execute(read_sql("delete-node-embedding.sql"), (node[0],))
+                cursor.execute(read_sql(Path("delete-node-embedding.sql")), (node[0],))
                 connection.commit()
 
         return _remove_multi_node
@@ -716,10 +722,10 @@ class Graph(AbstractContextManager):
         return self._atomic(_traverse_graph)  # type: ignore
 
     def _connections_in(self) -> str:
-        return read_sql("search-edges-inbound.sql")
+        return read_sql(Path("search-edges-inbound.sql"))
 
     def _connections_out(self) -> str:
-        return read_sql("search-edges-outbound.sql")
+        return read_sql(Path("search-edges-outbound.sql"))
 
     def _get_connections_one_way(
         self,
@@ -734,7 +740,7 @@ class Graph(AbstractContextManager):
     def _get_connections(self, identifier: Any) -> CursorExecFunction:
         def _get_all_connections(cursor, connection):
             return cursor.execute(
-                read_sql("search-edges.sql"),
+                read_sql(Path("search-edges.sql")),
                 (
                     identifier,
                     identifier,
@@ -812,7 +818,7 @@ class Graph(AbstractContextManager):
                             + 1
                         )
                         cursor.execute(
-                            read_sql("insert-edge.sql"),
+                            read_sql(Path("insert-edge.sql")),
                             (count, data[0], node_id[0], data[1], data[2]),
                         )
                         connection.commit()
@@ -824,7 +830,7 @@ class Graph(AbstractContextManager):
                             "attributes": data[2],
                         }
                         cursor.execute(
-                            read_sql("insert-edge-embedding.sql"),
+                            read_sql(Path("insert-edge-embedding.sql")),
                             (
                                 count,
                                 json.dumps(
@@ -853,7 +859,7 @@ class Graph(AbstractContextManager):
                             + 1
                         )
                         cursor.execute(
-                            read_sql("insert-edge.sql"),
+                            read_sql(Path("insert-edge.sql")),
                             (count, node_id[0], data[0], data[1], data[2]),
                         )
                         connection.commit()
@@ -865,7 +871,7 @@ class Graph(AbstractContextManager):
                             "attributes": data[2],
                         }
                         cursor.execute(
-                            read_sql("insert-edge-embedding.sql"),
+                            read_sql(Path("insert-edge-embedding.sql")),
                             (
                                 count,
                                 json.dumps(
