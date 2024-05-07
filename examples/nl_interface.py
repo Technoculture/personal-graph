@@ -3,15 +3,16 @@ import os
 import logging
 import argparse
 from dotenv import load_dotenv
-from personal_graph import Graph, LLMClient, EmbeddingClient
+from personal_graph import Graph, LLMClient, EmbeddingClient, DatabaseConfig
 
 
 def main(args):
     llm_client = LLMClient()
     embedding_client = EmbeddingClient()
     with Graph(
-        db_url=args.db_url,
-        db_auth_token=args.db_auth_token,
+        database_config=DatabaseConfig(
+            db_url=args.db_url, db_auth_token=args.db_auth_token
+        ),
         llm_client=llm_client,
         embedding_model_client=embedding_client,
     ) as graph:

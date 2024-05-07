@@ -9,13 +9,15 @@ from personal_graph import (
     Edge,
     LLMClient,
     EmbeddingClient,
+    DatabaseConfig,
 )
 
 
 def main(args):
     with Graph(
-        db_url=args.db_url,
-        db_auth_token=args.db_auth_token,
+        database_config=DatabaseConfig(
+            db_url=args.db_url, db_auth_token=args.db_auth_token
+        ),
         llm_client=LLMClient(),
         embedding_model_client=EmbeddingClient(),
     ) as graph:

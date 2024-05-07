@@ -52,6 +52,13 @@ class LLMClient(OpenAIClient):
     model_name: str = "openai/gpt-3.5-turbo"
 
 
+@dataclass
+class DatabaseConfig:
+    db_url: Optional[str] = None
+    db_auth_token: Optional[str] = None
+    use_in_memory: Optional[bool] = False
+
+
 @lru_cache(maxsize=None)
 def read_sql(sql_file: str) -> str:
     with open(pathlib.Path(__file__).parent.resolve() / "sql" / sql_file) as f:
@@ -73,13 +80,11 @@ class Graph(AbstractContextManager):
     def __init__(
         self,
         *,
-        db_url: Optional[str] = None,
-        db_auth_token: Optional[str] = None,
+        database_config: DatabaseConfig,
         llm_client: LLMClient,
         embedding_model_client: EmbeddingClient,
     ):
-        self.db_url = db_url
-        self.db_auth_token = db_auth_token
+        self.database_config = database_config
         self.llm_client = llm_client
 
         self.embedding_model = OpenAIEmbeddingsModel(
@@ -97,7 +102,11 @@ class Graph(AbstractContextManager):
     def __eq__(self, other):
         if not isinstance(other, Graph):
             return "Not of Graph Type"
-        return self.db_url == other.db_url and self.db_auth_token == other.db_auth_token
+        return (
+            self.database_config.db_url == other.database_config.db_url
+            and self.database_config.db_auth_token
+            == other.database_config.db_auth_token
+        )
 
     def __enter__(self, schema_file: str = "schema.sql") -> Graph:
         self._initialize(
@@ -111,11 +120,12 @@ class Graph(AbstractContextManager):
     # Low level database apis
     def _atomic(self, cursor_exec_fn: CursorExecFunction) -> Any:
         if not hasattr(self, "_connection"):
-            if not self.db_url:
+            if self.database_config.use_in_memory:
                 self._connection = libsql.connect(":memory:")
             else:
                 self._connection = libsql.connect(
-                    database=self.db_url, auth_token=self.db_auth_token
+                    database=self.database_config.db_url,
+                    auth_token=self.database_config.db_auth_token,
                 )
 
         try:
