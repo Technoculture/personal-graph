@@ -5,7 +5,7 @@ import openai
 
 
 class OpenAIClient(ABC):
-    def __init__(self, client=None):
+    def __init__(self, client=None) -> None:
         if client is None:
             client = self._create_default_client()
         self.client = client
@@ -18,7 +18,7 @@ class OpenAIClient(ABC):
 class EmbeddingClient(OpenAIClient):
     def __init__(
         self, client=None, model_name="openai/text-embedding-3-small", dimensions=384
-    ):
+    ) -> None:
         super().__init__(client)
         self.model_name = model_name
         self.dimensions = dimensions
@@ -34,7 +34,7 @@ class EmbeddingClient(OpenAIClient):
 
 
 class LLMClient(OpenAIClient):
-    def __init__(self, client=None, model_name="openai/gpt-3.5-turbo"):
+    def __init__(self, client=None, model_name="openai/gpt-3.5-turbo") -> None:
         super().__init__(client)
         self.model_name = model_name
 
