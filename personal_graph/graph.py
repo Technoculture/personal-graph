@@ -5,7 +5,6 @@ Provide a higher level API to the database using Pydantic
 from __future__ import annotations
 
 import json
-import os
 import sqlean as sqlite3  # type: ignore
 from pathlib import Path
 import uuid
@@ -20,37 +19,16 @@ from contextlib import AbstractContextManager
 import networkx as nx  # type: ignore
 from graphviz import Digraph  # type: ignore
 from jinja2 import Environment, BaseLoader, select_autoescape
-from litellm.llms import openai  # type: ignore
 from matplotlib import pyplot as plt
 from dotenv import load_dotenv
 
+from personal_graph.clients import LLMClient, EmbeddingClient
 from personal_graph.embeddings import OpenAIEmbeddingsModel
 from personal_graph.models import Node, EdgeInput, KnowledgeGraph, Edge
 from personal_graph.visualizers import _as_dot_node, _as_dot_label
 
 load_dotenv()
-
 CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
-
-
-@dataclass
-class OpenAIClient:
-    client: openai.OpenAI = openai.OpenAI(
-        api_key="",
-        base_url=os.getenv("LITE_LLM_BASE_URL", ""),
-        default_headers={"Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN', '')}"},
-    )
-
-
-@dataclass
-class EmbeddingClient(OpenAIClient):
-    model_name: str = "openai/text-embedding-3-small"
-    dimensions: int = 384
-
-
-@dataclass
-class LLMClient(OpenAIClient):
-    model_name: str = "openai/gpt-3.5-turbo"
 
 
 @dataclass
