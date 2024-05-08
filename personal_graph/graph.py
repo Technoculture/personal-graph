@@ -669,15 +669,6 @@ class Graph(AbstractContextManager):
 
         return _find_single_node
 
-    def _find_label(self, identifier: Any) -> CursorExecFunction:
-        def _search_label(cursor, connection):
-            node_label = cursor.execute(
-                "SELECT label from nodes where id=?", (identifier,)
-            ).fetchone()
-            return node_label
-
-        return _search_label
-
     def _parse_search_results(self, results: List[Tuple], idx: int = 0) -> List[Dict]:
         return [json.loads(item[idx]) for item in results]
 
@@ -765,7 +756,347 @@ class Graph(AbstractContextManager):
 
         return _get_all_connections
 
-    def _pruning(self, threshold: float) -> CursorExecFunction:
+    def _find_indegree_edges(self, target_id: Any) -> CursorExecFunction:
+        def _indegree_edges(cursor, connection):
+            indegree = cursor.execute(
+                "SELECT source, label, attributes from edges where target=? ",
+                (target_id,),
+            )
+
+            if indegree:
+                indegree = indegree.fetchall()
+
+            return indegree
+
+        return _indegree_edges
+
+    def _find_outdegree_edges(self, source_id: Any) -> CursorExecFunction:
+        def _outdegree_edges(cursor, connection):
+            outdegree = cursor.execute(
+                "SELECT target, label, attributes from edges where source=? ",
+                (source_id,),
+            )
+
+            if outdegree:
+                outdegree = outdegree.fetchall()
+
+            return outdegree
+
+        return _outdegree_edges
+
+    def _all_connected_nodes(
+        self, node_or_edge: Union[Node | Edge]
+    ) -> CursorExecFunction:
+        def _connected_nodes(cursor, connection):
+            nodes = None
+            if isinstance(node_or_edge, Node):
+                index = node_or_edge.id
+                nodes = cursor.execute(
+                    "SELECT source, target FROM edges WHERE source=? OR target=?",
+                    (index, index),
+                )
+            elif isinstance(node_or_edge, Edge):
+                index1, index2 = node_or_edge.source, node_or_edge.target
+                nodes = cursor.execute(
+                    "SELECT source, target FROM edges WHERE source=? OR target=? OR source=? OR target=?",
+                    (index1, index1, index2, index2),
+                )
+
+            resultant_connected_nodes = []
+            if nodes:
+                connected_nodes = nodes.fetchall()
+                for connected_node in connected_nodes:
+                    for id in connected_node:
+                        res = cursor.execute(
+                            "SELECT id, label, attributes from nodes where id=?",
+                            (id,),
+                        ).fetchone()
+                        if res not in resultant_connected_nodes:
+                            resultant_connected_nodes.append(
+                                Node(id=res[0], label=res[1], attributes=res[2])
+                            )
+
+                return resultant_connected_nodes
+
+        return _connected_nodes
+
+    # Natural Language apis
+    def _generate_graph(self, query: str) -> KnowledgeGraph:
+        client = instructor.from_openai(self.llm_client.client)
+        knowledge_graph = client.chat.completions.create(
+            model=self.llm_client.model_name,
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a high quality knowledge graph generator based on the user query for the purpose of generating descriptive, informative, detailed and accurate knowledge graphs. You can generate proper nodes and edges as a knowledge graph.",
+                },
+                {
+                    "role": "user",
+                    "content": f"Help me describe this user query as a detailed knowledge graph with meaningful relationships that should provide some descriptive attributes(attribute is the detailed and proper information about the edge) and informative labels about the nodes and relationship. Try to make most of the relationships between similar nodes: {query}",
+                },
+            ],
+            response_model=KnowledgeGraph,
+        )
+        return knowledge_graph
+
+    # Visualization api
+    def _graphviz_visualize(
+        self,
+        dot_file: Optional[str] = None,
+        path: List[Any] = [],
+        connections: Any = _get_connections,
+        format: str = "png",
+        exclude_node_keys: List[str] = [],
+        hide_node_key: bool = False,
+        node_kv: str = " ",
+        exclude_edge_keys: List[str] = [],
+        hide_edge_key: bool = False,
+        edge_kv: str = " ",
+    ) -> Digraph:
+        ids = []
+        for i in path:
+            ids.append(str(i))
+            for edge in self._atomic(connections(self, i)):  # type: ignore
+                _, src, tgt, _, _, _, _ = edge
+                if src not in ids:
+                    ids.append(src)
+                if tgt not in ids:
+                    ids.append(tgt)
+
+        dot = Digraph()
+
+        visited = []
+        edges = []
+        for i in ids:
+            if i not in visited:
+                node = self._atomic(self._find_node(i))  # type: ignore
+                name, label = _as_dot_node(
+                    node, exclude_node_keys, hide_node_key, node_kv
+                )
+                dot.node(name, label=label)
+                for edge in self._atomic(connections(self, i)):  # type: ignore
+                    if edge not in edges:
+                        _, src, tgt, _, prps, _, _ = edge
+                        props = json.loads(prps)
+                        dot.edge(
+                            str(src),
+                            str(tgt),
+                            label=_as_dot_label(
+                                props, exclude_edge_keys, hide_edge_key, edge_kv
+                            )
+                            if props
+                            else None,
+                        )
+                        edges.append(edge)
+                visited.append(i)
+
+        dot.render(dot_file, format=format)
+        return dot
+
+    # High level apis
+    def add_node(self, node: Node) -> None:
+        self._atomic(
+            self._add_node(
+                node.label,
+                json.loads(node.attributes)
+                if isinstance(node.attributes, str)
+                else node.attributes,
+                node.id,
+            )
+        )
+
+    def add_nodes(self, nodes: List[Node]) -> None:
+        labels: List[str] = [node.label for node in nodes]
+        attributes: List[Union[Dict[str, str]]] = [
+            json.loads(node.attributes)
+            if isinstance(node.attributes, str)
+            else node.attributes
+            for node in nodes
+        ]
+        ids: List[Any] = [node.id for node in nodes]
+        add_nodes_func = self._add_nodes(
+            nodes=attributes,
+            labels=labels,
+            ids=ids,
+        )
+        self._atomic(add_nodes_func)
+
+    def add_edge(self, edge: EdgeInput) -> None:
+        connect_nodes_func = self._connect_nodes(
+            edge.source.id,
+            edge.target.id,
+            edge.label,
+            json.loads(edge.attributes)
+            if isinstance(edge.attributes, str)
+            else edge.attributes,
+        )
+        self._atomic(connect_nodes_func)
+
+    def add_edges(self, edges: List[EdgeInput]) -> None:
+        sources: List[Any] = [edge.source.id for edge in edges]
+        targets: List[Any] = [edge.target.id for edge in edges]
+        labels: List[str] = [edge.label for edge in edges]
+        attributes: List[Union[Dict[str, str]]] = [
+            json.loads(edge.attributes)
+            if isinstance(edge.attributes, str)
+            else edge.attributes
+            for edge in edges
+        ]
+        connect_many_nodes_func = self._connect_many_nodes(
+            sources=sources,
+            targets=targets,
+            labels=labels,
+            attributes=attributes,
+        )
+        self._atomic(connect_many_nodes_func)
+
+    def update_node(self, node: Node) -> None:
+        upsert_node_func = self._upsert_node(
+            identifier=node.id,
+            label=node.label,
+            data=json.loads(node.attributes)
+            if isinstance(node.attributes, str)
+            else node.attributes,
+        )
+        self._atomic(upsert_node_func)
+
+    def update_nodes(self, nodes: List[Node]) -> None:
+        for node in nodes:
+            self.update_node(node)
+
+    def remove_node(self, id: Any) -> None:
+        self._atomic(self._remove_node(id))
+
+    def remove_nodes(self, ids: List[Any]) -> None:
+        self._atomic(self._remove_nodes(ids))
+
+    def search_node(self, node_id: Any) -> Any:
+        return self._atomic(self._find_node(node_id))
+
+    def search_node_label(self, node_id: Any) -> Any:
+        def _search_label(cursor, connection):
+            node_label = cursor.execute(
+                "SELECT label from nodes where id=?", (node_id,)
+            ).fetchone()
+
+            return node_label
+
+        return self._atomic(_search_label)
+
+    def traverse(
+        self, source: Any, target: Optional[Any] = None, with_bodies: bool = False
+    ) -> List:
+        neighbors_fn = (
+            self._find_neighbors if with_bodies else self._find_outbound_neighbors
+        )
+        path = self._traverse(
+            src=source,
+            tgt=target,
+            neighbors_fn=neighbors_fn,
+            with_bodies=with_bodies,
+        )
+        return path
+
+    def insert_into_graph(self, text: str) -> KnowledgeGraph:
+        uuid_dict = {}
+        kg = self._generate_graph(text)
+
+        try:
+            for node in kg.nodes:
+                uuid_dict[node.id] = str(uuid.uuid4())
+                self._atomic(
+                    self._add_node(
+                        node.label,
+                        {"body": node.attributes},
+                        uuid_dict[node.id],
+                    )
+                )
+
+            for edge in kg.edges:
+                self._atomic(
+                    self._connect_nodes(
+                        uuid_dict[edge.source],
+                        uuid_dict[edge.target],
+                        edge.label,
+                        {"body": edge.attributes},
+                    )
+                )
+        except KeyError:
+            return KnowledgeGraph()
+
+        return kg
+
+    def search_from_graph(
+        self, text: str, *, limit: int = 5, descending: bool = False
+    ) -> KnowledgeGraph:
+        try:
+            similar_nodes = self._atomic(
+                self._vector_search_node({"body": text}, 0.9, descending, limit)
+            )
+            similar_edges = self._atomic(
+                self._vector_search_edge({"body": text}, 0.9, descending, limit)
+            )
+
+            resultant_subgraph = KnowledgeGraph()
+
+            if similar_edges and similar_nodes is None or similar_nodes is None:
+                return resultant_subgraph
+
+            resultant_subgraph.nodes = [
+                Node(id=node[1], label=node[2], attributes=node[3])
+                for node in similar_nodes
+            ]
+
+            for node in similar_nodes:
+                similar_node = Node(id=node[1], label=node[2], attributes=node[3])
+                nodes = self._atomic(self._all_connected_nodes(similar_node))
+
+                if not nodes:
+                    continue
+
+                for i in nodes:
+                    if i not in resultant_subgraph.nodes:
+                        resultant_subgraph.nodes.append(i)
+
+            resultant_subgraph.edges = [
+                Edge(source=edge[1], target=edge[2], label=edge[3], attributes=edge[4])
+                for edge in similar_edges
+            ]
+            for edge in similar_edges:
+                similar_edge = Edge(
+                    source=edge[1],
+                    target=edge[2],
+                    label=edge[3],
+                    attributes=edge[4],
+                )
+                nodes = self._atomic(self._all_connected_nodes(similar_edge))
+
+                if not nodes:
+                    continue
+
+                for node in nodes:
+                    if node not in resultant_subgraph.nodes:
+                        resultant_subgraph.nodes.append(node)
+
+        except KeyError:
+            return KnowledgeGraph()
+
+        return resultant_subgraph
+
+    def visualize_graph(self, kg: KnowledgeGraph) -> Digraph:
+        dot = Digraph(comment="Knowledge Graph")
+
+        # Add nodes
+        for node in kg.nodes:
+            dot.node(str(node.id), node.label, color="black")
+
+        # Add edges
+        for edge in kg.edges:
+            dot.edge(str(edge.source), str(edge.target), edge.label, color="black")
+
+        return dot
+
+    def merge_by_similarity(self, threshold) -> None:
         def _merge(cursor, connection):
             nodes = cursor.execute("SELECT id from nodes").fetchall()
 
@@ -910,13 +1241,9 @@ class Graph(AbstractContextManager):
 
                 connection.commit()
 
-        return _merge
+        self._atomic(_merge)
 
-    def _find_similar_nodes(
-        self,
-        label: str,
-        threshold: Optional[float] = None,
-    ):
+    def find_nodes_like(self, label: str, threshold: float) -> List[Node]:
         def _identical_nodes(cursor, connection):
             nodes = cursor.execute(
                 "SELECT * FROM nodes WHERE label LIKE ?", ("%" + label + "%",)
@@ -940,24 +1267,28 @@ class Graph(AbstractContextManager):
                     if row in similar_rows:
                         continue
                     similar_rows.append(row)
+
             return similar_rows
 
-        return _identical_nodes
+        return self._atomic(_identical_nodes)
 
-    def _nodes_list(self) -> CursorExecFunction:
+    def visualize(self, file: str, path: List[str]) -> Digraph:
+        return self._graphviz_visualize(file, path)
+
+    def fetch_ids_from_db(self) -> List[str]:
         def _fetch_nodes_from_db(cursor, connection):
             nodes = cursor.execute("SELECT id from nodes").fetchall()
             ids = [id[0] for id in nodes]
 
             return ids
 
-        return _fetch_nodes_from_db
+        return self._atomic(_fetch_nodes_from_db)
 
-    def _find_indegree_edges(self, target_id: Any) -> CursorExecFunction:
+    def search_indegree_edges(self, target: Any) -> List[Any]:
         def _indegree_edges(cursor, connection):
             indegree = cursor.execute(
                 "SELECT source, label, attributes from edges where target=? ",
-                (target_id,),
+                (target,),
             )
 
             if indegree:
@@ -965,13 +1296,13 @@ class Graph(AbstractContextManager):
 
             return indegree
 
-        return _indegree_edges
+        return self._atomic(_indegree_edges)
 
-    def _find_outdegree_edges(self, source_id: Any) -> CursorExecFunction:
+    def search_outdegree_edges(self, source: Any) -> List[Any]:
         def _outdegree_edges(cursor, connection):
             outdegree = cursor.execute(
                 "SELECT target, label, attributes from edges where source=? ",
-                (source_id,),
+                (source,),
             )
 
             if outdegree:
@@ -979,46 +1310,18 @@ class Graph(AbstractContextManager):
 
             return outdegree
 
-        return _outdegree_edges
+        return self._atomic(_outdegree_edges)
 
-    def _all_connected_nodes(
-        self, node_or_edge: Union[Node | Edge]
-    ) -> CursorExecFunction:
-        def _connected_nodes(cursor, connection):
-            nodes = None
-            if isinstance(node_or_edge, Node):
-                index = node_or_edge.id
-                nodes = cursor.execute(
-                    "SELECT source, target FROM edges WHERE source=? OR target=?",
-                    (index, index),
-                )
-            elif isinstance(node_or_edge, Edge):
-                index1, index2 = node_or_edge.source, node_or_edge.target
-                nodes = cursor.execute(
-                    "SELECT source, target FROM edges WHERE source=? OR target=? OR source=? OR target=?",
-                    (index1, index1, index2, index2),
-                )
+    def is_unique_prompt(self, text: str, threshold: float) -> bool:
+        similar_nodes = self._atomic(
+            self._vector_search_node({"body": text}, threshold, False, 1)
+        )
 
-            resultant_connected_nodes = []
-            if nodes:
-                connected_nodes = nodes.fetchall()
-                for connected_node in connected_nodes:
-                    for id in connected_node:
-                        res = cursor.execute(
-                            "SELECT id, label, attributes from nodes where id=?",
-                            (id,),
-                        ).fetchone()
-                        if res not in resultant_connected_nodes:
-                            resultant_connected_nodes.append(
-                                Node(id=res[0], label=res[1], attributes=res[2])
-                            )
+        if not similar_nodes:
+            return True
+        return False
 
-                return resultant_connected_nodes
-
-        return _connected_nodes
-
-    # Network analysis libraries apis
-    def to_networkx(self, post_visualize: bool) -> nx.Graph:
+    def pg_to_networkx(self, *, post_visualize: bool = False):
         """
         Convert the graph database to a NetworkX DiGraph object.
         """
@@ -1074,9 +1377,9 @@ class Graph(AbstractContextManager):
 
         return G
 
-    def from_networkx(
-        self, network_graph: nx, post_visualize: bool, override: bool
-    ) -> Graph:
+    def networkx_to_pg(
+        self, networkx_graph: nx, *, post_visualize: bool = False, override: bool = True
+    ):
         if override:
             node_ids = self.fetch_ids_from_db()
             self.remove_nodes(node_ids)
@@ -1085,7 +1388,7 @@ class Graph(AbstractContextManager):
         kg = KnowledgeGraph()
 
         # Convert networkX edges to personal graph edges
-        for source_id, target_id, edge_data in network_graph.edges(data=True):
+        for source_id, target_id, edge_data in networkx_graph.edges(data=True):
             edge_attributes: Dict[str, Any] = edge_data
             edge_label: str = edge_attributes["label"]
 
@@ -1126,7 +1429,7 @@ class Graph(AbstractContextManager):
             kg.edges.append(edge)
 
         # Convert networkX nodes to personal graph nodes
-        for node_id, node_data in network_graph.nodes(data=True):
+        for node_id, node_data in networkx_graph.nodes(data=True):
             if str(node_id) not in node_ids_with_edges:
                 node_attributes: Dict[str, Any] = node_data
                 node_label: str = node_attributes.pop("label", "")
@@ -1193,340 +1496,6 @@ class Graph(AbstractContextManager):
 
         return self
 
-    # Natural Language apis
-    def _generate_graph(self, query: str) -> KnowledgeGraph:
-        client = instructor.from_openai(self.llm_client.client)
-        knowledge_graph = client.chat.completions.create(
-            model=self.llm_client.model_name,
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a high quality knowledge graph generator based on the user query for the purpose of generating descriptive, informative, detailed and accurate knowledge graphs. You can generate proper nodes and edges as a knowledge graph.",
-                },
-                {
-                    "role": "user",
-                    "content": f"Help me describe this user query as a detailed knowledge graph with meaningful relationships that should provide some descriptive attributes(attribute is the detailed and proper information about the edge) and informative labels about the nodes and relationship. Try to make most of the relationships between similar nodes: {query}",
-                },
-            ],
-            response_model=KnowledgeGraph,
-        )
-        return knowledge_graph
-
-    def _visualize_knowledge_graph(self, kg: KnowledgeGraph) -> Digraph:
-        dot = Digraph(comment="Knowledge Graph")
-
-        # Add nodes
-        for node in kg.nodes:
-            dot.node(str(node.id), node.label, color="black")
-
-        # Add edges
-        for edge in kg.edges:
-            dot.edge(str(edge.source), str(edge.target), edge.label, color="black")
-
-        return dot
-
-    def _insert_into_graph(self, text: str) -> KnowledgeGraph:
-        uuid_dict = {}
-        kg = self._generate_graph(text)
-
-        try:
-            for node in kg.nodes:
-                uuid_dict[node.id] = str(uuid.uuid4())
-                self._atomic(
-                    self._add_node(
-                        node.label,
-                        {"body": node.attributes},
-                        uuid_dict[node.id],
-                    )
-                )
-
-            for edge in kg.edges:
-                self._atomic(
-                    self._connect_nodes(
-                        uuid_dict[edge.source],
-                        uuid_dict[edge.target],
-                        edge.label,
-                        {"body": edge.attributes},
-                    )
-                )
-        except KeyError:
-            return KnowledgeGraph()
-
-        return kg
-
-    def _search_from_graph(
-        self, text: str, *, limit: int = 5, descending: bool = False
-    ) -> KnowledgeGraph:
-        try:
-            similar_nodes = self._atomic(
-                self._vector_search_node({"body": text}, 0.9, descending, limit)
-            )
-            similar_edges = self._atomic(
-                self._vector_search_edge({"body": text}, 0.9, descending, limit)
-            )
-
-            resultant_subgraph = KnowledgeGraph()
-
-            if similar_edges and similar_nodes is None or similar_nodes is None:
-                return resultant_subgraph
-
-            resultant_subgraph.nodes = [
-                Node(id=node[1], label=node[2], attributes=node[3])
-                for node in similar_nodes
-            ]
-
-            for node in similar_nodes:
-                similar_node = Node(id=node[1], label=node[2], attributes=node[3])
-                nodes = self._atomic(self._all_connected_nodes(similar_node))
-
-                if not nodes:
-                    continue
-
-                for i in nodes:
-                    if i not in resultant_subgraph.nodes:
-                        resultant_subgraph.nodes.append(i)
-
-            resultant_subgraph.edges = [
-                Edge(source=edge[1], target=edge[2], label=edge[3], attributes=edge[4])
-                for edge in similar_edges
-            ]
-            for edge in similar_edges:
-                similar_edge = Edge(
-                    source=edge[1],
-                    target=edge[2],
-                    label=edge[3],
-                    attributes=edge[4],
-                )
-                nodes = self._atomic(self._all_connected_nodes(similar_edge))
-
-                if not nodes:
-                    continue
-
-                for node in nodes:
-                    if node not in resultant_subgraph.nodes:
-                        resultant_subgraph.nodes.append(node)
-
-        except KeyError:
-            return KnowledgeGraph()
-
-        return resultant_subgraph
-
-    # Visualization api
-    def _graphviz_visualize(
-        self,
-        dot_file: Optional[str] = None,
-        path: List[Any] = [],
-        connections: Any = _get_connections,
-        format: str = "png",
-        exclude_node_keys: List[str] = [],
-        hide_node_key: bool = False,
-        node_kv: str = " ",
-        exclude_edge_keys: List[str] = [],
-        hide_edge_key: bool = False,
-        edge_kv: str = " ",
-    ) -> Digraph:
-        ids = []
-        for i in path:
-            ids.append(str(i))
-            for edge in self._atomic(connections(self, i)):  # type: ignore
-                _, src, tgt, _, _, _, _ = edge
-                if src not in ids:
-                    ids.append(src)
-                if tgt not in ids:
-                    ids.append(tgt)
-
-        dot = Digraph()
-
-        visited = []
-        edges = []
-        for i in ids:
-            if i not in visited:
-                node = self._atomic(self._find_node(i))  # type: ignore
-                name, label = _as_dot_node(
-                    node, exclude_node_keys, hide_node_key, node_kv
-                )
-                dot.node(name, label=label)
-                for edge in self._atomic(connections(self, i)):  # type: ignore
-                    if edge not in edges:
-                        _, src, tgt, _, prps, _, _ = edge
-                        props = json.loads(prps)
-                        dot.edge(
-                            str(src),
-                            str(tgt),
-                            label=_as_dot_label(
-                                props, exclude_edge_keys, hide_edge_key, edge_kv
-                            )
-                            if props
-                            else None,
-                        )
-                        edges.append(edge)
-                visited.append(i)
-
-        dot.render(dot_file, format=format)
-        return dot
-
-    def _attribute_search_node(
-        self, text: str, limit: int, descending: bool, sort_by: Optional[str]
-    ):
-        try:
-            similar_nodes = self._atomic(
-                self._vector_search_node(
-                    {"body": text}, 0.9, descending, limit, sort_by
-                )
-            )
-
-        except KeyError:
-            return []
-
-        return similar_nodes
-
-    # High level apis
-    def add_node(self, node: Node) -> None:
-        self._atomic(
-            self._add_node(
-                node.label,
-                json.loads(node.attributes)
-                if isinstance(node.attributes, str)
-                else node.attributes,
-                node.id,
-            )
-        )
-
-    def add_nodes(self, nodes: List[Node]) -> None:
-        labels: List[str] = [node.label for node in nodes]
-        attributes: List[Union[Dict[str, str]]] = [
-            json.loads(node.attributes)
-            if isinstance(node.attributes, str)
-            else node.attributes
-            for node in nodes
-        ]
-        ids: List[Any] = [node.id for node in nodes]
-        add_nodes_func = self._add_nodes(
-            nodes=attributes,
-            labels=labels,
-            ids=ids,
-        )
-        self._atomic(add_nodes_func)
-
-    def add_edge(self, edge: EdgeInput) -> None:
-        connect_nodes_func = self._connect_nodes(
-            edge.source.id,
-            edge.target.id,
-            edge.label,
-            json.loads(edge.attributes)
-            if isinstance(edge.attributes, str)
-            else edge.attributes,
-        )
-        self._atomic(connect_nodes_func)
-
-    def add_edges(self, edges: List[EdgeInput]) -> None:
-        sources: List[Any] = [edge.source.id for edge in edges]
-        targets: List[Any] = [edge.target.id for edge in edges]
-        labels: List[str] = [edge.label for edge in edges]
-        attributes: List[Union[Dict[str, str]]] = [
-            json.loads(edge.attributes)
-            if isinstance(edge.attributes, str)
-            else edge.attributes
-            for edge in edges
-        ]
-        connect_many_nodes_func = self._connect_many_nodes(
-            sources=sources,
-            targets=targets,
-            labels=labels,
-            attributes=attributes,
-        )
-        self._atomic(connect_many_nodes_func)
-
-    def update_node(self, node: Node) -> None:
-        upsert_node_func = self._upsert_node(
-            identifier=node.id,
-            label=node.label,
-            data=json.loads(node.attributes)
-            if isinstance(node.attributes, str)
-            else node.attributes,
-        )
-        self._atomic(upsert_node_func)
-
-    def update_nodes(self, nodes: List[Node]) -> None:
-        for node in nodes:
-            self.update_node(node)
-
-    def remove_node(self, id: Any) -> None:
-        self._atomic(self._remove_node(id))
-
-    def remove_nodes(self, ids: List[Any]) -> None:
-        self._atomic(self._remove_nodes(ids))
-
-    def search_node(self, node_id: Any) -> Any:
-        return self._atomic(self._find_node(node_id))
-
-    def search_node_label(self, node_id: Any) -> Any:
-        return self._atomic(self._find_label(node_id))
-
-    def traverse(
-        self, source: Any, target: Optional[Any] = None, with_bodies: bool = False
-    ) -> List:
-        neighbors_fn = (
-            self._find_neighbors if with_bodies else self._find_outbound_neighbors
-        )
-        path = self._traverse(
-            src=source,
-            tgt=target,
-            neighbors_fn=neighbors_fn,
-            with_bodies=with_bodies,
-        )
-        return path
-
-    def insert_into_graph(self, text: str) -> KnowledgeGraph:
-        kg: KnowledgeGraph = self._insert_into_graph(text)
-        return kg
-
-    def search_from_graph(self, text: str) -> KnowledgeGraph:
-        kg: KnowledgeGraph = self._search_from_graph(text)
-        return kg
-
-    def visualize_graph(self, kg: KnowledgeGraph) -> Digraph:
-        return self._visualize_knowledge_graph(kg)
-
-    def merge_by_similarity(self, threshold) -> None:
-        self._atomic(self._pruning(threshold))
-
-    def find_nodes_like(self, label: str, threshold: float) -> List[Node]:
-        return self._atomic(self._find_similar_nodes(label, threshold))
-
-    def visualize(self, file: str, path: List[str]) -> Digraph:
-        return self._graphviz_visualize(file, path)
-
-    def fetch_ids_from_db(self) -> List[str]:
-        return self._atomic(self._nodes_list())
-
-    def search_indegree_edges(self, target) -> List[Any]:
-        return self._atomic(self._find_indegree_edges(target))
-
-    def search_outdegree_edges(self, source) -> List[Any]:
-        return self._atomic(self._find_outdegree_edges(source))
-
-    def is_unique_prompt(self, text: str, threshold: float) -> bool:
-        similar_nodes = self._atomic(
-            self._vector_search_node({"body": text}, threshold, False, 1)
-        )
-
-        if not similar_nodes:
-            return True
-        return False
-
-    def pg_to_networkx(self, *, post_visualize: bool = False):
-        nx = self.to_networkx(post_visualize=post_visualize)
-        return nx
-
-    def networkx_to_pg(
-        self, networkx_graph: nx, *, post_visualize: bool = False, override: bool = True
-    ):
-        pg = self.from_networkx(
-            networkx_graph, post_visualize=post_visualize, override=override
-        )
-        return pg
-
     def insert(
         self,
         text: str,
@@ -1547,14 +1516,20 @@ class Graph(AbstractContextManager):
         limit: int = 1,
         sort_by: Optional[str] = "",
     ):
-        results = self._attribute_search_node(
-            text, limit=limit, descending=descending, sort_by=sort_by
-        )
+        try:
+            similar_nodes = self._atomic(
+                self._vector_search_node(
+                    {"body": text}, 0.9, descending, limit, sort_by
+                )
+            )
 
-        if results is None:
+        except KeyError:
+            return []
+
+        if similar_nodes is None:
             return None
 
         if limit == 1:
-            return json.loads(results[0][3])
+            return json.loads(similar_nodes[0][3])
 
-        return results
+        return similar_nodes
