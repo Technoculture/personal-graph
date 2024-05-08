@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import os
+import sqlean as sqlite3  # type: ignore
 from pathlib import Path
 import uuid
 from dataclasses import dataclass
@@ -57,6 +58,8 @@ class DatabaseConfig:
     db_url: Optional[str] = None
     db_auth_token: Optional[str] = None
     use_in_memory: Optional[bool] = False
+    vector0_so_path: Optional[str] = None
+    vss0_so_path: Optional[str] = None
 
 
 @lru_cache(maxsize=None)
@@ -128,7 +131,20 @@ class Graph(AbstractContextManager):
     def _atomic(self, cursor_exec_fn: CursorExecFunction) -> Any:
         if not hasattr(self, "_connection"):
             if self.database_config.use_in_memory:
-                self._connection = libsql.connect(":memory:")
+                self._connection = sqlite3.connect(":memory:")
+                self._connection.enable_load_extension(True)
+                if (
+                    self.database_config.vector0_so_path
+                    and self.database_config.vss0_so_path
+                ):
+                    self._connection.load_extension(
+                        self.database_config.vector0_so_path
+                    )
+                    self._connection.load_extension(self.database_config.vss0_so_path)
+                else:
+                    raise ValueError(
+                        "vector0_so_path and vss0_so_path must be provided when use_in_memory is True."
+                    )
             else:
                 self._connection = libsql.connect(
                     database=self.database_config.db_url,

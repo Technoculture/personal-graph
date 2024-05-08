@@ -16,7 +16,9 @@ from personal_graph import (
 def main(args):
     with Graph(
         database_config=DatabaseConfig(
-            db_url=args.db_url, db_auth_token=args.db_auth_token
+            use_in_memory=True,
+            vector0_so_path="path/to/vector0.so",
+            vss0_so_path="path/to/vss0.so",
         ),
         llm_client=LLMClient(),
         embedding_model_client=EmbeddingClient(),
