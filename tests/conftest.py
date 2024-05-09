@@ -5,7 +5,7 @@ from personal_graph.graph import (
     Graph,
     LLMClient,
     EmbeddingClient,
-    DatabaseConfig,
+    DBClient,
     OpenAIEmbeddingsModel,
     KnowledgeGraph,
     Node,
@@ -89,7 +89,7 @@ def graph(mock_openai_client, mock_embeddings_model):
             return_value=mock_embeddings_model,
         ):
             graph = Graph(
-                database_config=DatabaseConfig(use_in_memory=True),
+                database_config=DBClient(use_in_memory=True),
                 llm_client=LLMClient(client=None, model_name=""),
                 embedding_model_client=EmbeddingClient(
                     client=None, model_name="", dimensions=384
@@ -123,7 +123,7 @@ def mock_generate_graph():
 @pytest.fixture
 def mock_personal_graph(mock_openai_client, mock_atomic, mock_db_connection_and_cursor):
     graph = Graph(
-        database_config=DatabaseConfig(use_in_memory=True),
+        database_config=DBClient(use_in_memory=True),
         llm_client=LLMClient(client=mock_openai_client, model_name=""),
         embedding_model_client=EmbeddingClient(
             client=mock_openai_client, model_name="", dimensions=384

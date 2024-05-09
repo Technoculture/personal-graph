@@ -9,16 +9,16 @@ from personal_graph import (
     Edge,
     LLMClient,
     EmbeddingClient,
-    DatabaseConfig,
+    DBClient,
 )
 
 
 def main(args):
     with Graph(
-        database_config=DatabaseConfig(
+        database_config=DBClient(
             use_in_memory=True,
-            vector0_so_path="path/to/vector0.so",
-            vss0_so_path="path/to/vss0.so",
+            vector0_so_path="/home/anubhuti/.cache/pypoetry/virtualenvs/personal-graph-t9vgHMWG-py3.11/lib/python3.11/site-packages/sqlite_vss/vector0.so",
+            vss0_so_path="/home/anubhuti/.cache/pypoetry/virtualenvs/personal-graph-t9vgHMWG-py3.11/lib/python3.11/site-packages/sqlite_vss/vss0.so",
         ),
         llm_client=LLMClient(),
         embedding_model_client=EmbeddingClient(),

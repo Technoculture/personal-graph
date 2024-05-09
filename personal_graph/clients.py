@@ -1,5 +1,6 @@
 import os
 from abc import ABC, abstractmethod
+from typing import Optional
 
 import openai
 
@@ -46,3 +47,19 @@ class LLMClient(OpenAIClient):
                 "Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN', '')}"
             },
         )
+
+
+class DBClient:
+    def __init__(
+        self,
+        db_url: Optional[str] = None,
+        db_auth_token: Optional[str] = None,
+        use_in_memory: Optional[bool] = False,
+        vector0_so_path: Optional[str] = None,
+        vss0_so_path: Optional[str] = None,
+    ):
+        self.db_url = db_url
+        self.db_auth_token = db_auth_token
+        self.use_in_memory = use_in_memory
+        self.vector0_so_path = vector0_so_path
+        self.vss0_so_path = vss0_so_path

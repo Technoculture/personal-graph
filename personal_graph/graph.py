@@ -8,7 +8,6 @@ import json
 import sqlean as sqlite3  # type: ignore
 from pathlib import Path
 import uuid
-from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any, List, Optional, Union, Dict, Tuple, Callable
 
@@ -22,22 +21,13 @@ from jinja2 import Environment, BaseLoader, select_autoescape
 from matplotlib import pyplot as plt
 from dotenv import load_dotenv
 
-from personal_graph.clients import LLMClient, EmbeddingClient
+from personal_graph.clients import LLMClient, EmbeddingClient, DBClient
 from personal_graph.embeddings import OpenAIEmbeddingsModel
 from personal_graph.models import Node, EdgeInput, KnowledgeGraph, Edge
 from personal_graph.visualizers import _as_dot_node, _as_dot_label
 
 load_dotenv()
 CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
-
-
-@dataclass
-class DatabaseConfig:
-    db_url: Optional[str] = None
-    db_auth_token: Optional[str] = None
-    use_in_memory: Optional[bool] = False
-    vector0_so_path: Optional[str] = None
-    vss0_so_path: Optional[str] = None
 
 
 @lru_cache(maxsize=None)
@@ -66,7 +56,7 @@ class Graph(AbstractContextManager):
     def __init__(
         self,
         *,
-        database_config: DatabaseConfig,
+        database_config: DBClient,
         llm_client: LLMClient,
         embedding_model_client: EmbeddingClient,
     ):

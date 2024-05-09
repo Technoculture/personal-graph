@@ -2,12 +2,12 @@ import logging
 import os
 from dotenv import load_dotenv
 
-from personal_graph import Graph, LLMClient, EmbeddingClient, DatabaseConfig, PersonalRM
+from personal_graph import Graph, LLMClient, EmbeddingClient, DBClient, PersonalRM
 
 
 def main(db_url, db_auth_token):
     with Graph(
-        database_config=DatabaseConfig(db_url=db_url, db_auth_token=db_auth_token),
+        database_config=DBClient(db_url=db_url, db_auth_token=db_auth_token),
         llm_client=LLMClient(),
         embedding_model_client=EmbeddingClient(),
     ) as graph:

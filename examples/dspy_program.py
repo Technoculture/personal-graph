@@ -1,9 +1,9 @@
 import os
 import dspy  # type: ignore
-from personal_graph import Graph, LLMClient, EmbeddingClient, DatabaseConfig, PersonalRM
+from personal_graph import Graph, LLMClient, EmbeddingClient, DBClient, PersonalRM
 
 graph = Graph(
-    database_config=DatabaseConfig(
+    database_config=DBClient(
         db_url=os.getenv("LIBSQL_URL"), db_auth_token=os.getenv("LIBSQL_AUTH_TOKEN")
     ),
     llm_client=LLMClient(),
