@@ -11,18 +11,19 @@ from personal_graph import (
     EmbeddingClient,
     DBClient,
 )
+from personal_graph.database.sqlitevss import SQLiteVSS
 
 
 def main(args):
-    with Graph(
-        database_config=DBClient(
-            use_in_memory=True,
-            vector0_so_path="/home/anubhuti/.cache/pypoetry/virtualenvs/personal-graph-t9vgHMWG-py3.11/lib/python3.11/site-packages/sqlite_vss/vector0.so",
-            vss0_so_path="/home/anubhuti/.cache/pypoetry/virtualenvs/personal-graph-t9vgHMWG-py3.11/lib/python3.11/site-packages/sqlite_vss/vss0.so",
+    vector_store = SQLiteVSS(
+        db_client=DBClient(
+            db_url=os.getenv("LIBSQL_URL"),
+            db_auth_token=os.getenv("LIBSQL_AUTH_TOKEN"),
+
         ),
-        llm_client=LLMClient(),
         embedding_model_client=EmbeddingClient(),
-    ) as graph:
+    )
+    with Graph(vector_store=vector_store, llm_client=LLMClient()) as graph:
         # Define nodes and edges
         node1 = Node(id="3", label="Person", attributes={"name": "Alice", "age": "30"})
         node2 = Node(id="4", label="Person", attributes={"name": "Bob", "age": "25"})
@@ -103,12 +104,15 @@ def main(args):
         # Retrieve relevant information from the graph
         query = "Who is Alice?"
         results = graph.search(query, limit=1)
-        logging.info(results["body"])
+
+        if results is not None:
+            logging.info(results["body"])
 
         query = "Where does Bob work?"
         results = graph.search(query, limit=1)
         logging.info(results)
-        logging.info(results["body"])
+        if results is not None:
+            logging.info(results["body"])
 
         graph.add_node(node1)
         graph.add_nodes([node1, node2])

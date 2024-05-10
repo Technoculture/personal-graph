@@ -1,14 +1,17 @@
 import os
 import dspy  # type: ignore
-from personal_graph import Graph, LLMClient, EmbeddingClient, DBClient, PersonalRM
+from personal_graph import Graph, LLMClient, PersonalRM, DBClient, EmbeddingClient
+from personal_graph.database.sqlitevss import SQLiteVSS
 
-graph = Graph(
-    database_config=DBClient(
-        db_url=os.getenv("LIBSQL_URL"), db_auth_token=os.getenv("LIBSQL_AUTH_TOKEN")
+vector_store = SQLiteVSS(
+    db_client=DBClient(
+        db_url=os.getenv("LIBSQL_URL"),
+        db_auth_token=os.getenv("LIBSQL_AUTH_TOKEN"),
     ),
-    llm_client=LLMClient(),
     embedding_model_client=EmbeddingClient(),
 )
+
+graph = Graph(vector_store=vector_store, llm_client=LLMClient())
 turbo = dspy.OpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPEN_API_KEY"))
 retriever = PersonalRM(graph=graph, k=2)
 dspy.settings.configure(lm=turbo, rm=retriever)
