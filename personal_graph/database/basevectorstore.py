@@ -3,7 +3,7 @@ Provide access to different vector databases
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Union, Optional
 
 from personal_graph.models import Node, Edge
 
@@ -60,11 +60,6 @@ class BaseVectorStore(ABC):
     @abstractmethod
     def search_node(self, node_id: Any) -> Any:
         """Search for a node by its ID."""
-        pass
-
-    @abstractmethod
-    def search_node_label(self, node_id: Any) -> Any:
-        """Search for a node's label by its ID."""
         pass
 
     @abstractmethod

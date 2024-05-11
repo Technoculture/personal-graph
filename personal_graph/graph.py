@@ -17,13 +17,16 @@ from personal_graph.clients import LLMClient
 from personal_graph.models import Node, EdgeInput, KnowledgeGraph, Edge
 from personal_graph.visualizers import _as_dot_node, _as_dot_label
 from personal_graph.database.sqlitevss import SQLiteVSS
+from personal_graph.database.vlitedatabase import VLiteDatabase
 
 load_dotenv()
 CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
 
 
 class Graph(AbstractContextManager):
-    def __init__(self, *, llm_client: LLMClient, vector_store: Union[SQLiteVSS]):
+    def __init__(
+        self, *, llm_client: LLMClient, vector_store: Union[SQLiteVSS, VLiteDatabase]
+    ):
         self.llm_client = llm_client
         self.vector_store = vector_store
 
@@ -31,10 +34,14 @@ class Graph(AbstractContextManager):
         if not isinstance(other, Graph):
             return "Not of Graph Type"
         else:
-            return (
-                self.vector_store.db_url == other.vector_store.db_url
-                and self.vector_store.db_auth_token == other.vector_store.db_auth_token
-            )
+            if isinstance(self.vector_store, SQLiteVSS):
+                return (
+                    self.vector_store.db_url == other.vector_store.db_url
+                    and self.vector_store.db_auth_token
+                    == other.vector_store.db_auth_token
+                )
+            else:
+                return self.vector_store.collection == other.vector_store.collection
 
     def __enter__(self) -> Graph:
         self.vector_store.initialize()
@@ -82,7 +89,11 @@ class Graph(AbstractContextManager):
         for i in path:
             ids.append(str(i))
             for edge in connections(i):  # type: ignore
-                src, tgt, _ = edge
+                if isinstance(self.vector_store, SQLiteVSS):
+                    src, tgt, _ = edge
+                else:
+                    src = edge[2]["source"]
+                    tgt = edge[2]["target"]
                 if src not in ids:
                     ids.append(src)
                 if tgt not in ids:
@@ -95,6 +106,12 @@ class Graph(AbstractContextManager):
         for i in ids:
             if i not in visited:
                 node = self.vector_store.search_node(i)  # type: ignore
+                if node is []:
+                    continue
+
+                if not isinstance(self.vector_store, SQLiteVSS):
+                    node = node[0][2]
+
                 name, label = _as_dot_node(
                     node, exclude_node_keys, hide_node_key, node_kv
                 )
@@ -234,13 +251,30 @@ class Graph(AbstractContextManager):
             if similar_edges and similar_nodes is None or similar_nodes is None:
                 return resultant_subgraph
 
-            resultant_subgraph.nodes = [
-                Node(id=node[1], label=node[2], attributes=node[3])
-                for node in similar_nodes
-            ]
+            if isinstance(self.vector_store, SQLiteVSS):
+                resultant_subgraph.nodes = [
+                    Node(id=node[1], label=node[2], attributes=node[3])
+                    for node in similar_nodes
+                ]
+            else:
+                resultant_subgraph.nodes = [
+                    Node(
+                        id=node[0],
+                        label=node[1],
+                        attributes=node[2]["body"],
+                    )
+                    for node in similar_nodes
+                ]
 
             for node in similar_nodes:
-                similar_node = Node(id=node[1], label=node[2], attributes=node[3])
+                if isinstance(self.vector_store, SQLiteVSS):
+                    similar_node = Node(id=node[1], label=node[2], attributes=node[3])
+                else:
+                    similar_node = Node(
+                        id=node[0],
+                        label=json.loads(node[1])["label"],
+                        attributes=json.loads(node[1])["body"],
+                    )
                 nodes = self.vector_store.all_connected_nodes(similar_node)
 
                 if not nodes:
@@ -250,17 +284,42 @@ class Graph(AbstractContextManager):
                     if i not in resultant_subgraph.nodes:
                         resultant_subgraph.nodes.append(i)
 
-            resultant_subgraph.edges = [
-                Edge(source=edge[1], target=edge[2], label=edge[3], attributes=edge[4])
-                for edge in similar_edges
-            ]
+            if isinstance(self.vector_store, SQLiteVSS):
+                resultant_subgraph.edges = [
+                    Edge(
+                        source=edge[1],
+                        target=edge[2],
+                        label=edge[3],
+                        attributes=edge[4],
+                    )
+                    for edge in similar_edges
+                ]
+            else:
+                resultant_subgraph.edges = [
+                    Edge(
+                        source=json.loads(edge[1])["source"],
+                        target=json.loads(edge[1])["target"],
+                        label=json.loads(edge[1])["label"],
+                        attributes=json.loads(edge[1])["body"],
+                    )
+                    for edge in similar_edges
+                ]
             for edge in similar_edges:
-                similar_edge = Edge(
-                    source=edge[1],
-                    target=edge[2],
-                    label=edge[3],
-                    attributes=edge[4],
-                )
+                if isinstance(self.vector_store, SQLiteVSS):
+                    similar_edge = Edge(
+                        source=edge[1],
+                        target=edge[2],
+                        label=edge[3],
+                        attributes=edge[4],
+                    )
+                else:
+                    similar_edge = Edge(
+                        source=json.loads(edge[1])["source"],
+                        target=json.loads(edge[1])["target"],
+                        label=json.loads(edge[1])["label"],
+                        attributes=json.loads(edge[1])["body"],
+                    )
+
                 nodes = self.vector_store.all_connected_nodes(similar_edge)
                 if not nodes:
                     continue
@@ -307,7 +366,7 @@ class Graph(AbstractContextManager):
 
     def is_unique_prompt(self, text: str) -> bool:
         similar_nodes = self.vector_store.vector_search_node(
-            {"body": text}, descending=False, limit=1
+            {"body": text}, descending=False, limit=1, sort_by=""
         )
 
         if not similar_nodes:
@@ -324,22 +383,38 @@ class Graph(AbstractContextManager):
         # Add edges to networkX
         for source_id in node_ids:
             outdegree_edges = self.search_outdegree_edges(source_id)
+            if outdegree_edges is []:
+                continue
+
             for target_id, edge_label, edge_data in outdegree_edges:
-                edge_data = json.loads(edge_data)
+                if isinstance(self.vector_store, SQLiteVSS):
+                    edge_data = json.loads(edge_data)
+
                 edge_data["label"] = edge_label
                 G.add_edge(source_id, target_id, **edge_data)
 
         for target_id in node_ids:
             indegree_edges = self.search_indegree_edges(target_id)
+
+            if indegree_edges is []:
+                continue
+
             for source_id, edge_label, edge_data in indegree_edges:
-                edge_data = json.loads(edge_data)
+                if isinstance(self.vector_store, SQLiteVSS):
+                    edge_data = json.loads(edge_data)
+
                 edge_data["label"] = edge_label
                 G.add_edge(source_id, target_id, **edge_data)
 
         for node_id in node_ids:
-            node_data = self.search_node(node_id)
-            node_label = self.search_node_label(node_id)
-            node_data["label"] = node_label
+            node_data = self.search_node([node_id])
+
+            if isinstance(self.vector_store, SQLiteVSS):
+                node_label = self.search_node_label([node_id])
+                node_data["label"] = node_label
+            else:
+                node_data = node_data[0][2]
+
             G.add_node(node_id, **node_data)
 
         if post_visualize:
@@ -521,6 +596,9 @@ class Graph(AbstractContextManager):
             return None
 
         if limit == 1:
-            return json.loads(similar_nodes[0][3])
+            if isinstance(self.vector_store, SQLiteVSS):
+                return json.loads(similar_nodes[0][3])
+            else:
+                return similar_nodes[0][2]
 
         return similar_nodes
