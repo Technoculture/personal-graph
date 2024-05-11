@@ -1,27 +1,12 @@
 import argparse
 import os
 import logging
-from personal_graph import (
-    Graph,
-    Node,
-    EdgeInput,
-    KnowledgeGraph,
-    Edge,
-    LLMClient,
-    EmbeddingClient,
-    DBClient,
-)
-from personal_graph.database.sqlitevss import SQLiteVSS
+from personal_graph import Graph, Node, KnowledgeGraph, Edge, LLMClient
+from personal_graph.database.vlitedatabase import VLiteDatabase
 
 
 def main(args):
-    vector_store = SQLiteVSS(
-        db_client=DBClient(
-            db_url=os.getenv("LIBSQL_URL"),
-            db_auth_token=os.getenv("LIBSQL_AUTH_TOKEN"),
-        ),
-        embedding_model_client=EmbeddingClient(),
-    )
+    vector_store = VLiteDatabase(collection="sample_collection")
     with Graph(vector_store=vector_store, llm_client=LLMClient()) as graph:
         # Define nodes and edges
         node1 = Node(id="3", label="Person", attributes={"name": "Alice", "age": "30"})
@@ -83,9 +68,7 @@ def main(args):
 
         query = "User talked about his fears, achievements, hobbies and beliefs."
 
-        deepest_conversation = graph.search(
-            query, descending=True, limit=1, sort_by="depth_score"
-        )
+        deepest_conversation = graph.search(query, descending=True, limit=1, sort_by="")
 
         if deepest_conversation:
             logging.info(f"Question: {query}")
@@ -105,7 +88,7 @@ def main(args):
         results = graph.search(query, limit=1)
 
         if results is not None:
-            logging.info(results["body"])
+            logging.info(results)
 
         query = "Where does Bob work?"
         results = graph.search(query, limit=1)
@@ -114,23 +97,28 @@ def main(args):
             logging.info(results["body"])
 
         graph.add_node(node1)
-        graph.add_nodes([node1, node2])
+        graph.add_nodes([node3, node2])
         graph.add_edge(edge1)
-
         graph.add_edges([edge2, edge3])
 
-        logging.info(graph.traverse("3"))
-        graph.remove_node(3)
+        # logging.info(graph.traverse("3"))
+        graph.remove_node(["1"])
         graph.remove_nodes([1, 2])
+        logging.info(graph.search_node(["3"]))
 
-        graph.update_node(node3)
+        node5 = Node(
+            id="3",
+            label="Asthma",
+            attributes={"body": "Respiratory disease"},
+        )
+        graph.update_node(node5)
         node5 = Node(id=18, label="Person", attributes={"name": "Charlie", "age": "35"})
         graph.update_nodes([node4, node5])
 
         logging.info(graph.search_node(1))
 
-        graph.merge_by_similarity(threshold=0.9)
-        logging.info("Merged nodes")
+        # graph.merge_by_similarity(threshold=0.9)
+        # logging.info("Merged nodes")
 
         # Insert natural language query into graph db
         graph.insert_into_graph(
@@ -142,7 +130,7 @@ def main(args):
             graph.search_from_graph(text="Who is more interested in coral refs")
         )
 
-        logging.info(graph.find_nodes_like(label="relative", threshold=0.9))
+        # logging.info(graph.find_nodes_like(label="relative", threshold=0.9))
 
         graph.visualize("sample.dot", ["4"])
         kg = KnowledgeGraph(
