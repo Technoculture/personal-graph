@@ -29,6 +29,7 @@ networkx = {extras = ["default"], version = "^3.3"}
 litellm = "^1.35.26"
 dspy-ai = "2.3.0"
 instructor = "^1.2.2"
+vlite = "^0.2.7"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.1.1"
