@@ -82,7 +82,7 @@ class Graph(AbstractContextManager):
         for i in path:
             ids.append(str(i))
             for edge in connections(i):  # type: ignore
-                _, src, tgt, _, _, _, _ = edge
+                src, tgt, _ = edge
                 if src not in ids:
                     ids.append(src)
                 if tgt not in ids:
@@ -101,8 +101,7 @@ class Graph(AbstractContextManager):
                 dot.node(name, label=label)
                 for edge in connections(i):  # type: ignore
                     if edge not in edges:
-                        _, src, tgt, _, prps, _, _ = edge
-                        props = json.loads(prps)
+                        src, tgt, props = edge
                         dot.edge(
                             str(src),
                             str(tgt),

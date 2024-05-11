@@ -1,12 +1,12 @@
 import json
 import pytest
 from unittest.mock import patch, Mock
+
+from personal_graph import OpenAIEmbeddingsModel, DBClient, EmbeddingClient
+from personal_graph.database.sqlitevss import SQLiteVSS
 from personal_graph.graph import (
     Graph,
     LLMClient,
-    EmbeddingClient,
-    DBClient,
-    OpenAIEmbeddingsModel,
     KnowledgeGraph,
     Node,
     Edge,
@@ -16,7 +16,7 @@ from personal_graph.graph import (
 
 @pytest.fixture
 def mock_atomic():
-    with patch("personal_graph.graph.Graph._atomic") as mock_atomic:
+    with patch("personal_graph.database.sqlitevss.SQLiteVSS._atomic") as mock_atomic:
         yield mock_atomic
 
 
@@ -35,13 +35,17 @@ def embedding_model():
 
 @pytest.fixture
 def mock_find_node():
-    with patch("personal_graph.graph.Graph._find_node") as mock_find_node:
+    with patch(
+        "personal_graph.database.sqlitevss.SQLiteVSS._find_node"
+    ) as mock_find_node:
         yield mock_find_node
 
 
 @pytest.fixture
 def mock_get_connections():
-    with patch("personal_graph.graph.Graph._get_connections") as mock_get_connections:
+    with patch(
+        "personal_graph.database.sqlitevss.SQLiteVSS.get_connections"
+    ) as mock_get_connections:
         yield mock_get_connections
 
 
@@ -88,13 +92,15 @@ def graph(mock_openai_client, mock_embeddings_model):
             "personal_graph.embeddings.OpenAIEmbeddingsModel",
             return_value=mock_embeddings_model,
         ):
-            graph = Graph(
-                database_config=DBClient(use_in_memory=True),
-                llm_client=LLMClient(client=None, model_name=""),
-                embedding_model_client=EmbeddingClient(
-                    client=None, model_name="", dimensions=384
+            vector_store = SQLiteVSS(
+                db_client=DBClient(
+                    db_url=None,
+                    db_auth_token=None,
                 ),
+                embedding_model_client=EmbeddingClient(),
             )
+
+            graph = Graph(vector_store=vector_store, llm_client=LLMClient())
             yield graph
 
 
@@ -122,13 +128,15 @@ def mock_generate_graph():
 
 @pytest.fixture
 def mock_personal_graph(mock_openai_client, mock_atomic, mock_db_connection_and_cursor):
-    graph = Graph(
-        database_config=DBClient(use_in_memory=True),
-        llm_client=LLMClient(client=mock_openai_client, model_name=""),
-        embedding_model_client=EmbeddingClient(
-            client=mock_openai_client, model_name="", dimensions=384
+    vector_store = SQLiteVSS(
+        db_client=DBClient(
+            db_url=None,
+            db_auth_token=None,
         ),
+        embedding_model_client=EmbeddingClient(),
     )
+
+    graph = Graph(vector_store=vector_store, llm_client=LLMClient())
 
     node1 = Node(id=1, label="Sample Label", attributes={"Person": "scholar"})
     node2 = Node(id=2, label="Researching", attributes={"University": "Stanford"})

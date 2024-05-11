@@ -157,10 +157,6 @@ def test_find_nodes_like(graph, mock_atomic, mock_db_connection_and_cursor):
     assert graph.find_nodes_like("relative", 0.9) is not None
 
 
-def test_get_connections(graph, mock_atomic, mock_db_connection_and_cursor):
-    assert graph._get_connections(1) is not None
-
-
 def test_to_networkx(mock_personal_graph, mock_atomic, mock_db_connection_and_cursor):
     networkx_graph = mock_personal_graph.pg_to_networkx()
 
