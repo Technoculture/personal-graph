@@ -1,13 +1,19 @@
 import argparse
 import os
 import logging
-from personal_graph import Graph, Node, KnowledgeGraph, Edge, LLMClient
-from personal_graph.database.vlitedatabase import VLiteDatabase
+from personal_graph import (
+    Graph,
+    Node,
+    KnowledgeGraph,
+    Edge,
+    LLMClient,
+    EdgeInput
+)
+from personal_graph.database import VLiteDatabase
 
 
 def main(args):
-    vector_store = VLiteDatabase(collection="sample_collection")
-    with Graph(vector_store=vector_store, llm_client=LLMClient()) as graph:
+    with Graph(vector_store=VLiteDatabase(), llm_client=LLMClient()) as graph:
         # Define nodes and edges
         node1 = Node(id="3", label="Person", attributes={"name": "Alice", "age": "30"})
         node2 = Node(id="4", label="Person", attributes={"name": "Bob", "age": "25"})
@@ -102,9 +108,9 @@ def main(args):
         graph.add_edges([edge2, edge3])
 
         # logging.info(graph.traverse("3"))
-        graph.remove_node(["1"])
+        graph.remove_node(1)
         graph.remove_nodes([1, 2])
-        logging.info(graph.search_node(["3"]))
+        logging.info(graph.search_node("3"))
 
         node5 = Node(
             id="3",
