@@ -90,7 +90,7 @@ class Graph(AbstractContextManager):
             ids.append(str(i))
             for edge in connections(i):  # type: ignore
                 if isinstance(self.vector_store, SQLiteVSS):
-                    src, tgt, _ = edge
+                    _, src, tgt, _, _, _, _ = edge
                 else:
                     src = edge[2]["source"]
                     tgt = edge[2]["target"]
@@ -118,7 +118,11 @@ class Graph(AbstractContextManager):
                 dot.node(name, label=label)
                 for edge in connections(i):  # type: ignore
                     if edge not in edges:
-                        src, tgt, props = edge
+                        if isinstance(self.vector_store, SQLiteVSS):
+                            _, src, tgt, _, prps, _, _ = edge
+                            props = json.loads(prps)
+                        else:
+                            src, tgt, props = edge
                         dot.edge(
                             str(src),
                             str(tgt),
@@ -407,10 +411,10 @@ class Graph(AbstractContextManager):
                 G.add_edge(source_id, target_id, **edge_data)
 
         for node_id in node_ids:
-            node_data = self.search_node([node_id])
+            node_data = self.search_node(node_id)
 
             if isinstance(self.vector_store, SQLiteVSS):
-                node_label = self.search_node_label([node_id])
+                node_label = self.search_node_label(node_id)
                 node_data["label"] = node_label
             else:
                 node_data = node_data[0][2]
