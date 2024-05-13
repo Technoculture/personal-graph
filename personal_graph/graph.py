@@ -15,7 +15,6 @@ from dotenv import load_dotenv
 
 from personal_graph.clients import LLMClient
 from personal_graph.models import Node, EdgeInput, KnowledgeGraph, Edge
-from personal_graph.visualizers import _as_dot_node, _as_dot_label
 from personal_graph.database.sqlitevss import SQLiteVSS
 from personal_graph.database.vlitedatabase import VLiteDatabase
 
@@ -68,75 +67,6 @@ class Graph(AbstractContextManager):
             response_model=KnowledgeGraph,
         )
         return knowledge_graph
-
-    # Visualization api
-    def _graphviz_visualize(
-        self,
-        dot_file: Optional[str] = None,
-        path: List[Any] = [],
-        connections: Any = None,
-        format: str = "png",
-        exclude_node_keys: List[str] = [],
-        hide_node_key: bool = False,
-        node_kv: str = " ",
-        exclude_edge_keys: List[str] = [],
-        hide_edge_key: bool = False,
-        edge_kv: str = " ",
-    ) -> Digraph:
-        if connections is None:
-            connections = self.vector_store.get_connections
-        ids = []
-        for i in path:
-            ids.append(str(i))
-            for edge in connections(i):  # type: ignore
-                if isinstance(self.vector_store, SQLiteVSS):
-                    _, src, tgt, _, _, _, _ = edge
-                else:
-                    src = edge[2]["source"]
-                    tgt = edge[2]["target"]
-                if src not in ids:
-                    ids.append(src)
-                if tgt not in ids:
-                    ids.append(tgt)
-
-        dot = Digraph()
-
-        visited = []
-        edges = []
-        for i in ids:
-            if i not in visited:
-                node = self.vector_store.search_node(i)  # type: ignore
-                if node is []:
-                    continue
-
-                if not isinstance(self.vector_store, SQLiteVSS):
-                    node = node[0][2]
-
-                name, label = _as_dot_node(
-                    node, exclude_node_keys, hide_node_key, node_kv
-                )
-                dot.node(name, label=label)
-                for edge in connections(i):  # type: ignore
-                    if edge not in edges:
-                        if isinstance(self.vector_store, SQLiteVSS):
-                            _, src, tgt, _, prps, _, _ = edge
-                            props = json.loads(prps)
-                        else:
-                            src, tgt, props = edge
-                        dot.edge(
-                            str(src),
-                            str(tgt),
-                            label=_as_dot_label(
-                                props, exclude_edge_keys, hide_edge_key, edge_kv
-                            )
-                            if props
-                            else None,
-                        )
-                        edges.append(edge)
-                visited.append(i)
-
-        dot.render(dot_file, format=format)
-        return dot
 
     # High level apis
     def add_node(self, node: Node) -> None:
@@ -235,107 +165,14 @@ class Graph(AbstractContextManager):
                 )
         except KeyError:
             return KnowledgeGraph()
-
         return kg
 
     def search_from_graph(
         self, text: str, *, limit: int = 5, descending: bool = False, sort_by: str = ""
     ) -> KnowledgeGraph:
-        try:
-            similar_nodes = self.vector_store.vector_search_node(
-                {"body": text}, descending=descending, limit=limit, sort_by=sort_by
-            )
-
-            similar_edges = self.vector_store.vector_search_edge(
-                {"body": text}, descending=descending, limit=limit, sort_by=sort_by
-            )
-
-            resultant_subgraph = KnowledgeGraph()
-
-            if similar_edges and similar_nodes is None or similar_nodes is None:
-                return resultant_subgraph
-
-            if isinstance(self.vector_store, SQLiteVSS):
-                resultant_subgraph.nodes = [
-                    Node(id=node[1], label=node[2], attributes=node[3])
-                    for node in similar_nodes
-                ]
-            else:
-                resultant_subgraph.nodes = [
-                    Node(
-                        id=node[0],
-                        label=node[1],
-                        attributes=node[2]["body"],
-                    )
-                    for node in similar_nodes
-                ]
-
-            for node in similar_nodes:
-                if isinstance(self.vector_store, SQLiteVSS):
-                    similar_node = Node(id=node[1], label=node[2], attributes=node[3])
-                else:
-                    similar_node = Node(
-                        id=node[0],
-                        label=json.loads(node[1])["label"],
-                        attributes=json.loads(node[1])["body"],
-                    )
-                nodes = self.vector_store.all_connected_nodes(similar_node)
-
-                if not nodes:
-                    continue
-
-                for i in nodes:
-                    if i not in resultant_subgraph.nodes:
-                        resultant_subgraph.nodes.append(i)
-
-            if isinstance(self.vector_store, SQLiteVSS):
-                resultant_subgraph.edges = [
-                    Edge(
-                        source=edge[1],
-                        target=edge[2],
-                        label=edge[3],
-                        attributes=edge[4],
-                    )
-                    for edge in similar_edges
-                ]
-            else:
-                resultant_subgraph.edges = [
-                    Edge(
-                        source=json.loads(edge[1])["source"],
-                        target=json.loads(edge[1])["target"],
-                        label=json.loads(edge[1])["label"],
-                        attributes=json.loads(edge[1])["body"],
-                    )
-                    for edge in similar_edges
-                ]
-            for edge in similar_edges:
-                if isinstance(self.vector_store, SQLiteVSS):
-                    similar_edge = Edge(
-                        source=edge[1],
-                        target=edge[2],
-                        label=edge[3],
-                        attributes=edge[4],
-                    )
-                else:
-                    similar_edge = Edge(
-                        source=json.loads(edge[1])["source"],
-                        target=json.loads(edge[1])["target"],
-                        label=json.loads(edge[1])["label"],
-                        attributes=json.loads(edge[1])["body"],
-                    )
-
-                nodes = self.vector_store.all_connected_nodes(similar_edge)
-                if not nodes:
-                    continue
-
-                for node in nodes:
-                    if node not in resultant_subgraph.nodes:
-                        resultant_subgraph.nodes.append(node)
-
-        except KeyError:
-            return KnowledgeGraph()
-
-        return resultant_subgraph
+        return self.vector_store.search_from_graph(
+            text, limit=limit, descending=descending, sort_by=sort_by
+        )
 
     def visualize_graph(self, kg: KnowledgeGraph) -> Digraph:
         dot = Digraph(comment="Knowledge Graph")
@@ -357,7 +194,7 @@ class Graph(AbstractContextManager):
         return self.vector_store.find_nodes_like(label, threshold)
 
     def visualize(self, file: str, path: List[str]) -> Digraph:
-        return self._graphviz_visualize(file, path)
+        return self.vector_store.graphviz_visualize(file, path)
 
     def fetch_ids_from_db(self) -> List[str]:
         return self.vector_store.fetch_ids_from_db()

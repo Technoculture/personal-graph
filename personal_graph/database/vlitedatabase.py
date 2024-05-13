@@ -2,9 +2,11 @@ import json
 import uuid
 from typing import Dict, Any, List, Union, Callable, Optional, Set
 
+from graphviz import Digraph  # type: ignore
 from vlite import VLite  # type: ignore
 
-from personal_graph.models import Node, Edge
+from personal_graph.visualizers import _as_dot_node, _as_dot_label
+from personal_graph.models import Node, Edge, KnowledgeGraph
 from personal_graph.database.vector_store import VectorStore
 
 
@@ -136,3 +138,137 @@ class VLiteDatabase(VectorStore):
             connected_nodes.add(node_or_edge.source)
             connected_nodes.add(node_or_edge.target)
         return [self.search_node(node_id) for node_id in connected_nodes]
+
+    def graphviz_visualize(
+        self,
+        dot_file: Optional[str] = None,
+        path: List[Any] = [],
+        connections: Any = None,
+        format: str = "png",
+        exclude_node_keys: List[str] = [],
+        hide_node_key: bool = False,
+        node_kv: str = " ",
+        exclude_edge_keys: List[str] = [],
+        hide_edge_key: bool = False,
+        edge_kv: str = " ",
+    ) -> Digraph:
+        if connections is None:
+            connections = self.get_connections
+        ids = []
+        for i in path:
+            ids.append(str(i))
+            for edge in connections(i):  # type: ignore
+                src = edge[2]["source"]
+                tgt = edge[2]["target"]
+                if src not in ids:
+                    ids.append(src)
+                if tgt not in ids:
+                    ids.append(tgt)
+
+        dot = Digraph()
+
+        visited = []
+        edges = []
+        for i in ids:
+            if i not in visited:
+                node = self.search_node(i)  # type: ignore
+
+                if node == []:
+                    continue
+
+                name, label = _as_dot_node(
+                    node[0][2], exclude_node_keys, hide_node_key, node_kv
+                )
+                dot.node(name, label=label)
+                for edge in connections(i):  # type: ignore
+                    if edge not in edges:
+                        src, tgt, props = edge
+                        dot.edge(
+                            str(src),
+                            str(tgt),
+                            label=_as_dot_label(
+                                props, exclude_edge_keys, hide_edge_key, edge_kv
+                            )
+                            if props
+                            else None,
+                        )
+                        edges.append(edge)
+                visited.append(i)
+
+        dot.render(dot_file, format=format)
+        return dot
+
+    def search_from_graph(
+        self, text: str, *, limit: int = 5, descending: bool = False, sort_by: str = ""
+    ) -> KnowledgeGraph:
+        try:
+            similar_nodes = self.vector_search_node(
+                {"body": text}, descending=descending, limit=limit, sort_by=sort_by
+            )
+
+            similar_edges = self.vector_search_edge(
+                {"body": text}, descending=descending, limit=limit, sort_by=sort_by
+            )
+
+            resultant_subgraph = KnowledgeGraph()
+
+            if similar_edges and similar_nodes is None or similar_nodes is None:
+                return resultant_subgraph
+
+            for node in similar_nodes:
+                similar_node = Node(
+                    id=node[0],
+                    label=node[1],
+                    attributes=(node[2])["body"],
+                )
+                resultant_subgraph.nodes.append(similar_node)
+
+                nodes = self.all_connected_nodes(similar_node)
+
+                if not nodes:
+                    continue
+
+                for i in nodes:
+                    if i not in resultant_subgraph.nodes:
+                        node = Node(
+                            id=i[0][0],
+                            label=i[0][1],
+                            attributes=(i[0][2])["body"],
+                        )
+                        resultant_subgraph.nodes.append(node)
+
+            for edge in similar_edges:
+                edge = self.search_node(edge[0].rstrip("_0"))
+
+                if edge == []:
+                    continue
+
+                if "source" not in edge[0][2].keys():
+                    continue
+
+                else:
+                    similar_edge = Edge(
+                        source=edge[0][2]["source"],
+                        target=edge[0][2]["target"],
+                        label=edge[0][1],
+                        attributes=edge[0][2]["body"],
+                    )
+                    resultant_subgraph.edges.append(similar_edge)
+
+                    nodes = self.all_connected_nodes(similar_edge)
+                    if not nodes:
+                        continue
+
+                    for i in nodes:
+                        if i not in resultant_subgraph.nodes:
+                            node = Node(
+                                id=i[0][0],
+                                label=i[0][1],
+                                attributes=(i[0][2])["body"],
+                            )
+                            resultant_subgraph.nodes.append(node)
+
+        except KeyError:
+            return KnowledgeGraph()
+
+        return resultant_subgraph

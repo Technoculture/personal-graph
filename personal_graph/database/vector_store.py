@@ -5,7 +5,9 @@ Provide access to different vector databases
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Union, Optional
 
-from personal_graph.models import Node, Edge
+from graphviz import Digraph  # type: ignore
+
+from personal_graph.models import Node, Edge, KnowledgeGraph
 
 
 class VectorStore(ABC):
@@ -115,4 +117,27 @@ class VectorStore(ABC):
     @abstractmethod
     def all_connected_nodes(self, node_or_edge: Union[Node | Edge]):
         """Get all connected nodes"""
+        pass
+
+    @abstractmethod
+    def graphviz_visualize(
+        self,
+        dot_file: Optional[str] = None,
+        path: List[Any] = [],
+        connections: Any = None,
+        format: str = "png",
+        exclude_node_keys: List[str] = [],
+        hide_node_key: bool = False,
+        node_kv: str = " ",
+        exclude_edge_keys: List[str] = [],
+        hide_edge_key: bool = False,
+        edge_kv: str = " ",
+    ) -> Digraph:
+        """Visualize the knowledge graph using graphviz"""
+        pass
+
+    @abstractmethod
+    def search_from_graph(
+        self, text: str, *, limit: int = 5, descending: bool = False, sort_by: str = ""
+    ) -> KnowledgeGraph:
         pass

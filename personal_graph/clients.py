@@ -1,8 +1,7 @@
 import os
-from abc import ABC, abstractmethod
-from typing import Optional
-
 import openai
+
+from abc import ABC, abstractmethod
 
 
 class OpenAIClient(ABC):

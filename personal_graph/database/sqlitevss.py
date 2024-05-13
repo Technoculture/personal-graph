@@ -1,5 +1,5 @@
 import json
-from dataclasses import dataclass, Field
+from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
@@ -7,9 +7,11 @@ import libsql_experimental as libsql  # type: ignore
 from typing import Any, Callable, Dict, Optional, List, Union, Tuple
 
 import sqlean as sqlite3  # type: ignore
+from graphviz import Digraph  # type: ignore
 from jinja2 import BaseLoader, Environment, select_autoescape
 
-from personal_graph.models import Node, Edge
+from personal_graph.visualizers import _as_dot_node, _as_dot_label
+from personal_graph.models import Node, Edge, KnowledgeGraph
 from personal_graph.embeddings import OpenAIEmbeddingsModel
 from personal_graph.clients import EmbeddingClient
 from personal_graph.database.vector_store import VectorStore
@@ -804,12 +806,12 @@ class SQLiteVSS(VectorStore):
     def vector_search_node(
         self, data: Dict, *, descending: bool = False, limit: int = 5, sort_by: str = ""
     ):
-        self._atomic(self._vector_search_node(data, 0.9, descending, limit))
+        return self._atomic(self._vector_search_node(data, 0.9, descending, limit))
 
     def vector_search_edge(
         self, data: Dict, *, descending: bool, limit: int, sort_by: str
     ):
-        self._atomic(self._vector_search_edge(data, 0.9, descending, limit))
+        return self._atomic(self._vector_search_edge(data, 0.9, descending, limit))
 
     def traverse(
         self, source: Any, target: Optional[Any] = None, with_bodies: bool = False
@@ -1001,6 +1003,64 @@ class SQLiteVSS(VectorStore):
 
         return self._atomic(_identical_nodes)
 
+    def graphviz_visualize(
+        self,
+        dot_file: Optional[str] = None,
+        path: List[Any] = [],
+        connections: Any = None,
+        format: str = "png",
+        exclude_node_keys: List[str] = [],
+        hide_node_key: bool = False,
+        node_kv: str = " ",
+        exclude_edge_keys: List[str] = [],
+        hide_edge_key: bool = False,
+        edge_kv: str = " ",
+    ) -> Digraph:
+        if connections is None:
+            connections = self.get_connections
+        ids = []
+        for i in path:
+            ids.append(str(i))
+            for edge in connections(i):  # type: ignore
+                _, src, tgt, _, _, _, _ = edge
+                if src not in ids:
+                    ids.append(src)
+                if tgt not in ids:
+                    ids.append(tgt)
+
+        dot = Digraph()
+
+        visited = []
+        edges = []
+        for i in ids:
+            if i not in visited:
+                node = self.search_node(i)  # type: ignore
+                if node is []:
+                    continue
+
+                name, label = _as_dot_node(
+                    node, exclude_node_keys, hide_node_key, node_kv
+                )
+                dot.node(name, label=label)
+                for edge in connections(i):  # type: ignore
+                    if edge not in edges:
+                        _, src, tgt, _, prps, _, _ = edge
+                        props = json.loads(prps)
+                        dot.edge(
+                            str(src),
+                            str(tgt),
+                            label=_as_dot_label(
+                                props, exclude_edge_keys, hide_edge_key, edge_kv
+                            )
+                            if props
+                            else None,
+                        )
+                        edges.append(edge)
+                visited.append(i)
+
+        dot.render(dot_file, format=format)
+        return dot
+
     def fetch_ids_from_db(self) -> List[str]:
         def _fetch_nodes_from_db(cursor, connection):
             nodes = cursor.execute("SELECT id from nodes").fetchall()
@@ -1037,3 +1097,55 @@ class SQLiteVSS(VectorStore):
             return outdegree
 
         return self._atomic(_outdegree_edges)
+
+    def search_from_graph(
+        self, text: str, *, limit: int = 5, descending: bool = False, sort_by: str = ""
+    ) -> KnowledgeGraph:
+        try:
+            similar_nodes = self.vector_search_node(
+                {"body": text}, descending=descending, limit=limit, sort_by=sort_by
+            )
+
+            similar_edges = self.vector_search_edge(
+                {"body": text}, descending=descending, limit=limit, sort_by=sort_by
+            )
+
+            resultant_subgraph = KnowledgeGraph()
+
+            if similar_edges and similar_nodes is None or similar_nodes is None:
+                return resultant_subgraph
+
+            for node in similar_nodes:
+                similar_node = Node(id=node[1], label=node[2], attributes=node[3])
+                resultant_subgraph.nodes.append(similar_node)
+
+                nodes = self.all_connected_nodes(similar_node)
+
+                if not nodes:
+                    continue
+
+                for i in nodes:
+                    if i not in resultant_subgraph.nodes:
+                        resultant_subgraph.nodes.append(i)
+
+            for edge in similar_edges:
+                similar_edge = Edge(
+                    source=edge[1],
+                    target=edge[2],
+                    label=edge[3],
+                    attributes=edge[4],
+                )
+                resultant_subgraph.edges.append(similar_edge)
+
+                nodes = self.all_connected_nodes(similar_edge)
+                if not nodes:
+                    continue
+
+                for node in nodes:
+                    if node not in resultant_subgraph.nodes:
+                        resultant_subgraph.nodes.append(node)
+
+        except KeyError:
+            return KnowledgeGraph()
+
+        return resultant_subgraph
