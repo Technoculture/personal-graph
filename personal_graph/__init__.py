@@ -7,7 +7,7 @@ from personal_graph.visualizers import (
 from personal_graph.embeddings import OpenAIEmbeddingsModel
 from personal_graph.graph import Graph
 from personal_graph.models import Node, Edge, EdgeInput, KnowledgeGraph
-from personal_graph.clients import LLMClient, EmbeddingClient, DBClient
+from personal_graph.clients import LLMClient, EmbeddingClient
 
 __all__ = [
     "Graph",
@@ -22,5 +22,4 @@ __all__ = [
     "OpenAIEmbeddingsModel",
     "LLMClient",
     "EmbeddingClient",
-    "DBClient",
 ]
