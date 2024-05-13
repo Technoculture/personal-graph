@@ -24,6 +24,9 @@ class VLiteDatabase(VectorStore):
         self.vlite = VLite(collection=self.collection, model_name=self.model_name)
         return self.vlite
 
+    def __eq__(self, other):
+        return self.collection == other.collection
+
     def add_node(self, label: str, attribute: Dict, id: Any):
         attribute.update({"label": label, "id": id})
         self.vlite.add(item_id=id, data={"text": label}, metadata=attribute)
@@ -71,7 +74,7 @@ class VLiteDatabase(VectorStore):
 
     def search_node_label(self, node_id: Any) -> Any:
         node_data = self.search_node([node_id])
-        if node_data is None:
+        if node_data == []:
             return None
 
         return node_data[0][2]["label"]
@@ -272,3 +275,27 @@ class VLiteDatabase(VectorStore):
             return KnowledgeGraph()
 
         return resultant_subgraph
+
+    def search(
+        self,
+        text: str,
+        *,
+        descending: bool = False,
+        limit: int = 1,
+        sort_by: str = "",
+    ):
+        try:
+            similar_nodes = self.vector_search_node(
+                {"body": text}, descending=descending, limit=limit, sort_by=sort_by
+            )
+
+        except KeyError:
+            return []
+
+        if similar_nodes is None:
+            return None
+
+        if limit == 1:
+            return similar_nodes[0][2]
+
+        return similar_nodes

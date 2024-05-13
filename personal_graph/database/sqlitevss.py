@@ -82,6 +82,9 @@ class SQLiteVSS(VectorStore):
 
         return self._atomic(_init)
 
+    def __eq__(self, other):
+        return self.db_url == other.db_url and self.db_auth_token == other.db_auth_token
+
     def _atomic(self, cursor_exec_fn: CursorExecFunction) -> Any:
         if not hasattr(self, "_connection"):
             if self.use_in_memory:
@@ -1149,3 +1152,27 @@ class SQLiteVSS(VectorStore):
             return KnowledgeGraph()
 
         return resultant_subgraph
+
+    def search(
+        self,
+        text: str,
+        *,
+        descending: bool = False,
+        limit: int = 1,
+        sort_by: str = "",
+    ):
+        try:
+            similar_nodes = self.vector_search_node(
+                {"body": text}, descending=descending, limit=limit, sort_by=sort_by
+            )
+
+        except KeyError:
+            return []
+
+        if similar_nodes is None:
+            return None
+
+        if limit == 1:
+            return json.loads(similar_nodes[0][3])
+
+        return similar_nodes

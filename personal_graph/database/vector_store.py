@@ -17,6 +17,11 @@ class VectorStore(ABC):
         pass
 
     @abstractmethod
+    def __eq__(self, other):
+        """Custom equality comparison between objects"""
+        pass
+
+    @abstractmethod
     def add_node(self, label: str, attribute: Dict, id: Any):
         """Add a single node to the database."""
         pass
@@ -140,4 +145,16 @@ class VectorStore(ABC):
     def search_from_graph(
         self, text: str, *, limit: int = 5, descending: bool = False, sort_by: str = ""
     ) -> KnowledgeGraph:
+        pass
+
+    @abstractmethod
+    def search(
+        self,
+        text: str,
+        *,
+        descending: bool = False,
+        limit: int = 1,
+        sort_by: str = "",
+    ):
+        """Search similar nodes based on given parameters"""
         pass

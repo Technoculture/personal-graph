@@ -2,7 +2,8 @@ import logging
 import os
 from dotenv import load_dotenv
 
-from personal_graph import Graph, LLMClient, EmbeddingClient, DBClient, PersonalRM
+from personal_graph import Graph, LLMClient, EmbeddingClient, PersonalRM
+from personal_graph.database.sqlitevss import DBClient
 
 
 def main(db_url, db_auth_token):

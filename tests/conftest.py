@@ -2,9 +2,9 @@ import json
 import pytest
 from unittest.mock import patch, Mock
 
-from personal_graph import OpenAIEmbeddingsModel, DBClient, EmbeddingClient
-from personal_graph.database.sqlitevss import SQLiteVSS
-from personal_graph.graph import (
+from personal_graph import OpenAIEmbeddingsModel, EmbeddingClient
+from personal_graph.database.sqlitevss import SQLiteVSS, DBClient
+from personal_graph import (
     Graph,
     LLMClient,
     KnowledgeGraph,

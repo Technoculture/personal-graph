@@ -1,7 +1,7 @@
 import os
 import dspy  # type: ignore
-from personal_graph import Graph, LLMClient, PersonalRM, DBClient, EmbeddingClient
-from personal_graph.database.sqlitevss import SQLiteVSS
+from personal_graph import Graph, LLMClient, PersonalRM, EmbeddingClient
+from personal_graph.database.sqlitevss import SQLiteVSS, DBClient
 
 vector_store = SQLiteVSS(
     db_client=DBClient(

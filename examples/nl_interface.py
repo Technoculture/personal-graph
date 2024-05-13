@@ -3,7 +3,8 @@ import os
 import logging
 import argparse
 from dotenv import load_dotenv
-from personal_graph import Graph, LLMClient, EmbeddingClient, DBClient
+from personal_graph import Graph, LLMClient, EmbeddingClient
+from personal_graph.database.sqlitevss import DBClient
 
 
 def main(args):

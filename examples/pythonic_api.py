@@ -7,9 +7,10 @@ from personal_graph import (
     KnowledgeGraph,
     Edge,
     LLMClient,
-    EdgeInput
+    EdgeInput,
 )
 from personal_graph.database import VLiteDatabase
+from personal_graph.ml import networkx_to_pg, pg_to_networkx
 
 
 def main(args):
@@ -102,7 +103,7 @@ def main(args):
         if results is not None:
             logging.info(results["body"])
 
-        graph.add_node(node1)
+        graph.add_node(node2)
         graph.add_nodes([node3, node2])
         graph.add_edge(edge1)
         graph.add_edges([edge2, edge3])
@@ -121,7 +122,7 @@ def main(args):
         node5 = Node(id=18, label="Person", attributes={"name": "Charlie", "age": "35"})
         graph.update_nodes([node4, node5])
 
-        logging.info(graph.search_node(1))
+        logging.info(graph.search_node(4))
 
         # graph.merge_by_similarity(threshold=0.9)
         # logging.info("Merged nodes")
@@ -132,6 +133,8 @@ def main(args):
         )
 
         # Search natural language query from graph db
+        kg = graph.search_from_graph(text="Who is more interested in coral refs")
+        graph.visualize_graph(kg).render("sample.dot")
         logging.info(
             graph.search_from_graph(text="Who is more interested in coral refs")
         )
@@ -185,8 +188,9 @@ def main(args):
         logging.info(graph.visualize_graph(kg))
 
         # Transforms to and from networkx do not alter the graph
-        g2 = graph.networkx_to_pg(
-            graph.pg_to_networkx(post_visualize=True),
+        g2 = networkx_to_pg(
+            pg_to_networkx(graph, post_visualize=True),
+            graph,
             post_visualize=True,
             override=True,
         )
