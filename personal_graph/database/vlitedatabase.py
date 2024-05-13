@@ -5,10 +5,10 @@ from typing import Dict, Any, List, Union, Callable, Optional, Set
 from vlite import VLite  # type: ignore
 
 from personal_graph.models import Node, Edge
-from personal_graph.database.basevectorstore import BaseVectorStore
+from personal_graph.database.vector_store import VectorStore
 
 
-class VLiteDatabase(BaseVectorStore):
+class VLiteDatabase(VectorStore):
     def __init__(
         self,
         *,

@@ -1,4 +1,5 @@
 import json
+from dataclasses import dataclass, Field
 from functools import lru_cache
 from pathlib import Path
 
@@ -10,10 +11,19 @@ from jinja2 import BaseLoader, Environment, select_autoescape
 
 from personal_graph.models import Node, Edge
 from personal_graph.embeddings import OpenAIEmbeddingsModel
-from personal_graph.clients import EmbeddingClient, DBClient
-from personal_graph.database.basevectorstore import BaseVectorStore
+from personal_graph.clients import EmbeddingClient
+from personal_graph.database.vector_store import VectorStore
 
 CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
+
+
+@dataclass
+class DBClient:
+    db_url: Optional[str] = None
+    db_auth_token: Optional[str] = None
+    use_in_memory: Optional[bool] = False
+    vector0_so_path: Optional[str] = None
+    vss0_so_path: Optional[str] = None
 
 
 @lru_cache(maxsize=None)
@@ -38,7 +48,7 @@ class SqlTemplateLoader(BaseLoader):
         return read_sql(template_path), template, uptodate
 
 
-class SQLiteVSS(BaseVectorStore):
+class SQLiteVSS(VectorStore):
     # Implement all the functions from the given file here
     def __init__(self, *, db_client: DBClient, embedding_model_client: EmbeddingClient):
         # Initialize the necessary attributes and dependencies
