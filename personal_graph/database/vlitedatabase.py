@@ -65,10 +65,10 @@ class VLiteDatabase(VectorStore):
         self.vlite.delete(ids)
 
     def search_node(self, node_id: Any) -> Any:
-        return self.vlite.get(ids=node_id)
+        return self.vlite.get(ids=[node_id])
 
     def search_node_label(self, node_id: Any) -> Any:
-        node_data = self.search_node(node_id)
+        node_data = self.search_node([node_id])
         if node_data is None:
             return None
 
