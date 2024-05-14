@@ -8,12 +8,14 @@ from personal_graph import (
     Edge,
     LLMClient,
     EdgeInput,
+    EmbeddingClient,
 )
-from personal_graph.database import VLiteDatabase
+from personal_graph.database import VLiteDatabase, SQLiteVSS, DBClient
 from personal_graph.ml import networkx_to_pg, pg_to_networkx
 
 
 def main(args):
+    # vector_store = SQLiteVSS(db_client=DBClient(db_url=os.getenv("LIBSQL_URL"), db_auth_token=os.getenv("LIBSQL_AUTH_TOKEN")), embedding_model_client=EmbeddingClient())
     with Graph(vector_store=VLiteDatabase(), llm_client=LLMClient()) as graph:
         # Define nodes and edges
         node1 = Node(
@@ -77,7 +79,9 @@ def main(args):
 
         query = "User talked about his fears, achievements, hobbies and beliefs."
 
-        deepest_conversation = graph.search(query, descending=True, limit=1, sort_by="")
+        deepest_conversation = graph.search(
+            query, descending=False, limit=5, sort_by="depth_score"
+        )
 
         if deepest_conversation:
             logging.info(f"Question: {query}")
@@ -94,7 +98,8 @@ def main(args):
 
         # Retrieve relevant information from the graph
         query = "Who is Alice?"
-        results = graph.search(query, limit=1)
+        results = graph.search(query, limit=1, )
+        logging.info(results)
 
         if results is not None:
             logging.info(results)
@@ -126,8 +131,8 @@ def main(args):
 
         logging.info(graph.search_node(4))
 
-        # graph.merge_by_similarity(threshold=0.9)
-        # logging.info("Merged nodes")
+        graph.merge_by_similarity(threshold=5000)
+        logging.info("Merged nodes")
 
         # Insert natural language query into graph db
         graph.insert_into_graph(

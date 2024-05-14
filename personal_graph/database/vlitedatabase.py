@@ -83,7 +83,13 @@ class VLiteDatabase(VectorStore):
         return node_data[0][2]["label"]
 
     def vector_search_node(
-        self, data: Dict, *, descending: bool, limit: int, sort_by: str
+        self,
+        data: Dict,
+        *,
+        threshold: Optional[float] = None,
+        descending: bool,
+        limit: int,
+        sort_by: str,
     ):
         results = self.vlite.retrieve(
             text=json.dumps(data), top_k=limit, return_scores=True
@@ -91,17 +97,35 @@ class VLiteDatabase(VectorStore):
 
         if results is None:
             return None
-        # TODO: Implement sort_by and descending logic
+
+        if sort_by:
+            results.sort(key=lambda x: x[2].get(sort_by, 0), reverse=descending)
+
+        if threshold is not None:
+            return [res for res in results if res[3] < threshold][:limit]
+
         return results[:limit]
 
     def vector_search_edge(
-        self, data: Dict, *, descending: bool, limit: int, sort_by: str
+        self,
+        data: Dict,
+        *,
+        threshold: Optional[float] = None,
+        descending: bool,
+        limit: int,
+        sort_by: str,
     ):
         results = self.vlite.retrieve(text=json.dumps(data), top_k=limit)
         if results is None:
             return None
-        # TODO: Implement sort_by and descending logic
-        return [result[:2] for result in results[:limit]]
+
+        if sort_by:
+            results.sort(key=lambda x: x[2].get(sort_by, 0), reverse=descending)
+
+        if threshold is not None:
+            return [res for res in results if res[3] < threshold][:limit]
+
+        return results[:limit]
 
     def fetch_ids_from_db(self) -> List[str]:
         ids = []
@@ -289,7 +313,11 @@ class VLiteDatabase(VectorStore):
     ):
         try:
             similar_nodes = self.vector_search_node(
-                {"body": text}, descending=descending, limit=limit, sort_by=sort_by
+                {"body": text},
+                threshold=4500,
+                descending=descending,
+                limit=limit,
+                sort_by=sort_by,
             )
 
         except KeyError:

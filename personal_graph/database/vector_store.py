@@ -76,14 +76,26 @@ class VectorStore(ABC):
 
     @abstractmethod
     def vector_search_node(
-        self, data: Dict, *, descending: bool, limit: int, sort_by: str
+        self,
+        data: Dict,
+        *,
+        threshold: Optional[float] = None,
+        descending: bool,
+        limit: int,
+        sort_by: str,
     ):
         """Perform a vector search for nodes."""
         pass
 
     @abstractmethod
     def vector_search_edge(
-        self, data: Dict, *, descending: bool, limit: int, sort_by: str
+        self,
+        data: Dict,
+        *,
+        threshold: Optional[float] = None,
+        descending: bool,
+        limit: int,
+        sort_by: str,
     ):
         """Perform a vector search for edges."""
         pass

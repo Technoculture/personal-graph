@@ -810,14 +810,30 @@ class SQLiteVSS(VectorStore):
         return self._atomic(_search_label)
 
     def vector_search_node(
-        self, data: Dict, *, descending: bool = False, limit: int = 5, sort_by: str = ""
+        self,
+        data: Dict,
+        *,
+        threshold: Optional[float] = None,
+        descending: bool = False,
+        limit: int = 5,
+        sort_by: str = "",
     ):
-        return self._atomic(self._vector_search_node(data, 0.9, descending, limit))
+        return self._atomic(
+            self._vector_search_node(data, threshold, descending, limit)
+        )
 
     def vector_search_edge(
-        self, data: Dict, *, descending: bool, limit: int, sort_by: str
+        self,
+        data: Dict,
+        *,
+        threshold: Optional[float] = None,
+        descending: bool,
+        limit: int,
+        sort_by: str,
     ):
-        return self._atomic(self._vector_search_edge(data, 0.9, descending, limit))
+        return self._atomic(
+            self._vector_search_edge(data, threshold, descending, limit)
+        )
 
     def traverse(
         self, source: Any, target: Optional[Any] = None, with_bodies: bool = False
