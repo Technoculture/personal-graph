@@ -1,5 +1,6 @@
 import json
 import uuid
+from collections import deque
 from typing import Dict, Any, List, Union, Callable, Optional, Set
 
 from graphviz import Digraph  # type: ignore
@@ -427,3 +428,41 @@ class VLiteDatabase(VectorStore):
                 self.remove_node(similar_node_id)
 
         self.vlite.save()
+
+    def traverse(
+        self, source: Any, target: Optional[Any] = None, with_bodies: bool = False
+    ) -> List:
+        if source is None:
+            return []
+
+        visited = set()
+        queue: deque = deque([(source, [])])
+        paths = []
+
+        while queue:
+            node, path = queue.popleft()
+            visited.add(node)
+            path = path + [node]
+
+            if target is None or node == target:
+                if with_bodies:
+                    node_data = self.search_node(node)
+                    if node_data:
+                        node_path = [
+                            (node_id, node_label, node_attributes)
+                            for node_id, node_label, node_attributes in node_data
+                        ]
+                        if node_path not in paths:
+                            paths.append(node_path)
+                else:
+                    if path not in paths:
+                        paths.append(path)
+
+            connections = self.get_connections(node, self._connections_out)
+
+            for conn in connections:
+                neighbor = conn[2]["target"]
+                if neighbor not in visited:
+                    queue.append((neighbor, path))
+
+        return paths

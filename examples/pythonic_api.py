@@ -10,13 +10,18 @@ from personal_graph import (
     EdgeInput,
     EmbeddingClient,
 )
-from personal_graph.database import VLiteDatabase, SQLiteVSS, DBClient
+from personal_graph.database import SQLiteVSS, DBClient
 from personal_graph.ml import networkx_to_pg, pg_to_networkx
 
 
 def main(args):
-    # vector_store = SQLiteVSS(db_client=DBClient(db_url=os.getenv("LIBSQL_URL"), db_auth_token=os.getenv("LIBSQL_AUTH_TOKEN")), embedding_model_client=EmbeddingClient())
-    with Graph(vector_store=VLiteDatabase(), llm_client=LLMClient()) as graph:
+    vector_store = SQLiteVSS(
+        db_client=DBClient(
+            db_url=os.getenv("LIBSQL_URL"), db_auth_token=os.getenv("LIBSQL_AUTH_TOKEN")
+        ),
+        embedding_model_client=EmbeddingClient(),
+    )
+    with Graph(vector_store=vector_store, llm_client=LLMClient()) as graph:
         # Define nodes and edges
         node1 = Node(
             id="3", label="close relative", attributes={"name": "Alice", "age": "30"}
@@ -80,7 +85,7 @@ def main(args):
         query = "User talked about his fears, achievements, hobbies and beliefs."
 
         deepest_conversation = graph.search(
-            query, descending=False, limit=5, sort_by="depth_score"
+            query, descending=False, limit=1, sort_by="depth_score"
         )
 
         if deepest_conversation:
@@ -118,7 +123,7 @@ def main(args):
         graph.add_edge(edge1)
         graph.add_edges([edge2, edge3])
 
-        # logging.info(graph.traverse("3"))
+        logging.info(graph.traverse("3"))
         graph.remove_node(1)
         graph.remove_nodes([1, 2])
         logging.info(graph.search_node("3"))

@@ -100,13 +100,13 @@ class VectorStore(ABC):
         """Perform a vector search for edges."""
         pass
 
-    # @abstractmethod
-    # def traverse(
-    #     self, source: Any, target: Optional[Any] = None, with_bodies: bool = False
-    # ) -> List:
-    #     """Traverse the graph from a source node to a target node."""
-    #     pass
-    #
+    @abstractmethod
+    def traverse(
+        self, source: Any, target: Optional[Any] = None, with_bodies: bool = False
+    ) -> List:
+        """Traverse the graph from a source node to a target node."""
+        pass
+
     @abstractmethod
     def merge_by_similarity(self, threshold) -> None:
         """Merge similar nodes based on a similarity threshold."""
