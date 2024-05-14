@@ -27,8 +27,11 @@ class VLiteDatabase(VectorStore):
     def __eq__(self, other):
         return self.collection == other.collection
 
+    def save(self):
+        self.vlite.save()
+
     def add_node(self, label: str, attribute: Dict, id: Any):
-        attribute.update({"label": label, "id": id})
+        attribute.update({"label": label, "type": "node", "id": id})
         self.vlite.add(item_id=id, data={"text": label}, metadata=attribute)
         self.vlite.save()
 
@@ -64,7 +67,7 @@ class VLiteDatabase(VectorStore):
         self.vlite.save()
 
     def remove_node(self, id: Any) -> None:
-        self.vlite.delete(ids=id)
+        self.vlite.delete(ids=[id])
 
     def remove_nodes(self, ids: List[Any]) -> None:
         self.vlite.delete(ids)
@@ -327,3 +330,72 @@ class VLiteDatabase(VectorStore):
                     similar_nodes.append(node)
 
         return similar_nodes
+
+    def merge_by_similarity(self, threshold) -> None:
+        nodes = self.vlite.get(where={"type": "node"})
+
+        for node_id in nodes:
+            node_data = self.search_node(node_id[0])
+
+            if not node_data:
+                continue
+
+            node = Node(
+                id=node_data[0][0],
+                label=node_data[0][1],
+                attributes=json.dumps(node_data[0][2]),
+            )
+
+            similar_nodes = self.vlite.retrieve(
+                text=json.dumps(node_data[0][2]), top_k=3, return_scores=True
+            )
+
+            if not similar_nodes:
+                continue
+
+            for similar_node in similar_nodes:
+                if similar_node[3] >= threshold:
+                    continue
+
+                similar_node_id = similar_node[0]
+
+                if similar_node_id == node_id:
+                    continue
+
+                in_degree_edges = self.search_indegree_edges(similar_node_id)
+
+                out_degree_edges = self.search_outdegree_edges(similar_node_id)
+
+                concatenated_attributes = json.loads(node.attributes).copy()  # type: ignore
+                concatenated_labels = node.label
+
+                for edge in in_degree_edges:
+                    for key, value in edge[2].items():
+                        if key in concatenated_attributes:
+                            concatenated_attributes[key] += value
+                        else:
+                            concatenated_attributes[key] = value
+
+                    concatenated_labels += "," + edge[1]
+
+                for edge in out_degree_edges:
+                    self.add_edge(similar_node_id, edge[2]["target"], edge[1], edge[2])
+
+                    for key, value in edge[2].items():
+                        if key in concatenated_attributes:
+                            concatenated_attributes[key] += value
+                        else:
+                            concatenated_attributes[key] = value
+
+                    concatenated_labels += "," + edge[1]
+
+                self.update_node(
+                    Node(
+                        id=node.id,
+                        label=concatenated_labels,
+                        attributes=json.dumps(concatenated_attributes),
+                    )
+                )
+                self.remove_node(similar_node_id)
+
+        self.vlite.save()

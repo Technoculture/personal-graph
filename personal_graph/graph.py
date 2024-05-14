@@ -38,7 +38,7 @@ class Graph(AbstractContextManager):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
-        pass
+        self.vector_store.save()
 
     # Natural Language apis
     def _generate_graph(self, query: str) -> KnowledgeGraph:

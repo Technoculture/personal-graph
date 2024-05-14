@@ -22,6 +22,11 @@ class VectorStore(ABC):
         pass
 
     @abstractmethod
+    def save(self):
+        """Save the data into the database"""
+        pass
+
+    @abstractmethod
     def add_node(self, label: str, attribute: Dict, id: Any):
         """Add a single node to the database."""
         pass
@@ -90,11 +95,11 @@ class VectorStore(ABC):
     #     """Traverse the graph from a source node to a target node."""
     #     pass
     #
-    # @abstractmethod
-    # def merge_by_similarity(self, threshold) -> None:
-    #     """Merge similar nodes based on a similarity threshold."""
-    #     pass
-    #
+    @abstractmethod
+    def merge_by_similarity(self, threshold) -> None:
+        """Merge similar nodes based on a similarity threshold."""
+        pass
+
     @abstractmethod
     def find_nodes_like(self, label: str, threshold: float) -> List[Node]:
         """Find nodes with a label similar to the given label."""

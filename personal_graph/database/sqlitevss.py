@@ -85,6 +85,9 @@ class SQLiteVSS(VectorStore):
     def __eq__(self, other):
         return self.db_url == other.db_url and self.db_auth_token == other.db_auth_token
 
+    def save(self):
+        self._connection.commit()
+
     def _atomic(self, cursor_exec_fn: CursorExecFunction) -> Any:
         if not hasattr(self, "_connection"):
             if self.use_in_memory:
