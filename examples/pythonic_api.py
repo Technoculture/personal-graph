@@ -98,7 +98,10 @@ def main(args):
 
         # Retrieve relevant information from the graph
         query = "Who is Alice?"
-        results = graph.search(query, limit=1, )
+        results = graph.search(
+            query,
+            limit=1,
+        )
         logging.info(results)
 
         if results is not None:
