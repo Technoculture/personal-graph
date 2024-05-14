@@ -16,8 +16,10 @@ from personal_graph.ml import networkx_to_pg, pg_to_networkx
 def main(args):
     with Graph(vector_store=VLiteDatabase(), llm_client=LLMClient()) as graph:
         # Define nodes and edges
-        node1 = Node(id="3", label="Person", attributes={"name": "Alice", "age": "30"})
-        node2 = Node(id="4", label="Person", attributes={"name": "Bob", "age": "25"})
+        node1 = Node(
+            id="3", label="close relative", attributes={"name": "Alice", "age": "30"}
+        )
+        node2 = Node(id="4", label="relative", attributes={"name": "Bob", "age": "25"})
         node3 = Node(
             id="1",
             label="Diabetes",
@@ -103,7 +105,7 @@ def main(args):
         if results is not None:
             logging.info(results["body"])
 
-        graph.add_node(node2)
+        graph.add_node(node1)
         graph.add_nodes([node3, node2])
         graph.add_edge(edge1)
         graph.add_edges([edge2, edge3])
@@ -139,7 +141,7 @@ def main(args):
             graph.search_from_graph(text="Who is more interested in coral refs")
         )
 
-        # logging.info(graph.find_nodes_like(label="relative", threshold=0.9))
+        logging.info(graph.find_nodes_like(label="relative", threshold=3000))
 
         graph.visualize("sample.dot", ["4"])
         kg = KnowledgeGraph(

@@ -95,10 +95,10 @@ class VectorStore(ABC):
     #     """Merge similar nodes based on a similarity threshold."""
     #     pass
     #
-    # @abstractmethod
-    # def find_nodes_like(self, label: str, threshold: float) -> List[Node]:
-    #     """Find nodes with a label similar to the given label."""
-    #     pass
+    @abstractmethod
+    def find_nodes_like(self, label: str, threshold: float) -> List[Node]:
+        """Find nodes with a label similar to the given label."""
+        pass
 
     @abstractmethod
     def fetch_ids_from_db(self) -> List[str]:

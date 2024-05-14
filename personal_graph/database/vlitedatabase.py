@@ -299,3 +299,31 @@ class VLiteDatabase(VectorStore):
             return similar_nodes[0][2]
 
         return similar_nodes
+
+    def find_nodes_like(self, label: str, threshold: float) -> List[Node]:
+        nodes = self.vlite.get(where={"label": label})
+
+        similar_nodes = []
+        for node in nodes:
+            node_id, node_text, node_metadata = node
+            retrieved_nodes = self.vlite.retrieve(
+                text=node_text, top_k=5, return_scores=True
+            )
+
+            if not retrieved_nodes:
+                continue
+
+            for similar_node in retrieved_nodes:
+                if (
+                    similar_node
+                    and similar_node not in similar_nodes
+                    and similar_node[3] <= threshold
+                ):
+                    node = Node(
+                        id=similar_node[2]["id"],
+                        label=similar_node[1],
+                        attributes=similar_node[2],
+                    )
+                    similar_nodes.append(node)
+
+        return similar_nodes
