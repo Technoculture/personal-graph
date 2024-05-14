@@ -992,7 +992,7 @@ class SQLiteVSS(VectorStore):
                 if len(similar_nodes) < 1:
                     continue
 
-                for rowid, _ in similar_nodes:
+                for rowid, _, _, _, _ in similar_nodes:
                     row = cursor.execute(
                         "SELECT id, label, attributes from nodes where embed_id=?",
                         (rowid,),
