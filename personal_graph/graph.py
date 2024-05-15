@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import instructor
 import uuid
 from typing import Any, List, Optional, Union, Dict, Callable
 
@@ -11,7 +10,7 @@ from contextlib import AbstractContextManager
 from graphviz import Digraph  # type: ignore
 from dotenv import load_dotenv
 
-from personal_graph.clients import LLMClient
+from personal_graph.graph_generator import InstructorGraphGenerator
 from personal_graph.models import Node, EdgeInput, KnowledgeGraph
 from personal_graph.database.sqlitevss import SQLiteVSS
 from personal_graph.database.vlitedatabase import VLiteDatabase
@@ -22,10 +21,13 @@ CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
 
 class Graph(AbstractContextManager):
     def __init__(
-        self, *, llm_client: LLMClient, vector_store: Union[SQLiteVSS, VLiteDatabase]
+        self,
+        *,
+        vector_store: Union[SQLiteVSS, VLiteDatabase],
+        graph_generator: InstructorGraphGenerator,
     ):
-        self.llm_client = llm_client
         self.vector_store = vector_store
+        self.graph_generator = graph_generator
 
     def __eq__(self, other):
         if not isinstance(other, Graph):
@@ -39,25 +41,6 @@ class Graph(AbstractContextManager):
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         self.vector_store.save()
-
-    # Natural Language apis
-    def _generate_graph(self, query: str) -> KnowledgeGraph:
-        client = instructor.from_openai(self.llm_client.client)
-        knowledge_graph = client.chat.completions.create(
-            model=self.llm_client.model_name,
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a high quality knowledge graph generator based on the user query for the purpose of generating descriptive, informative, detailed and accurate knowledge graphs. You can generate proper nodes and edges as a knowledge graph.",
-                },
-                {
-                    "role": "user",
-                    "content": f"Help me describe this user query as a detailed knowledge graph with meaningful relationships that should provide some descriptive attributes(attribute is the detailed and proper information about the edge) and informative labels about the nodes and relationship. Try to make most of the relationships between similar nodes: {query}",
-                },
-            ],
-            response_model=KnowledgeGraph,
-        )
-        return knowledge_graph
 
     # High level apis
     def add_node(self, node: Node) -> None:
@@ -117,7 +100,7 @@ class Graph(AbstractContextManager):
         for node in nodes:
             self.update_node(node)
 
-    def remove_node(self, id: str) -> None:
+    def remove_node(self, id: Union[str, int]) -> None:
         self.vector_store.remove_node(id)
 
     def remove_nodes(self, ids: List[str]) -> None:
@@ -136,7 +119,7 @@ class Graph(AbstractContextManager):
 
     def insert_into_graph(self, text: str) -> KnowledgeGraph:
         uuid_dict = {}
-        kg = self._generate_graph(text)
+        kg = self.graph_generator.generate(text)
 
         try:
             for node in kg.nodes:
