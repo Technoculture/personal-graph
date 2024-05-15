@@ -18,7 +18,7 @@ from personal_graph import (
 
 @pytest.fixture
 def mock_atomic():
-    with patch("personal_graph.database.sqlitevss.SQLiteVSS._atomic") as mock_atomic:
+    with patch("personal_graph.database.SQLiteVSS._atomic") as mock_atomic:
         yield mock_atomic
 
 
@@ -38,7 +38,7 @@ def embedding_model():
 @pytest.fixture
 def mock_find_node():
     with patch(
-        "personal_graph.database.sqlitevss.SQLiteVSS._find_node"
+        "personal_graph.database.SQLiteVSS._find_node"
     ) as mock_find_node:
         yield mock_find_node
 
@@ -46,7 +46,7 @@ def mock_find_node():
 @pytest.fixture
 def mock_get_connections():
     with patch(
-        "personal_graph.database.sqlitevss.SQLiteVSS.get_connections"
+        "personal_graph.database.SQLiteVSS.get_connections"
     ) as mock_get_connections:
         yield mock_get_connections
 
@@ -125,7 +125,7 @@ def mock_generate_graph():
         ],
     )
     with patch(
-        "personal_graph.graph_generator.generator.InstructorGraphGenerator.generate", return_value=mock_knowledge_graph
+        "personal_graph.graph_generator.InstructorGraphGenerator.generate", return_value=mock_knowledge_graph
     ):
         yield mock_knowledge_graph
 
