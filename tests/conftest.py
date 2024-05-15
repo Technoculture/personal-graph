@@ -37,9 +37,7 @@ def embedding_model():
 
 @pytest.fixture
 def mock_find_node():
-    with patch(
-        "personal_graph.database.SQLiteVSS._find_node"
-    ) as mock_find_node:
+    with patch("personal_graph.database.SQLiteVSS._find_node") as mock_find_node:
         yield mock_find_node
 
 
@@ -125,7 +123,8 @@ def mock_generate_graph():
         ],
     )
     with patch(
-        "personal_graph.graph_generator.InstructorGraphGenerator.generate", return_value=mock_knowledge_graph
+        "personal_graph.graph_generator.InstructorGraphGenerator.generate",
+        return_value=mock_knowledge_graph,
     ):
         yield mock_knowledge_graph
 
