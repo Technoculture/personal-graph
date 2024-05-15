@@ -4,17 +4,21 @@ import logging
 import argparse
 from dotenv import load_dotenv
 from personal_graph import Graph, LLMClient, EmbeddingClient
-from personal_graph.database.sqlitevss import DBClient
+from personal_graph.database import DBClient, TursoDB, SQLiteVSS
 
 
 def main(args):
-    llm_client = LLMClient()
-    embedding_client = EmbeddingClient()
-    with Graph(
-        database_config=DBClient(db_url=args.db_url, db_auth_token=args.db_auth_token),
-        llm_client=llm_client,
-        embedding_model_client=embedding_client,
-    ) as graph:
+    vector_store = SQLiteVSS(
+        persistence_layer=TursoDB(
+            db_client=DBClient(
+                db_url=os.getenv("LIBSQL_URL"),
+                db_auth_token=os.getenv("LIBSQL_AUTH_TOKEN"),
+            ),
+            embedding_model_client=EmbeddingClient(),
+        )
+    )
+
+    with Graph(vector_store=vector_store, llm_client=LLMClient()) as graph:
         # Testing insert query into graph db
         nl_query = "increased thirst, weight loss, increased hunger, frequent urination etc. are all symptoms of diabetes."
         kg = graph.insert_into_graph(text=nl_query)

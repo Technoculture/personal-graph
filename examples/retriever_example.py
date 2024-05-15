@@ -3,15 +3,21 @@ import os
 from dotenv import load_dotenv
 
 from personal_graph import Graph, LLMClient, EmbeddingClient, PersonalRM
-from personal_graph.database.sqlitevss import DBClient
+from personal_graph.database import DBClient, SQLiteVSS, TursoDB
 
 
 def main(db_url, db_auth_token):
-    with Graph(
-        database_config=DBClient(db_url=db_url, db_auth_token=db_auth_token),
-        llm_client=LLMClient(),
-        embedding_model_client=EmbeddingClient(),
-    ) as graph:
+    vector_store = SQLiteVSS(
+        persistence_layer=TursoDB(
+            db_client=DBClient(
+                db_url=os.getenv("LIBSQL_URL"),
+                db_auth_token=os.getenv("LIBSQL_AUTH_TOKEN"),
+            ),
+            embedding_model_client=EmbeddingClient(),
+        )
+    )
+
+    with Graph(vector_store=vector_store, llm_client=LLMClient()) as graph:
         query = "What is the similarity between Jack and Ronaldo?"
         retriever = PersonalRM(graph)
 
