@@ -77,7 +77,7 @@ class Graph(AbstractContextManager):
             else node.attributes
             for node in nodes
         ]
-        ids: List[Any] = [node.id for node in nodes]
+        ids: List[str | int] = [node.id for node in nodes]
 
         self.vector_store.add_nodes(
             attributes=attributes,
@@ -96,8 +96,8 @@ class Graph(AbstractContextManager):
         )
 
     def add_edges(self, edges: List[EdgeInput]) -> None:
-        sources: List[Any] = [edge.source.id for edge in edges]
-        targets: List[Any] = [edge.target.id for edge in edges]
+        sources: List[str | int] = [edge.source.id for edge in edges]
+        targets: List[str | int] = [edge.target.id for edge in edges]
         labels: List[str] = [edge.label for edge in edges]
         attributes: List[Union[Dict[str, str]]] = [
             json.loads(edge.attributes)
@@ -117,20 +117,20 @@ class Graph(AbstractContextManager):
         for node in nodes:
             self.update_node(node)
 
-    def remove_node(self, id: Any) -> None:
+    def remove_node(self, id: str) -> None:
         self.vector_store.remove_node(id)
 
-    def remove_nodes(self, ids: List[Any]) -> None:
+    def remove_nodes(self, ids: List[str]) -> None:
         self.vector_store.remove_nodes(ids)
 
-    def search_node(self, node_id: Any) -> Any:
+    def search_node(self, node_id: str | int) -> Any:
         return self.vector_store.search_node(node_id)
 
-    def search_node_label(self, node_id: Any) -> Any:
+    def search_node_label(self, node_id: str | int) -> Any:
         return self.vector_store.search_node_label(node_id)
 
     def traverse(
-        self, source: Any, target: Optional[Any] = None, with_bodies: bool = False
+        self, source: str, target: Optional[str] = None, with_bodies: bool = False
     ) -> List:
         return self.vector_store.traverse(source, target, with_bodies)
 
@@ -190,10 +190,10 @@ class Graph(AbstractContextManager):
     def fetch_ids_from_db(self) -> List[str]:
         return self.vector_store.fetch_ids_from_db()
 
-    def search_indegree_edges(self, target: Any) -> List[Any]:
+    def search_indegree_edges(self, target: str) -> List[Any]:
         return self.vector_store.search_indegree_edges(target)
 
-    def search_outdegree_edges(self, source: Any) -> List[Any]:
+    def search_outdegree_edges(self, source: str) -> List[Any]:
         return self.vector_store.search_outdegree_edges(source)
 
     def is_unique_prompt(self, text: str) -> bool:
