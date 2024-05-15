@@ -2,8 +2,7 @@ import json
 import pytest
 from unittest.mock import patch, Mock
 
-from personal_graph import OpenAIEmbeddingsModel, EmbeddingClient
-from personal_graph.database.sqlitevss import SQLiteVSS, DBClient
+from personal_graph.database import SQLiteVSS, DBClient, TursoDB
 from personal_graph import (
     Graph,
     LLMClient,
@@ -11,6 +10,8 @@ from personal_graph import (
     Node,
     Edge,
     EdgeInput,
+    OpenAIEmbeddingsModel,
+    EmbeddingClient,
 )
 
 
@@ -93,11 +94,10 @@ def graph(mock_openai_client, mock_embeddings_model):
             return_value=mock_embeddings_model,
         ):
             vector_store = SQLiteVSS(
-                db_client=DBClient(
-                    db_url=None,
-                    db_auth_token=None,
-                ),
-                embedding_model_client=EmbeddingClient(),
+                persistence_layer=TursoDB(
+                    db_client=DBClient(db_url=None, db_auth_token=None),
+                    embedding_model_client=EmbeddingClient(),
+                )
             )
 
             graph = Graph(vector_store=vector_store, llm_client=LLMClient())
@@ -129,11 +129,10 @@ def mock_generate_graph():
 @pytest.fixture
 def mock_personal_graph(mock_openai_client, mock_atomic, mock_db_connection_and_cursor):
     vector_store = SQLiteVSS(
-        db_client=DBClient(
-            db_url=None,
-            db_auth_token=None,
-        ),
-        embedding_model_client=EmbeddingClient(),
+        persistence_layer=TursoDB(
+            db_client=DBClient(db_url=None, db_auth_token=None),
+            embedding_model_client=EmbeddingClient(),
+        )
     )
 
     graph = Graph(vector_store=vector_store, llm_client=LLMClient())
