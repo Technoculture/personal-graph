@@ -3,6 +3,7 @@ import pytest
 from unittest.mock import patch, Mock
 
 from personal_graph.database import SQLiteVSS, DBClient, TursoDB
+from personal_graph.graph_generator import InstructorGraphGenerator
 from personal_graph import (
     Graph,
     LLMClient,
@@ -100,7 +101,10 @@ def graph(mock_openai_client, mock_embeddings_model):
                 )
             )
 
-            graph = Graph(vector_store=vector_store, llm_client=LLMClient())
+            graph = Graph(
+                vector_store=vector_store,
+                graph_generator=InstructorGraphGenerator(llm_client=LLMClient()),
+            )
             yield graph
 
 
@@ -121,7 +125,7 @@ def mock_generate_graph():
         ],
     )
     with patch(
-        "personal_graph.graph.Graph._generate_graph", return_value=mock_knowledge_graph
+        "personal_graph.graph_generator.generator.InstructorGraphGenerator.generate", return_value=mock_knowledge_graph
     ):
         yield mock_knowledge_graph
 
@@ -135,7 +139,10 @@ def mock_personal_graph(mock_openai_client, mock_atomic, mock_db_connection_and_
         )
     )
 
-    graph = Graph(vector_store=vector_store, llm_client=LLMClient())
+    graph = Graph(
+        vector_store=vector_store,
+        graph_generator=InstructorGraphGenerator(llm_client=LLMClient()),
+    )
 
     node1 = Node(id=1, label="Sample Label", attributes={"Person": "scholar"})
     node2 = Node(id=2, label="Researching", attributes={"University": "Stanford"})
