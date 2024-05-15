@@ -5,6 +5,7 @@ Unit test for high level apis
 import networkx as nx  # type: ignore
 
 from personal_graph import Graph, Node, EdgeInput, KnowledgeGraph
+from personal_graph.ml import networkx_to_pg, pg_to_networkx
 
 
 def test_add_node(graph, mock_atomic, mock_db_connection_and_cursor):
@@ -158,7 +159,7 @@ def test_find_nodes_like(graph, mock_atomic, mock_db_connection_and_cursor):
 
 
 def test_to_networkx(mock_personal_graph, mock_atomic, mock_db_connection_and_cursor):
-    networkx_graph = mock_personal_graph.pg_to_networkx()
+    networkx_graph = pg_to_networkx(mock_personal_graph)
 
     # Check if the returned object is a NetworkX graph
     assert isinstance(networkx_graph, nx.Graph)
@@ -169,10 +170,11 @@ def test_to_networkx(mock_personal_graph, mock_atomic, mock_db_connection_and_cu
 def test_from_networkx(
     graph, mock_personal_graph, mock_atomic, mock_db_connection_and_cursor
 ):
-    personal_graph = mock_personal_graph.networkx_to_pg(
+    personal_graph = networkx_to_pg(
         test_to_networkx(
             mock_personal_graph, mock_atomic, mock_db_connection_and_cursor
-        )
+        ),
+        mock_personal_graph,
     )
 
     # Check if the returned object is a Personal Graph
@@ -189,8 +191,24 @@ def test_graphviz_visualize(
 ):
     mock_find_node.return_value = {"id": 1, "name": "Alice", "age": 30}
     mock_get_connections.return_value = [
-        (1, 2, {"weight": 0.5}),
-        (2, 3, {"weight": 0.7}),
+        (
+            1,
+            2,
+            2,
+            "sample label",
+            '{"weight": 0.5}',
+            "2024-05-14 09:45:47",
+            "2024-05-14 09:45:47",
+        ),
+        (
+            2,
+            2,
+            3,
+            "sample label",
+            '{"weight": 0.7}',
+            "2024-05-14 09:45:47",
+            "2024-05-14 09:45:47",
+        ),
     ]
 
     graph.visualize(
