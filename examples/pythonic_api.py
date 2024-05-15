@@ -11,7 +11,7 @@ from personal_graph import (
     EmbeddingClient,
 )
 from personal_graph.database import SQLiteVSS, DBClient, TursoDB
-from personal_graph.graph_generator.generator import InstructorGraphGenerator
+from personal_graph.graph_generator import InstructorGraphGenerator
 from personal_graph.ml import networkx_to_pg, pg_to_networkx
 
 

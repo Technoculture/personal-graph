@@ -2,7 +2,7 @@ import os
 import dspy  # type: ignore
 from personal_graph import Graph, LLMClient, PersonalRM, EmbeddingClient
 from personal_graph.database import TursoDB, DBClient, SQLiteVSS
-from personal_graph.graph_generator.generator import InstructorGraphGenerator
+from personal_graph.graph_generator import InstructorGraphGenerator
 
 vector_store = SQLiteVSS(
     persistence_layer=TursoDB(
