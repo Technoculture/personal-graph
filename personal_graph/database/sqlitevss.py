@@ -59,10 +59,7 @@ class SQLiteVSS(VectorStore):
         return self._atomic(_init)
 
     def __eq__(self, other):
-        return (
-            self.persistence_layer.db_url == other.persistent_layer.db_url
-            and self.persistence_layer.db_auth_token == other.persistent_layer.db_auth_token
-        )
+        return self.persistence_layer.db_url == other.persistence_layer.db_url
 
     def save(self):
         self.persistence_layer.save()
@@ -105,6 +102,7 @@ class SQLiteVSS(VectorStore):
                 json.dumps(set_data),
             ),
         )
+        connection.commit()
 
         cursor.execute(
             read_sql(Path("insert-node-embedding.sql")),
