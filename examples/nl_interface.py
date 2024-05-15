@@ -4,6 +4,7 @@ import logging
 import argparse
 from dotenv import load_dotenv
 from personal_graph import Graph, LLMClient, EmbeddingClient
+from personal_graph.graph_generator import InstructorGraphGenerator
 from personal_graph.database import DBClient, TursoDB, SQLiteVSS
 
 
@@ -18,7 +19,10 @@ def main(args):
         )
     )
 
-    with Graph(vector_store=vector_store, llm_client=LLMClient()) as graph:
+    with Graph(
+        vector_store=vector_store,
+        graph_generator=InstructorGraphGenerator(llm_client=LLMClient()),
+    ) as graph:
         # Testing insert query into graph db
         nl_query = "increased thirst, weight loss, increased hunger, frequent urination etc. are all symptoms of diabetes."
         kg = graph.insert_into_graph(text=nl_query)

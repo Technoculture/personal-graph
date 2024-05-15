@@ -11,6 +11,7 @@ from personal_graph import (
     EmbeddingClient,
 )
 from personal_graph.database import SQLiteVSS, DBClient, TursoDB
+from personal_graph.graph_generator.generator import InstructorGraphGenerator
 from personal_graph.ml import networkx_to_pg, pg_to_networkx
 
 
@@ -24,7 +25,10 @@ def main(args):
             embedding_model_client=EmbeddingClient(),
         )
     )
-    with Graph(vector_store=vector_store, llm_client=LLMClient()) as graph:
+    with Graph(
+        vector_store=vector_store,
+        graph_generator=InstructorGraphGenerator(llm_client=LLMClient()),
+    ) as graph:
         # Define nodes and edges
         node1 = Node(
             id="3", label="close relative", attributes={"name": "Alice", "age": "30"}

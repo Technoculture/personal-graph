@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 
 from personal_graph import Graph, LLMClient, EmbeddingClient, PersonalRM
 from personal_graph.database import DBClient, SQLiteVSS, TursoDB
+from personal_graph.graph_generator import InstructorGraphGenerator
 
 
 def main(db_url, db_auth_token):
@@ -17,7 +18,10 @@ def main(db_url, db_auth_token):
         )
     )
 
-    with Graph(vector_store=vector_store, llm_client=LLMClient()) as graph:
+    with Graph(
+        vector_store=vector_store,
+        graph_generator=InstructorGraphGenerator(llm_client=LLMClient()),
+    ) as graph:
         query = "What is the similarity between Jack and Ronaldo?"
         retriever = PersonalRM(graph)
 
