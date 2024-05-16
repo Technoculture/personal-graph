@@ -87,7 +87,7 @@ def main(args):
         query = "User talked about his fears, achievements, hobbies and beliefs."
 
         deepest_conversation = graph.search(
-            query, descending=False, limit=1, sort_by="depth_score"
+            query, descending=False, sort_by="depth_score"
         )
 
         if deepest_conversation:
@@ -105,17 +105,14 @@ def main(args):
 
         # Retrieve relevant information from the graph
         query = "Who is Alice?"
-        results = graph.search(
-            query,
-            limit=1,
-        )
+        results = graph.search(query)
         logging.info(results)
 
         if results is not None:
             logging.info(results)
 
         query = "Where does Bob work?"
-        results = graph.search(query, limit=1)
+        results = graph.search(query)
         logging.info(results)
         if results is not None:
             logging.info(results["body"])
