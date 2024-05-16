@@ -13,7 +13,7 @@ from personal_graph import (
     KnowledgeGraph,
     PersonalRM,
 )
-from personal_graph.database import SQLiteVSS, TursoDB, DBClient
+from personal_graph.database import SQLiteVSS, TursoDB
 from personal_graph.graph_generator import InstructorGraphGenerator
 
 try:
@@ -159,12 +159,9 @@ def main():
 
     vector_store = SQLiteVSS(
         persistence_layer=TursoDB(
-            db_client=DBClient(
-                db_url=os.getenv("LIBSQL_URL"),
-                db_auth_token=os.getenv("LIBSQL_AUTH_TOKEN"),
-            ),
-            embedding_model_client=EmbeddingClient(),
-        )
+            url=os.getenv("LIBSQL_URL"), auth_token=os.getenv("LIBSQL_AUTH_TOKEN")
+        ),
+        embedding_model_client=EmbeddingClient(),
     )
 
     with Graph(

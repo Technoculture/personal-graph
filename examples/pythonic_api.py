@@ -10,19 +10,14 @@ from personal_graph import (
     EdgeInput,
     EmbeddingClient,
 )
-from personal_graph.database import SQLiteVSS, DBClient, TursoDB
+from personal_graph.database import SQLiteVSS, TursoDB
 from personal_graph.graph_generator import InstructorGraphGenerator
 from personal_graph.ml import networkx_to_pg, pg_to_networkx
 
 
 def main(args):
     vector_store = SQLiteVSS(
-        persistence_layer=TursoDB(
-            db_client=DBClient(
-                db_url=args.db_url,
-                db_auth_token=args.db_auth_token,
-            )
-        ),
+        persistence_layer=TursoDB(url=args.db_url, auth_token=args.db_auth_token),
         embedding_model_client=EmbeddingClient(),
     )
     with Graph(

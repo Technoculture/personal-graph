@@ -1,21 +1,10 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 
 import sqlean as sqlite3  # type: ignore
 import libsql_experimental as libsql  # type: ignore
 from typing import Any, Callable, Optional
 
 CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
-
-
-@dataclass
-class DBClient:
-    db_url: Optional[str] = None
-    db_auth_token: Optional[str] = None
-    use_in_memory: Optional[bool] = False
-    vector0_so_path: Optional[str] = None
-    vss0_so_path: Optional[str] = None
-    local_path: Optional[str] = None
 
 
 class PersistenceLayer(ABC):
@@ -30,9 +19,9 @@ class PersistenceLayer(ABC):
 
 # TursoDB persistence layer
 class TursoDB(PersistenceLayer):
-    def __init__(self, *, db_client: DBClient):
-        self.db_url = db_client.db_url
-        self.db_auth_token = db_client.db_auth_token
+    def __init__(self, *, url: Optional[str] = None, auth_token: Optional[str] = None):
+        self.db_url = url
+        self.db_auth_token = auth_token
 
     def atomic(self, cursor_exec_fn: CursorExecFunction) -> Any:
         if not hasattr(self, "_connection"):
@@ -56,11 +45,18 @@ class TursoDB(PersistenceLayer):
 
 # SQlite persistence layer
 class SQLite(PersistenceLayer):
-    def __init__(self, *, db_client: DBClient):
-        self.use_in_memory = db_client.use_in_memory
-        self.vector0_so_path = db_client.vector0_so_path
-        self.vss0_so_path = db_client.vss0_so_path
-        self.local_path = db_client.local_path
+    def __init__(
+        self,
+        *,
+        use_in_memory: bool = False,
+        local_path: Optional[str] = None,
+        vector0_so_path: Optional[str] = None,
+        vss0_so_path: Optional[str] = None,
+    ):
+        self.use_in_memory = use_in_memory
+        self.vector0_so_path = vector0_so_path
+        self.vss0_so_path = vss0_so_path
+        self.local_path = local_path
 
     def atomic(self, cursor_exec_fn: CursorExecFunction) -> Any:
         if not hasattr(self, "_connection"):

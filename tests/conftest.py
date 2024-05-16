@@ -2,7 +2,7 @@ import json
 import pytest
 from unittest.mock import patch, Mock
 
-from personal_graph.database import SQLiteVSS, DBClient, TursoDB
+from personal_graph.database import SQLiteVSS, TursoDB
 from personal_graph.graph_generator import InstructorGraphGenerator
 from personal_graph import (
     Graph,
@@ -93,9 +93,7 @@ def graph(mock_openai_client, mock_embeddings_model):
             return_value=mock_embeddings_model,
         ):
             vector_store = SQLiteVSS(
-                persistence_layer=TursoDB(
-                    db_client=DBClient(db_url=None, db_auth_token=None)
-                ),
+                persistence_layer=TursoDB(url=None, auth_token=None),
                 embedding_model_client=EmbeddingClient(),
             )
 
@@ -132,7 +130,7 @@ def mock_generate_graph():
 @pytest.fixture
 def mock_personal_graph(mock_openai_client, mock_atomic, mock_db_connection_and_cursor):
     vector_store = SQLiteVSS(
-        persistence_layer=TursoDB(db_client=DBClient(db_url=None, db_auth_token=None)),
+        persistence_layer=TursoDB(url=None, auth_token=None),
         embedding_model_client=EmbeddingClient(),
     )
 

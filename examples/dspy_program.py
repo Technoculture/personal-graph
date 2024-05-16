@@ -1,14 +1,12 @@
 import os
 import dspy  # type: ignore
 from personal_graph import Graph, LLMClient, PersonalRM, EmbeddingClient
-from personal_graph.database import TursoDB, DBClient, SQLiteVSS
+from personal_graph.database import TursoDB, SQLiteVSS
 from personal_graph.graph_generator import InstructorGraphGenerator
 
 vector_store = SQLiteVSS(
     persistence_layer=TursoDB(
-        db_client=DBClient(
-            db_url=os.getenv("LIBSQL_URL"), db_auth_token=os.getenv("LIBSQL_AUTH_TOKEN")
-        )
+        url=os.getenv("LIBSQL_URL"), auth_token=os.getenv("LIBSQL_AUTH_TOKEN")
     ),
     embedding_model_client=EmbeddingClient(),
 )

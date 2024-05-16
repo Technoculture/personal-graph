@@ -5,16 +5,14 @@ import argparse
 from dotenv import load_dotenv
 from personal_graph import Graph, LLMClient, EmbeddingClient
 from personal_graph.graph_generator import InstructorGraphGenerator
-from personal_graph.database import DBClient, TursoDB, SQLiteVSS
+from personal_graph.database import TursoDB, SQLiteVSS
 
 
 def main(args):
     vector_store = SQLiteVSS(
         persistence_layer=TursoDB(
-            db_client=DBClient(
-                db_url=args.db_url,
-                db_auth_token=args.db_auth_token,
-            )
+            url=args.db_url,
+            auth_token=args.db_auth_token,
         ),
         embedding_model_client=EmbeddingClient(),
     )
