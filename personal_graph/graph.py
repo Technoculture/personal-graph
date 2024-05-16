@@ -103,7 +103,7 @@ class Graph(AbstractContextManager):
     def remove_node(self, id: Union[str, int]) -> None:
         self.vector_store.remove_node(id)
 
-    def remove_nodes(self, ids: List[str]) -> None:
+    def remove_nodes(self, ids: List[Any]) -> None:
         self.vector_store.remove_nodes(ids)
 
     def search_node(self, node_id: str | int) -> Any:
@@ -179,9 +179,9 @@ class Graph(AbstractContextManager):
     def search_outdegree_edges(self, source: str) -> List[Any]:
         return self.vector_store.search_outdegree_edges(source)
 
-    def is_unique_prompt(self, text: str) -> bool:
+    def is_unique_prompt(self, text: str, threshold: float) -> bool:
         similar_nodes = self.vector_store.vector_search_node(
-            {"body": text}, descending=False, limit=1, sort_by=""
+            {"body": text}, threshold=threshold, descending=False, limit=1, sort_by=""
         )
 
         if not similar_nodes:
