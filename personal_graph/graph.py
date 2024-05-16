@@ -25,7 +25,9 @@ class Graph(AbstractContextManager):
         self,
         *,
         vector_store: Union[SQLiteVSS, VLiteDatabase],
-        graph_generator: InstructorGraphGenerator = InstructorGraphGenerator(llm_client=LLMClient()),
+        graph_generator: InstructorGraphGenerator = InstructorGraphGenerator(
+            llm_client=LLMClient()
+        ),
     ):
         self.vector_store = vector_store
         self.graph_generator = graph_generator

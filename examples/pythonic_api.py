@@ -18,9 +18,7 @@ def main(args):
         persistence_layer=TursoDB(url=args.db_url, auth_token=args.db_auth_token),
         embedding_model_client=EmbeddingClient(),
     )
-    with Graph(
-        vector_store=vector_store
-    ) as graph:
+    with Graph(vector_store=vector_store) as graph:
         # Define nodes and edges
         node1 = Node(
             id="3", label="close relative", attributes={"name": "Alice", "age": "30"}
