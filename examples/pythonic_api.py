@@ -6,12 +6,10 @@ from personal_graph import (
     Node,
     KnowledgeGraph,
     Edge,
-    LLMClient,
     EdgeInput,
     EmbeddingClient,
 )
 from personal_graph.database import SQLiteVSS, TursoDB
-from personal_graph.graph_generator import InstructorGraphGenerator
 from personal_graph.ml import networkx_to_pg, pg_to_networkx
 
 
@@ -21,8 +19,7 @@ def main(args):
         embedding_model_client=EmbeddingClient(),
     )
     with Graph(
-        vector_store=vector_store,
-        graph_generator=InstructorGraphGenerator(llm_client=LLMClient()),
+        vector_store=vector_store
     ) as graph:
         # Define nodes and edges
         node1 = Node(

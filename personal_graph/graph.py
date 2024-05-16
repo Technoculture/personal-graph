@@ -10,6 +10,7 @@ from contextlib import AbstractContextManager
 from graphviz import Digraph  # type: ignore
 from dotenv import load_dotenv
 
+from personal_graph.clients import LLMClient
 from personal_graph.graph_generator import InstructorGraphGenerator
 from personal_graph.models import Node, EdgeInput, KnowledgeGraph
 from personal_graph.database.sqlitevss import SQLiteVSS
@@ -24,7 +25,7 @@ class Graph(AbstractContextManager):
         self,
         *,
         vector_store: Union[SQLiteVSS, VLiteDatabase],
-        graph_generator: InstructorGraphGenerator,
+        graph_generator: InstructorGraphGenerator = InstructorGraphGenerator(llm_client=LLMClient()),
     ):
         self.vector_store = vector_store
         self.graph_generator = graph_generator
