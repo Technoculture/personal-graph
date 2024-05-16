@@ -20,12 +20,65 @@ pip install personal-graph
 
 ## Usage
 
+### Usage of Vector store classes
+There are two vector store classes SQLiteVSS and VLiteDatabase. Let's dive down into the implementation of both the vector store classes.
+
+
+```
+from personal_graph.database import SQLiteVSS, DBClient, TursoDB
+from personal_graph import EmbeddingClient
+
+# Using SQLiteVSS vector database and connecting with Turso DB
+vector_store = SQLiteVSS(
+        persistence_layer=TursoDB(
+            db_client=DBClient(
+                db_url=args.db_url,
+                db_auth_token=args.db_auth_token,
+            ),
+            embedding_model_client=EmbeddingClient(),
+        )
+    )
+
+# Using SQLiteVSS vector database and connecting with local DB
+vector_store = SQLiteVSS(
+        persistence_layer=SQLite(
+            db_client=DBClient(
+                use_in_memory=True,
+                vector0_so_path="path/to/vector0.so",
+                vss0_so_path="path/to/vss0.so"
+            ),
+            embedding_model_client=EmbeddingClient(),
+        )
+    )
+
+# Using SQLiteVSS vector database and connecting with in-memory DB
+vector_store = SQLiteVSS(
+        persistence_layer=SQLite(
+            db_client=DBClient(
+                use_in_memory=True,
+                vector0_so_path="path/to/vector0.so",
+                vss0_so_path="path/to/vss0.so"
+            ),
+            embedding_model_client=EmbeddingClient(),
+        )
+    )
+
+# Using VLite vector database 
+from personal_graph.database import VLiteDatabase
+
+vector_store = VLiteDatabase(collection="your-collection-name", model_name="embedding-model-name")
+
+```
+
 ### Building a Working Memory for an AI
 
 ```python
-from personal_graph import Graph, LLMClient, EmbeddingClient, DatabaseConfig
+from personal_graph import Graph, LLMClient
+from personal_graph.database import SQLiteVSS, DBClient, TursoDB
+from personal_graph.graph_generator import InstructorGraphGenerator
 
-graph = Graph(DatabaseConfig(db_url="your_db_url", db_auth_token="your_auth_token"), LLMClient(), EmbeddingClient())
+
+graph = Graph(vector_store=vector_store, graph_generator=InstructorGraphGenerator(llm_client=LLMClient()))
 
 # Insert information into the graph
 graph.insert_into_graph(text="Alice is Bob's sister. Bob works at Google.")
@@ -50,9 +103,10 @@ In this example, we insert information about Alice and Bob into the knowledge gr
 
 ### Building Long-Term Memory
 ```python
-from personal_graph import Graph, LLMClient, EmbeddingClient, DatabaseConfig
+from personal_graph import Graph, LLMClient
+from personal_graph.graph_generator import InstructorGraphGenerator
 
-graph = Graph(DatabaseConfig(db_url="your_db_url", db_auth_token="your_auth_token"), LLMClient(), EmbeddingClient())
+graph = Graph(vector_store=vector_store, graph_generator=InstructorGraphGenerator(llm_client=LLMClient()))
 
 # Insert information about conversations with the user over time
 graph.insert(
@@ -109,9 +163,10 @@ This example demonstrates how Personal-Graph can be used to build long-term memo
 
 ### Creating and Querying a Knowledge Graph
 ```py
-from personal_graph import Graph, LLMClient, EmbeddingClient, DatabaseConfig
+from personal_graph import Graph, LLMClient
+from personal_graph.graph_generator import InstructorGraphGenerator
 
-graph = Graph(DatabaseConfig(db_url="your_db_url", db_auth_token="your_auth_token"), LLMClient(), EmbeddingClient())
+graph = Graph(vector_store=vector_store, graph_generator=InstructorGraphGenerator(llm_client=LLMClient()))
 
 nl_query = "Increased thirst, weight loss, increased hunger, and frequent urination are all symptoms of diabetes."
 graph = graph.insert_into_graph(text=nl_query)
@@ -125,9 +180,10 @@ print(knowledge_graph)
 ### Retrieval and Question-Answering
 ```py
 import dspy
-from personal_graph import Graph, LLMClient, EmbeddingClient, DatabaseConfig, PersonalRM
+from personal_graph.graph_generator import InstructorGraphGenerator
+from personal_graph import Graph, LLMClient, PersonalRM
 
-graph = Graph(DatabaseConfig(db_url="your_db_url", db_auth_token="your_auth_token"), LLMClient(), EmbeddingClient())
+graph = Graph(vector_store=vector_store, graph_generator=InstructorGraphGenerator(llm_client=LLMClient()))
 retriever = PersonalRM(graph=graph, k=2)
 
 class RAG(dspy.Module):
@@ -146,23 +202,17 @@ response = rag("How is Jack related to James?")
 print(response.answer)
 ```
 
-### Providing an LiteLLM Client
+### Providing Custom LLMClient and EmbeddingClient
 
 ```py
-from personal_graph.graph import Graph, LLMClient, EmbeddingClient, DatabaseConfig
+from personal_graph.graph import Graph, LLMClient, EmbeddingClient
+from personal_graph.graph_generator import InstructorGraphGenerator
 
 your_litellm_client = LLMClient(client="llm-client", model_name="llm-model-name")
 your_embedding_client = EmbeddingClient(client="embedding-client", model_name="embedding-model-name", dimensions="model-dimension")
 
-graph = Graph(DatabaseConfig(db_url="your_db_url", db_auth_token="your_auth_token"), your_litellm_client, your_embedding_client)
+graph = Graph(vector_store=vector_store, graph_generator=InstructorGraphGenerator(llm_client=your_litellm_client))
 
-```
-### In-memory db support
-
-```py
-from personal_graph import Graph, LLMClient, EmbeddingClient, DatabaseConfig
-
-graph = Graph(DatabaseConfig(use_in_memory=True), LLMClient(), EmbeddingClient())
 ```
 
 For more details and API documentation, see the Personal-Graph Documentation.
