@@ -13,6 +13,8 @@ from personal_graph import (
     KnowledgeGraph,
     PersonalRM,
 )
+from personal_graph.database import SQLiteVSS, TursoDB, DBClient
+from personal_graph.graph_generator import InstructorGraphGenerator
 
 try:
     import streamlit_scrollable_textbox as stx  # type: ignore
@@ -155,11 +157,19 @@ def main():
 
     st.title("Knowledge Graph Chat")
 
+    vector_store = SQLiteVSS(
+        persistence_layer=TursoDB(
+            db_client=DBClient(
+                db_url=os.getenv("LIBSQL_URL"),
+                db_auth_token=os.getenv("LIBSQL_AUTH_TOKEN"),
+            ),
+            embedding_model_client=EmbeddingClient(),
+        )
+    )
+
     with Graph(
-        db_url=os.getenv("LIBSQL_URL"),
-        db_auth_token=os.getenv("LIBSQL_AUTH_TOKEN"),
-        llm_client=LLMClient(),
-        embedding_model_client=EmbeddingClient(),
+        vector_store=vector_store,
+        graph_generator=InstructorGraphGenerator(llm_client=LLMClient()),
     ) as graph:
         turbo = dspy.OpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPEN_API_KEY"))
         cached_backstory, cached_kg, cached_context = load_cache()
