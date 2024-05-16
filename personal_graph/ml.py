@@ -7,7 +7,6 @@ from matplotlib import pyplot as plt
 
 from personal_graph import Graph
 from personal_graph import KnowledgeGraph, Node, Edge, EdgeInput
-from personal_graph.database import SQLiteVSS
 
 
 def pg_to_networkx(graph: Graph, *, post_visualize: bool = False):
