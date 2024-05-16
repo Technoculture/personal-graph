@@ -24,7 +24,7 @@ def pg_to_networkx(graph: Graph, *, post_visualize: bool = False):
             continue
 
         for target_id, edge_label, edge_data in outdegree_edges:
-            if isinstance(graph.vector_store, SQLiteVSS):
+            if isinstance(edge_data, str):
                 edge_data = json.loads(edge_data)
 
             edge_data["label"] = edge_label
@@ -37,7 +37,7 @@ def pg_to_networkx(graph: Graph, *, post_visualize: bool = False):
             continue
 
         for source_id, edge_label, edge_data in indegree_edges:
-            if isinstance(graph.vector_store, SQLiteVSS):
+            if isinstance(edge_data, str):
                 edge_data = json.loads(edge_data)
 
             edge_data["label"] = edge_label
@@ -45,12 +45,8 @@ def pg_to_networkx(graph: Graph, *, post_visualize: bool = False):
 
     for node_id in node_ids:
         node_data = graph.search_node(node_id)
-
-        if isinstance(graph.vector_store, SQLiteVSS):
-            node_label = graph.search_node_label(node_id)
-            node_data["label"] = node_label
-        else:
-            node_data = node_data[0][2]
+        if "label" not in node_data.keys():
+            node_data["label"] = graph.vector_store.search_node_label(node_id)
 
         G.add_node(node_id, **node_data)
 

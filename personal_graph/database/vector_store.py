@@ -75,6 +75,11 @@ class VectorStore(ABC):
         pass
 
     @abstractmethod
+    def search_node_label(self, id: Any):
+        """Search node label using node id"""
+        pass
+
+    @abstractmethod
     def vector_search_node(
         self,
         data: Dict,
