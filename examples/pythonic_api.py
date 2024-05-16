@@ -21,9 +21,9 @@ def main(args):
             db_client=DBClient(
                 db_url=args.db_url,
                 db_auth_token=args.db_auth_token,
-            ),
-            embedding_model_client=EmbeddingClient(),
-        )
+            )
+        ),
+        embedding_model_client=EmbeddingClient(),
     )
     with Graph(
         vector_store=vector_store,

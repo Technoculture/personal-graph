@@ -5,9 +5,6 @@ import sqlean as sqlite3  # type: ignore
 import libsql_experimental as libsql  # type: ignore
 from typing import Any, Callable, Optional
 
-from personal_graph.embeddings import OpenAIEmbeddingsModel
-from personal_graph.clients import EmbeddingClient
-
 CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
 
 
@@ -33,15 +30,9 @@ class PersistenceLayer(ABC):
 
 # TursoDB persistence layer
 class TursoDB(PersistenceLayer):
-    def __init__(self, *, db_client: DBClient, embedding_model_client: EmbeddingClient):
+    def __init__(self, *, db_client: DBClient):
         self.db_url = db_client.db_url
         self.db_auth_token = db_client.db_auth_token
-
-        self.embedding_model = OpenAIEmbeddingsModel(
-            embedding_model_client.client,
-            embedding_model_client.model_name,
-            embedding_model_client.dimensions,
-        )
 
     def atomic(self, cursor_exec_fn: CursorExecFunction) -> Any:
         if not hasattr(self, "_connection"):
@@ -65,17 +56,11 @@ class TursoDB(PersistenceLayer):
 
 # SQlite persistence layer
 class SQLite(PersistenceLayer):
-    def __init__(self, *, db_client: DBClient, embedding_model_client: EmbeddingClient):
+    def __init__(self, *, db_client: DBClient):
         self.use_in_memory = db_client.use_in_memory
         self.vector0_so_path = db_client.vector0_so_path
         self.vss0_so_path = db_client.vss0_so_path
         self.local_path = db_client.local_path
-
-        self.embedding_model = OpenAIEmbeddingsModel(
-            embedding_model_client.client,
-            embedding_model_client.model_name,
-            embedding_model_client.dimensions,
-        )
 
     def atomic(self, cursor_exec_fn: CursorExecFunction) -> Any:
         if not hasattr(self, "_connection"):

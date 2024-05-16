@@ -8,9 +8,9 @@ vector_store = SQLiteVSS(
     persistence_layer=TursoDB(
         db_client=DBClient(
             db_url=os.getenv("LIBSQL_URL"), db_auth_token=os.getenv("LIBSQL_AUTH_TOKEN")
-        ),
-        embedding_model_client=EmbeddingClient(),
-    )
+        )
+    ),
+    embedding_model_client=EmbeddingClient(),
 )
 
 graph = Graph(

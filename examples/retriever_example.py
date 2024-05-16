@@ -11,11 +11,11 @@ def main(db_url, db_auth_token):
     vector_store = SQLiteVSS(
         persistence_layer=TursoDB(
             db_client=DBClient(
-                db_url=os.getenv("LIBSQL_URL"),
-                db_auth_token=os.getenv("LIBSQL_AUTH_TOKEN"),
-            ),
-            embedding_model_client=EmbeddingClient(),
-        )
+                db_url=db_url,
+                db_auth_token=db_auth_token,
+            )
+        ),
+        embedding_model_client=EmbeddingClient(),
     )
 
     with Graph(

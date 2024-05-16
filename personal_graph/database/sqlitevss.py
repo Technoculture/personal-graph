@@ -8,6 +8,9 @@ from typing import Any, Callable, Dict, Optional, List, Union, Tuple
 from graphviz import Digraph  # type: ignore
 from jinja2 import BaseLoader, Environment, select_autoescape
 
+
+from personal_graph.embeddings import OpenAIEmbeddingsModel
+from personal_graph.clients import EmbeddingClient
 from personal_graph.database.persistence_layer import TursoDB, SQLite
 from personal_graph.visualizers import _as_dot_node, _as_dot_label
 from personal_graph.models import Node, Edge, KnowledgeGraph
@@ -39,8 +42,19 @@ class SqlTemplateLoader(BaseLoader):
 
 
 class SQLiteVSS(VectorStore):
-    def __init__(self, *, persistence_layer: Union[TursoDB, SQLite]):
+    def __init__(
+        self,
+        *,
+        persistence_layer: Union[TursoDB, SQLite],
+        embedding_model_client: EmbeddingClient,
+    ):
         self.persistence_layer = persistence_layer
+
+        self.embedding_model = OpenAIEmbeddingsModel(
+            embedding_model_client.client,
+            embedding_model_client.model_name,
+            embedding_model_client.dimensions,
+        )
 
         self.env = Environment(
             loader=SqlTemplateLoader(Path(__file__).parent / "sql"),
@@ -108,11 +122,7 @@ class SQLiteVSS(VectorStore):
             read_sql(Path("insert-node-embedding.sql")),
             (
                 count,
-                json.dumps(
-                    self.persistence_layer.embedding_model.get_embedding(
-                        json.dumps(set_data)
-                    )
-                ),
+                json.dumps(self.embedding_model.get_embedding(json.dumps(set_data))),
             ),
         )
         connection.commit()
@@ -164,7 +174,7 @@ class SQLiteVSS(VectorStore):
                     (
                         count + i,
                         json.dumps(
-                            self.persistence_layer.embedding_model.get_embedding(
+                            self.embedding_model.get_embedding(
                                 json.dumps(self._set_id(x[0], x[2]))
                             )
                         ),
@@ -226,9 +236,7 @@ class SQLiteVSS(VectorStore):
                 (
                     count,
                     json.dumps(
-                        self.persistence_layer.embedding_model.get_embedding(
-                            json.dumps(edge_data)
-                        )
+                        self.embedding_model.get_embedding(json.dumps(edge_data))
                     ),
                 ),
             )
@@ -288,7 +296,7 @@ class SQLiteVSS(VectorStore):
                     (
                         count + i,
                         json.dumps(
-                            self.persistence_layer.embedding_model.get_embedding(
+                            self.embedding_model.get_embedding(
                                 json.dumps(
                                     (
                                         x[0],
@@ -414,9 +422,7 @@ class SQLiteVSS(VectorStore):
                 (
                     count,
                     json.dumps(
-                        self.persistence_layer.embedding_model.get_embedding(
-                            json.dumps(updated_data)
-                        )
+                        self.embedding_model.get_embedding(json.dumps(updated_data))
                     ),
                 ),
             )
@@ -588,7 +594,7 @@ class SQLiteVSS(VectorStore):
     ) -> CursorExecFunction:
         def _search_node(cursor, connection):
             embed_json = json.dumps(
-                self.persistence_layer.embedding_model.get_embedding(json.dumps(data))
+                self.embedding_model.get_embedding(json.dumps(data))
             )
 
             nodes = cursor.execute(
@@ -614,9 +620,7 @@ class SQLiteVSS(VectorStore):
         k: int = 10,
     ) -> CursorExecFunction:
         def _search_edge(cursor, connection):
-            embed = json.dumps(
-                self.persistence_layer.embedding_model.get_embedding(json.dumps(data))
-            )
+            embed = json.dumps(self.embedding_model.get_embedding(json.dumps(data)))
             if desc:
                 edges = cursor.execute(
                     read_sql(Path("vector-search-edge-desc.sql")), (embed, k)
@@ -897,7 +901,7 @@ class SQLiteVSS(VectorStore):
                             (
                                 count,
                                 json.dumps(
-                                    self.persistence_layer.embedding_model.get_embedding(
+                                    self.embedding_model.get_embedding(
                                         json.dumps(edge_data)
                                     )
                                 ),
@@ -938,7 +942,7 @@ class SQLiteVSS(VectorStore):
                             (
                                 count,
                                 json.dumps(
-                                    self.persistence_layer.embedding_model.get_embedding(
+                                    self.embedding_model.get_embedding(
                                         json.dumps(edge_data)
                                     )
                                 ),
