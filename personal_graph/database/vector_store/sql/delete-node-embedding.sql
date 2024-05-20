@@ -1,0 +1,1 @@
+DELETE FROM nodes_embedding where rowid = (?)
