@@ -45,7 +45,7 @@ def pg_to_networkx(graph: Graph, *, post_visualize: bool = False):
     for node_id in node_ids:
         node_data = graph.search_node(node_id)
         if "label" not in node_data.keys():
-            node_data["label"] = graph.vector_store.search_node_label(node_id)
+            node_data["label"] = graph.db.search_node_label(node_id)
 
         G.add_node(node_id, **node_data)
 

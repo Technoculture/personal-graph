@@ -2,22 +2,23 @@ from __future__ import annotations
 
 import json
 import uuid
-from typing import Any, List, Optional, Union, Dict, Callable
+from typing import Any, List, Optional, Union, Dict
 
-import libsql_experimental as libsql  # type: ignore
 from contextlib import AbstractContextManager
 
 from graphviz import Digraph  # type: ignore
 from dotenv import load_dotenv
 
 from personal_graph.clients import LLMClient
+from personal_graph.database.database_store.turso import TursoDB
+from personal_graph.database.database_store.sqlite import SQLite
+
 from personal_graph.graph_generator import InstructorGraphGenerator
-from personal_graph.models import Node, EdgeInput, KnowledgeGraph
-from personal_graph.database.sqlitevss import SQLiteVSS
-from personal_graph.database.vlitedatabase import VLiteDatabase
+from personal_graph.models import Node, EdgeInput, KnowledgeGraph, Edge
+from personal_graph.database.vector_store.sqlitevss import SQLiteVSS
+from personal_graph.database.vector_store.vlitedatabase import VLiteDatabase
 
 load_dotenv()
-CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
 
 
 class Graph(AbstractContextManager):
@@ -25,100 +26,118 @@ class Graph(AbstractContextManager):
         self,
         *,
         vector_store: Union[SQLiteVSS, VLiteDatabase],
+        database: Union[TursoDB, SQLite],
         graph_generator: InstructorGraphGenerator = InstructorGraphGenerator(
             llm_client=LLMClient()
         ),
     ):
         self.vector_store = vector_store
+        self.db = database
         self.graph_generator = graph_generator
 
     def __eq__(self, other):
         if not isinstance(other, Graph):
             return "Not of Graph Type"
         else:
-            return self.vector_store == other.vector_store
+            return self.db == other.db
 
     def __enter__(self) -> Graph:
+        self.db.initialize()
         self.vector_store.initialize()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
+        self.db.save()
         self.vector_store.save()
 
     # High level apis
     def add_node(self, node: Node) -> None:
-        self.vector_store.add_node(
-            node.label,
-            json.loads(node.attributes)
-            if isinstance(node.attributes, str)
-            else node.attributes,
-            node.id,
-        )
+        if self.db.search_node(node_id=node.id) is None:
+            self.db.add_node(
+                node.label,
+                json.loads(node.attributes)
+                if isinstance(node.attributes, str)
+                else node.attributes,
+                node.id,
+            )
+
+            self.vector_store.add_node_embedding(
+                node.id,
+                json.loads(node.attributes)
+                if isinstance(node.attributes, str)
+                else node.attributes,
+            )
 
     def add_nodes(self, nodes: List[Node]) -> None:
-        labels: List[str] = [node.label for node in nodes]
-        attributes: List[Union[Dict[str, str]]] = [
-            json.loads(node.attributes)
-            if isinstance(node.attributes, str)
-            else node.attributes
-            for node in nodes
-        ]
-        ids: List[str | int] = [node.id for node in nodes]
-
-        self.vector_store.add_nodes(
-            attributes=attributes,
-            labels=labels,
-            ids=ids,
-        )
+        for node in nodes:
+            self.add_node(node)
 
     def add_edge(self, edge: EdgeInput) -> None:
-        self.vector_store.add_edge(
-            edge.source.id,
-            edge.target.id,
-            edge.label,
-            json.loads(edge.attributes)
-            if isinstance(edge.attributes, str)
-            else edge.attributes,
-        )
+        if (
+            self.db.search_edge(edge.source.id, edge.target.id, edge.attributes) is None
+            and (self.db.search_node(edge.source.id) is not None)
+            and (self.db.search_node(edge.target.id) is not None)
+        ):
+            self.db.add_edge(
+                edge.source.id,
+                edge.target.id,
+                edge.label,
+                json.loads(edge.attributes)
+                if isinstance(edge.attributes, str)
+                else edge.attributes,
+            )
+            self.vector_store.add_edge_embedding(
+                edge.source.id,
+                edge.target.id,
+                edge.label,
+                json.loads(edge.attributes)
+                if isinstance(edge.attributes, str)
+                else edge.attributes,
+            )
 
     def add_edges(self, edges: List[EdgeInput]) -> None:
-        sources: List[str | int] = [edge.source.id for edge in edges]
-        targets: List[str | int] = [edge.target.id for edge in edges]
-        labels: List[str] = [edge.label for edge in edges]
-        attributes: List[Union[Dict[str, str]]] = [
-            json.loads(edge.attributes)
-            if isinstance(edge.attributes, str)
-            else edge.attributes
-            for edge in edges
-        ]
-
-        self.vector_store.add_edges(
-            sources=sources, targets=targets, labels=labels, attributes=attributes
-        )
+        for edge in edges:
+            self.add_edge(edge)
 
     def update_node(self, node: Node) -> None:
-        self.vector_store.update_node(node)
+        node_data = self.db.search_node(node.id)
+        if node_data is not None:
+            embed_id_to_be_updated = self.db.fetch_node_embed_id(node.id)
+
+            self.db.update_node(node)
+
+            updated_data = {**node_data, **node.attributes}
+            self.vector_store.add_node_embedding(node.id, updated_data)
+            self.vector_store.delete_node_embedding(embed_id_to_be_updated[0])
+        else:
+            self.add_node(node)
 
     def update_nodes(self, nodes: List[Node]) -> None:
         for node in nodes:
             self.update_node(node)
 
     def remove_node(self, id: Union[str, int]) -> None:
-        self.vector_store.remove_node(id)
+        if self.db.search_node(id) is not None:
+            ids = self.db.fetch_edge_embed_ids(id)
+            self.vector_store.delete_node_embedding(self.db.fetch_node_embed_id(id))
+
+            self.db.remove_node(id)
+            self.vector_store.delete_edge_embedding(ids)
 
     def remove_nodes(self, ids: List[Any]) -> None:
-        self.vector_store.remove_nodes(ids)
+        for id in ids:
+            self.remove_node(id)
 
     def search_node(self, node_id: str | int) -> Any:
-        return self.vector_store.search_node(node_id)
+        return self.db.search_node(node_id)
 
     def search_node_label(self, node_id: str | int) -> Any:
-        return self.vector_store.search_node_label(node_id)
+        return self.db.search_node_label(node_id)
 
     def traverse(
         self, source: str, target: Optional[str] = None, with_bodies: bool = False
     ) -> List:
-        return self.vector_store.traverse(source, target, with_bodies)
+        return self.db.traverse(source, target, with_bodies)
 
     def insert_into_graph(self, text: str) -> KnowledgeGraph:
         uuid_dict = {}
@@ -127,14 +146,24 @@ class Graph(AbstractContextManager):
         try:
             for node in kg.nodes:
                 uuid_dict[node.id] = str(uuid.uuid4())
-                self.vector_store.add_node(
+                self.db.add_node(
                     node.label,
                     {"body": node.attributes},
                     uuid_dict[node.id],
                 )
 
+                self.vector_store.add_node_embedding(
+                    uuid_dict[node.id], {"body": node.attributes}
+                )
+
             for edge in kg.edges:
-                self.vector_store.add_edge(
+                self.db.add_edge(
+                    uuid_dict[edge.source],
+                    uuid_dict[edge.target],
+                    edge.label,
+                    {"body": edge.attributes},
+                )
+                self.vector_store.add_edge_embedding(
                     uuid_dict[edge.source],
                     uuid_dict[edge.target],
                     edge.label,
@@ -147,10 +176,55 @@ class Graph(AbstractContextManager):
     def search_from_graph(
         self, text: str, *, limit: int = 5, descending: bool = False, sort_by: str = ""
     ) -> KnowledgeGraph:
-        return self.vector_store.search_from_graph(
-            text, limit=limit, descending=descending, sort_by=sort_by
-        )
+        try:
+            similar_nodes = self.vector_store.vector_search_node(
+                {"body": text}, descending=descending, limit=limit, sort_by=sort_by
+            )
+            similar_edges = self.vector_store.vector_search_edge(
+                {"body": text}, descending=descending, limit=limit, sort_by=sort_by
+            )
 
+            resultant_subgraph = KnowledgeGraph()
+
+            if similar_edges and similar_nodes is None or similar_nodes is None:
+                return resultant_subgraph
+
+            for node in similar_nodes:
+                similar_node = Node(id=node[1], label=node[2], attributes=node[3])
+                resultant_subgraph.nodes.append(similar_node)
+
+                nodes = self.db.all_connected_nodes(similar_node)
+
+                if not nodes:
+                    continue
+
+                for i in nodes:
+                    if i not in resultant_subgraph.nodes:
+                        resultant_subgraph.nodes.append(i)
+
+            for edge in similar_edges:
+                similar_edge = Edge(
+                    source=edge[1],
+                    target=edge[2],
+                    label=edge[3],
+                    attributes=edge[4],
+                )
+                resultant_subgraph.edges.append(similar_edge)
+
+                nodes = self.db.all_connected_nodes(similar_edge)
+                if not nodes:
+                    continue
+
+                for node in nodes:
+                    if node not in resultant_subgraph.nodes:
+                        resultant_subgraph.nodes.append(node)
+
+        except KeyError:
+            return KnowledgeGraph()
+
+        return resultant_subgraph
+
+    # TODO: Helper function , place it inside visualizers.py file rather
     def visualize_graph(self, kg: KnowledgeGraph) -> Digraph:
         dot = Digraph(comment="Knowledge Graph")
 
@@ -165,22 +239,114 @@ class Graph(AbstractContextManager):
         return dot
 
     def merge_by_similarity(self, threshold) -> None:
-        self.vector_store.merge_by_similarity(threshold)
+        node_ids = self.db.fetch_ids_from_db()
+
+        for node_id in node_ids:
+            node = self.db.search_node(node_id)
+            if node is None:
+                continue
+
+            similar_nodes = self.vector_store.vector_search_node(
+                node, threshold=threshold, descending=False, limit=2, sort_by=""
+            )
+
+            if similar_nodes is None or len(similar_nodes) > 1:
+                continue
+
+            for row in similar_nodes:
+                similar_node_id = row[1]
+
+                # Skip the same nodes from getting merged
+                if similar_node_id is None or similar_node_id == node_id:
+                    continue
+
+                in_degree_ids = self.db.search_indegree_edges(similar_node_id)
+                out_degree_ids = self.db.search_outdegree_edges(similar_node_id)
+
+                concatenated_attributes = {}
+                concatenated_labels = ""
+
+                for data in in_degree_ids:
+                    for key, value in json.loads(data[2]).items():
+                        if key in concatenated_attributes:
+                            # If the key already exists, update its value
+                            concatenated_attributes[key] += value
+                        else:
+                            # If the key doesn't exist, add a new key-value pair
+                            concatenated_attributes[key] = value
+
+                    concatenated_labels += data[1] + ","
+
+                    self.db.add_edge(data[0], node_id, data[1], data[2])
+                    self.vector_store.add_edge_embedding(
+                        data[0], node_id, data[1], data[2]
+                    )
+
+                for data in out_degree_ids:
+                    for key, value in json.loads(data[2]).items():
+                        if key in concatenated_attributes:
+                            # If the key already exists, update its value
+                            concatenated_attributes[key] += value
+                        else:
+                            # If the key doesn't exist, add a new key-value pair
+                            concatenated_attributes[key] = value
+                    concatenated_labels += data[1] + ","
+
+                    self.db.add_edge(node_id, data[0], data[1], data[2])
+                    self.vector_store.add_edge_embedding(
+                        node_id, data[0], data[1], data[2]
+                    )
+
+                    updated_attributes = node if node else {}
+                    updated_attributes.update(concatenated_attributes)
+                    new_node_label = self.db.search_node_label(node_id)
+
+                    new_node = Node(
+                        id=node_id,
+                        label=new_node_label[0] + "," + concatenated_labels,
+                        attributes=updated_attributes,
+                    )
+                    self.update_node(new_node)
+
+                    self.remove_node(similar_node_id)
 
     def find_nodes_like(self, label: str, threshold: float) -> List[Node]:
-        return self.vector_store.find_nodes_like(label, threshold)
+        nodes = self.db.find_nodes_by_label(label)
+        similar_rows = []
+        for node in nodes:
+            similar_nodes = self.vector_store.vector_search_node(
+                node, threshold=threshold, descending=False, limit=2, sort_by=""
+            )
 
+            if len(similar_nodes) < 1:
+                continue
+
+            for rowid, _, _, _, _ in similar_nodes:
+                fetched_node_id = self.db.fetch_node_id(rowid)
+                node_data = self.db.search_node(fetched_node_id[0])
+                node_label = self.db.search_node_label(fetched_node_id[0])
+
+                if node_data in similar_rows:
+                    continue
+                node = Node(
+                    id=node_data["id"], label=node_label[0], attributes=node_data
+                )
+                similar_rows.append(node)
+
+        return similar_rows
+
+    # TODO: path: Should be a list of paths
     def visualize(self, file: str, path: List[str]) -> Digraph:
-        return self.vector_store.graphviz_visualize(file, path)
+        return self.db.graphviz_visualize(file, path)
 
     def fetch_ids_from_db(self) -> List[str]:
-        return self.vector_store.fetch_ids_from_db()
+        return self.db.fetch_ids_from_db()
 
     def search_indegree_edges(self, target: str) -> List[Any]:
-        return self.vector_store.search_indegree_edges(target)
+        return self.db.search_indegree_edges(target)
 
     def search_outdegree_edges(self, source: str) -> List[Any]:
-        return self.vector_store.search_outdegree_edges(source)
+        return self.db.search_outdegree_edges(source)
 
     def is_unique_prompt(self, text: str, threshold: float) -> bool:
         similar_nodes = self.vector_store.vector_search_node(
@@ -189,6 +355,7 @@ class Graph(AbstractContextManager):
 
         if not similar_nodes:
             return True
+
         return False
 
     def insert(
@@ -211,6 +378,18 @@ class Graph(AbstractContextManager):
         limit: int = 1,
         sort_by: str = "",
     ):
-        return self.vector_store.search(
-            text, descending=descending, limit=limit, sort_by=sort_by
-        )
+        try:
+            similar_nodes = self.vector_store.vector_search_node(
+                {"body": text}, descending=descending, limit=limit, sort_by=sort_by
+            )
+
+        except Exception as e:
+            return e
+
+        if similar_nodes is None:
+            return None
+
+        if limit == 1:
+            return json.loads(similar_nodes[0][3])
+
+        return similar_nodes
