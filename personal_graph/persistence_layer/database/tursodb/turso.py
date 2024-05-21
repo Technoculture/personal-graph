@@ -5,15 +5,14 @@ import libsql_experimental as libsql  # type: ignore
 from typing import Optional, Any, Callable, Tuple
 
 from jinja2 import BaseLoader, Environment, select_autoescape
-
-from personal_graph.database.database_store.sqlite import SQLite
+from personal_graph.persistence_layer.database.sqlite.sqlite import SQLite
 
 CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
 
 
 @lru_cache(maxsize=None)
 def read_sql(sql_file: Path) -> str:
-    with open(Path(__file__).parent.resolve() / "sql" / sql_file) as f:
+    with open(Path(__file__).parent.resolve() / "raw-queries" / sql_file) as f:
         return f.read()
 
 
@@ -39,7 +38,7 @@ class TursoDB(SQLite):
         self.db_auth_token = auth_token
 
         self.env = Environment(
-            loader=SqlTemplateLoader(Path(__file__).parent / "sql"),
+            loader=SqlTemplateLoader(Path(__file__).parent / "raw-queries"),
             autoescape=select_autoescape(),
         )
         self.clause_template = self.env.get_template("search-where.template")

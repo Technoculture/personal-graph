@@ -6,16 +6,18 @@ from typing import Any, Dict, Optional, Union, Callable, List
 
 from personal_graph.clients import EmbeddingClient
 from personal_graph.embeddings import OpenAIEmbeddingsModel
-from personal_graph.database.vector_store.vector_store import VectorStore
-from personal_graph.database.database_store.turso import TursoDB
-from personal_graph.database.database_store.sqlite import SQLite
+from personal_graph.persistence_layer.vector_store.vector_store import VectorStore
+from personal_graph.persistence_layer.database.tursodb.turso import TursoDB
+from personal_graph.persistence_layer.database.sqlite.sqlite import SQLite
 
 CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
 
 
 @lru_cache(maxsize=None)
 def read_sql(sql_file: Path) -> str:
-    with open(Path(__file__).parent.resolve() / "sql" / sql_file) as f:
+    with open(
+        Path(__file__).parent.resolve() / "embeddings-raw-queries" / sql_file
+    ) as f:
         return f.read()
 
 
@@ -172,7 +174,16 @@ class SQLiteVSS(VectorStore):
 
             nodes = cursor.execute(
                 read_sql(Path("vector-search-node.sql")),
-                (embed_json, limit, sort_by, descending, sort_by, sort_by, descending, sort_by),
+                (
+                    embed_json,
+                    limit,
+                    sort_by,
+                    descending,
+                    sort_by,
+                    sort_by,
+                    descending,
+                    sort_by,
+                ),
             ).fetchall()
 
             if not nodes:

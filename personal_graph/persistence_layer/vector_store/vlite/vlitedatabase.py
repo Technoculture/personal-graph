@@ -8,7 +8,7 @@ from vlite import VLite  # type: ignore
 
 from personal_graph.visualizers import _as_dot_node, _as_dot_label
 from personal_graph.models import Node, Edge, KnowledgeGraph
-from personal_graph.database.vector_store.vector_store import VectorStore
+from personal_graph.persistence_layer.vector_store.vector_store import VectorStore
 
 
 class VLiteDatabase(VectorStore):

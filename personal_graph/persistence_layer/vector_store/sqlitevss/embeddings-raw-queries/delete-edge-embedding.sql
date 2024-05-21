@@ -1,0 +1,1 @@
+DELETE FROM relationship_embedding WHERE rowid = (?)

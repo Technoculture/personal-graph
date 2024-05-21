@@ -10,14 +10,14 @@ from personal_graph.models import Node, Edge
 from jinja2 import BaseLoader, Environment, select_autoescape
 
 from personal_graph.visualizers import _as_dot_node, _as_dot_label
-from personal_graph.database.database_store.database_store import DatabaseStore
+from personal_graph.persistence_layer.database.database_store import DatabaseStore
 
 CursorExecFunction = Callable[[sqlite3.Cursor, sqlite3.Connection], Any]
 
 
 @lru_cache(maxsize=None)
 def read_sql(sql_file: Path) -> str:
-    with open(Path(__file__).parent.resolve() / "sql" / sql_file) as f:
+    with open(Path(__file__).parent.resolve() / "raw-queries" / sql_file) as f:
         return f.read()
 
 
@@ -53,7 +53,7 @@ class SQLite(DatabaseStore):
         self.local_path = local_path
 
         self.env = Environment(
-            loader=SqlTemplateLoader(Path(__file__).parent / "sql"),
+            loader=SqlTemplateLoader(Path(__file__).parent / "raw-queries"),
             autoescape=select_autoescape(),
         )
         self.clause_template = self.env.get_template("search-where.template")
