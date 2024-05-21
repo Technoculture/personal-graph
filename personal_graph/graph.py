@@ -61,7 +61,11 @@ class Graph(AbstractContextManager):
                 use_direct_search = True
 
         elif isinstance(self.vector_store.db, SQLite) and isinstance(self.db, SQLite):
-            if self.vector_store.db.local_path == self.db.local_path:
+            if (
+                self.vector_store.db.local_path == self.db.local_path
+                and self.vector_store.db.local_path is not None
+                and self.db.local_path is not None
+            ):
                 use_direct_search = True
 
         if use_direct_search:
@@ -96,7 +100,11 @@ class Graph(AbstractContextManager):
                 use_direct_search = True
 
         elif isinstance(self.vector_store.db, SQLite) and isinstance(self.db, SQLite):
-            if self.vector_store.db.local_path == self.db.local_path:
+            if (
+                self.vector_store.db.local_path == self.db.local_path
+                and self.vector_store.db.local_path is not None
+                and self.db.local_path is not None
+            ):
                 use_direct_search = True
 
         if use_direct_search:
