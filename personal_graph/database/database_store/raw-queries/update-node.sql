@@ -1,1 +1,0 @@
-UPDATE nodes SET label = ?, attributes = json(?), embed_id = ? WHERE id = ?
