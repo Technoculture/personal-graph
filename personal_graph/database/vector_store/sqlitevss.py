@@ -116,7 +116,6 @@ class SQLiteVSS(VectorStore):
 
     def _remove_node(self, id: Any):
         def _delete_node_embedding(cursor, connection):
-            # print(id)
             cursor.execute(read_sql(Path("delete-node-embedding.sql")), (id[0],))
 
         return _delete_node_embedding
@@ -130,16 +129,14 @@ class SQLiteVSS(VectorStore):
 
     def _vector_search_node(
         self,
-        data: Dict,
+        data: str,
         threshold: Optional[float] = None,
         desc: Optional[bool] = False,
         k: int = 10,
         sort_by: Optional[str] = "",
     ) -> CursorExecFunction:
         def _search_node(cursor, connection):
-            embed_json = json.dumps(
-                self.embedding_model.get_embedding(json.dumps(data))
-            )
+            embed_json = json.dumps(self.embedding_model.get_embedding(data))
 
             nodes = cursor.execute(
                 read_sql(Path("vector-search-node.sql")),
@@ -156,15 +153,65 @@ class SQLiteVSS(VectorStore):
 
         return _search_node
 
+    def _similarity_search_node(
+        self,
+        data: str,
+        *,
+        threshold: Optional[float] = None,
+        k: int = 10,
+    ) -> CursorExecFunction:
+        def _search_node(cursor, connection):
+            embed_json = json.dumps(self.embedding_model.get_embedding(data))
+
+            nodes = cursor.execute(
+                read_sql(Path("similarity-search-node.sql")),
+                (embed_json, k),
+            ).fetchall()
+
+            if not nodes:
+                return None
+
+            if threshold is not None:
+                return [node for node in nodes if node[1] < threshold][:k]
+            else:
+                return nodes[:k]
+
+        return _search_node
+
+    def _similarity_search_edge(
+        self,
+        data: str,
+        *,
+        threshold: Optional[float] = None,
+        k: int = 10,
+    ) -> CursorExecFunction:
+        def _search_node(cursor, connection):
+            embed_json = json.dumps(self.embedding_model.get_embedding(data))
+
+            nodes = cursor.execute(
+                read_sql(Path("similarity-search-edge.sql")),
+                (embed_json, k),
+            ).fetchall()
+
+            if not nodes:
+                return None
+
+            if threshold is not None:
+                return [node for node in nodes if node[1] < threshold][:k]
+            else:
+                return nodes[:k]
+
+        return _search_node
+
     def _vector_search_edge(
         self,
-        data: Dict,
+        data: str,
         threshold: Optional[float] = None,
         desc: bool = False,
         k: int = 10,
     ) -> CursorExecFunction:
         def _search_edge(cursor, connection):
-            embed = json.dumps(self.embedding_model.get_embedding(json.dumps(data)))
+            embed = json.dumps(self.embedding_model.get_embedding(data))
             if desc:
                 edges = cursor.execute(
                     read_sql(Path("vector-search-edge-desc.sql")), (embed, k)
@@ -219,7 +266,7 @@ class SQLiteVSS(VectorStore):
 
     def vector_search_node(
         self,
-        data: Dict,
+        data: str,
         *,
         threshold: Optional[float] = None,
         descending: bool,
@@ -234,7 +281,7 @@ class SQLiteVSS(VectorStore):
     # TODO: check up the optional params, , mention default values, use enums Ordering(asc, desc): do ordering.asc
     def vector_search_edge(
         self,
-        data: Dict,
+        data: str,
         *,
         threshold: Optional[float] = None,
         descending: bool,
@@ -243,4 +290,18 @@ class SQLiteVSS(VectorStore):
     ):
         return self.db.atomic(
             self._vector_search_edge(data, threshold, descending, limit)
+        )
+
+    def vector_search_node_from_multi_db(
+        self, data: str, *, threshold: Optional[float] = None, limit: int = 1
+    ):
+        return self.db.atomic(
+            self._similarity_search_node(data, threshold=threshold, k=limit)
+        )
+
+    def vector_search_edge_from_multi_db(
+        self, data: str, *, threshold: Optional[float] = None, limit: int = 1
+    ):
+        return self.db.atomic(
+            self._similarity_search_edge(data, threshold=threshold, k=limit)
         )

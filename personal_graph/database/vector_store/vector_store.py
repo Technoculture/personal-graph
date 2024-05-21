@@ -74,3 +74,15 @@ class VectorStore(ABC):
     ):
         """Perform a vector search for edges."""
         pass
+
+    @abstractmethod
+    def vector_search_node_from_multi_db(
+        self, data: Dict, *, threshold: Optional[float] = None, limit: int = 1
+    ):
+        pass
+
+    @abstractmethod
+    def vector_search_edge_from_multi_db(
+        self, data: Dict, *, threshold: Optional[float] = None, limit: int = 1
+    ):
+        pass
