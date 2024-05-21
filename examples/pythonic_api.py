@@ -9,16 +9,26 @@ from personal_graph import (
     EdgeInput,
     EmbeddingClient,
 )
-from personal_graph.database import SQLiteVSS, TursoDB
+from personal_graph.database.database_store import SQLite
+from personal_graph.database.vector_store.sqlitevss import SQLiteVSS
 from personal_graph.ml import networkx_to_pg, pg_to_networkx
 
 
 def main(args):
     vector_store = SQLiteVSS(
-        persistence_layer=TursoDB(url=args.db_url, auth_token=args.db_auth_token),
+        db=SQLite(
+            use_in_memory=True,
+            vector0_so_path="path/to/vector0.so",
+            vss0_so_path="path/to/vss0.so",
+        ),
         embedding_model_client=EmbeddingClient(),
     )
-    with Graph(vector_store=vector_store) as graph:
+    database = SQLite(
+        use_in_memory=True,
+        vector0_so_path="path/to/vector0.so",
+        vss0_so_path="path/to/vss0.so",
+    )
+    with Graph(vector_store=vector_store, database=database) as graph:
         # Define nodes and edges
         node1 = Node(
             id="3", label="close relative", attributes={"name": "Alice", "age": "30"}
@@ -82,8 +92,9 @@ def main(args):
         query = "User talked about his fears, achievements, hobbies and beliefs."
 
         deepest_conversation = graph.search(
-            query, descending=False, sort_by="depth_score"
+            query, descending=True, limit=1, sort_by="depth_score"
         )
+        logging.info(deepest_conversation)
 
         if deepest_conversation:
             logging.info(f"Question: {query}")
@@ -95,6 +106,9 @@ def main(args):
             logging.info(
                 "Answer: I apologize, but I don't have enough information to determine our deepest conversation."
             )
+
+        query = "User discussed their fears and insecurities"
+        logging.info(graph.is_unique_prompt(query, 0.9))
 
         graph.insert_into_graph(text="Alice is Bob's sister. Bob works at Google.")
 
@@ -110,30 +124,30 @@ def main(args):
         results = graph.search(query)
         logging.info(results)
         if results is not None:
-            logging.info(results["body"])
+            logging.info(results)
 
-        graph.add_node(node1)
-        graph.add_nodes([node3, node2])
+        graph.add_node(node2)
+        graph.add_nodes([node1, node2])
         graph.add_edge(edge1)
         graph.add_edges([edge2, edge3])
 
-        logging.info(graph.traverse("3"))
+        logging.info(graph.traverse("2"))
         graph.remove_node(1)
-        graph.remove_nodes([1, 2])
-        logging.info(graph.search_node("3"))
+        graph.remove_nodes([3, 2])
+        logging.info(graph.search_node("4"))
 
         node5 = Node(
             id="3",
-            label="Asthma",
-            attributes={"body": "Respiratory disease"},
+            label="Diabetes",
+            attributes={"body": "Continuous urination"},
         )
         graph.update_node(node5)
-        node5 = Node(id=18, label="Person", attributes={"name": "Charlie", "age": "35"})
+        node5 = Node(id=1, label="Person", attributes={"name": "Charlie", "age": "35"})
         graph.update_nodes([node4, node5])
 
         logging.info(graph.search_node(4))
 
-        graph.merge_by_similarity(threshold=5000)
+        graph.merge_by_similarity(threshold=1)
         logging.info("Merged nodes")
 
         # Insert natural language query into graph db
@@ -142,13 +156,9 @@ def main(args):
         )
 
         # Search natural language query from graph db
-        kg = graph.search_from_graph(text="Who is more interested in coral refs")
+        kg = graph.search_from_graph(text="I have a interest in Sri Lankan coral reefs")
         graph.visualize_graph(kg).render("sample.dot")
-        logging.info(
-            graph.search_from_graph(text="Who is more interested in coral refs")
-        )
-
-        logging.info(graph.find_nodes_like(label="relative", threshold=3000))
+        logging.info(graph.find_nodes_like(label="favorite hobbies ", threshold=3000))
 
         graph.visualize("sample.dot", ["4"])
         kg = KnowledgeGraph(
