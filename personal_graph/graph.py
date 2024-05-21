@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from pathlib import Path
 from typing import Any, List, Optional, Union, Dict
 
 from contextlib import AbstractContextManager
@@ -419,8 +420,7 @@ class Graph(AbstractContextManager):
 
         return similar_rows
 
-    # TODO: path: Should be a list of paths
-    def visualize(self, file: str, path: List[str]) -> Digraph:
+    def visualize(self, file: str, path: List[Path]) -> Digraph:
         return self.db.graphviz_visualize(file, path)
 
     def fetch_ids_from_db(self) -> List[str]:
