@@ -111,3 +111,15 @@ class DatabaseStore(ABC):
     @abstractmethod
     def search_outdegree_edges(self, source: Any) -> List[Any]:
         pass
+
+    @abstractmethod
+    def search_similar_nodes(
+        self, embed_id, *, desc: Optional[bool] = False, sort_by: Optional[str] = ""
+    ):
+        pass
+
+    @abstractmethod
+    def search_similar_edges(
+        self, embed_id, *, desc: Optional[bool] = False, sort_by: Optional[str] = ""
+    ):
+        pass

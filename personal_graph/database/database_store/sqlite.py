@@ -635,3 +635,35 @@ class SQLite(DatabaseStore):
                 return outdegree.fetchall()
 
         return self.atomic(_outdegree_edges)
+
+    def search_similar_nodes(
+        self, embed_ids, *, desc: Optional[bool] = False, sort_by: Optional[str] = ""
+    ):
+        def _search_node(cursor, connection):
+            nodes = cursor.execute(
+                read_sql(Path("search-node-by-rowid.sql")),
+                (embed_ids, sort_by, desc, sort_by, sort_by, desc, sort_by),
+            )
+
+            if not nodes:
+                return None
+
+            return nodes.fetchall()
+
+        return self.atomic(_search_node)
+
+    def search_similar_edges(
+        self, embed_ids, *, desc: Optional[bool] = False, sort_by: str = ""
+    ):
+        def _search_edge(cursor, connection):
+            edges = cursor.execute(
+                read_sql(Path("search-edge-by-rowid.sql")),
+                (embed_ids, sort_by, desc, sort_by, sort_by, desc, sort_by),
+            )
+
+            if not edges:
+                return None
+
+            return edges.fetchall()
+
+        return self.atomic(_search_edge)
