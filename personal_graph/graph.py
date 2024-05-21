@@ -314,20 +314,6 @@ class Graph(AbstractContextManager):
 
         return resultant_subgraph
 
-    # TODO: Helper function , place it inside visualizers.py file rather
-    def visualize_graph(self, kg: KnowledgeGraph) -> Digraph:
-        dot = Digraph(comment="Knowledge Graph")
-
-        # Add nodes
-        for node in kg.nodes:
-            dot.node(str(node.id), node.label, color="black")
-
-        # Add edges
-        for edge in kg.edges:
-            dot.edge(str(edge.source), str(edge.target), edge.label, color="black")
-
-        return dot
-
     def merge_by_similarity(self, threshold) -> None:
         node_ids = self.db.fetch_ids_from_db()
 

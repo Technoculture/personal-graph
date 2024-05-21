@@ -12,6 +12,8 @@ import json
 from graphviz import Digraph  # type: ignore
 from typing import List, Dict, Any, Tuple
 
+from personal_graph.models import KnowledgeGraph
+
 
 def _as_dot_label(
     body: Dict[str, Any],
@@ -76,3 +78,17 @@ def graphviz_visualize_bodies(
                 )
                 edges.append(edge)
     dot.render(dot_file, format=format)
+
+
+def visualize_graph(kg: KnowledgeGraph) -> Digraph:
+    dot = Digraph(comment="Knowledge Graph")
+
+    # Add nodes
+    for node in kg.nodes:
+        dot.node(str(node.id), node.label, color="black")
+
+    # Add edges
+    for edge in kg.edges:
+        dot.edge(str(edge.source), str(edge.target), edge.label, color="black")
+
+    return dot
