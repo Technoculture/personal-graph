@@ -50,6 +50,76 @@ class Graph(AbstractContextManager):
         self.db.save()
         self.vector_store.save()
 
+    def _similarity_search_node(self, text, threshold, limit, descending, sort_by):
+        use_direct_search = False
+
+        if isinstance(self.vector_store.db, TursoDB) and isinstance(self.db, TursoDB):
+            if (
+                self.vector_store.db.db_url == self.db.db_url
+                and self.vector_store.db.db_auth_token == self.db.db_auth_token
+            ):
+                use_direct_search = True
+
+        elif isinstance(self.vector_store.db, SQLite) and isinstance(self.db, SQLite):
+            if self.vector_store.db.local_path == self.db.local_path:
+                use_direct_search = True
+
+        if use_direct_search:
+            similar_nodes = self.vector_store.vector_search_node(
+                text,
+                threshold=threshold,
+                descending=descending,
+                limit=limit,
+                sort_by=sort_by,
+            )
+        else:
+            similarity_scores = self.vector_store.vector_search_node_from_multi_db(
+                text, threshold=threshold, limit=limit
+            )
+            embed_ids = [score for score, distance in similarity_scores]
+            embed_ids_str = json.dumps(embed_ids)
+
+            similar_nodes = self.db.search_similar_nodes(
+                embed_ids_str, desc=descending, sort_by=sort_by
+            )
+
+        return similar_nodes
+
+    def _similarity_search_edge(self, text, threshold, limit, descending, sort_by):
+        use_direct_search = False
+
+        if isinstance(self.vector_store.db, TursoDB) and isinstance(self.db, TursoDB):
+            if (
+                self.vector_store.db.db_url == self.db.db_url
+                and self.vector_store.db.db_auth_token == self.db.db_auth_token
+            ):
+                use_direct_search = True
+
+        elif isinstance(self.vector_store.db, SQLite) and isinstance(self.db, SQLite):
+            if self.vector_store.db.local_path == self.db.local_path:
+                use_direct_search = True
+
+        if use_direct_search:
+            similar_edges = self.vector_store.vector_search_edge(
+                text,
+                threshold=threshold,
+                descending=descending,
+                limit=limit,
+                sort_by=sort_by,
+            )
+        else:
+            similarity_scores = self.vector_store.vector_search_edge_from_multi_db(
+                text, threshold=threshold, limit=limit
+            )
+            embed_ids = [score for score, distance in similarity_scores]
+            embed_ids_str = json.dumps(embed_ids)
+
+            similar_edges = self.db.search_similar_edges(
+                embed_ids_str, desc=descending, sort_by=sort_by
+            )
+
+        return similar_edges
+
     # High level apis
     def add_node(self, node: Node) -> None:
         if self.db.search_node(node_id=node.id) is None:
@@ -174,14 +244,28 @@ class Graph(AbstractContextManager):
         return kg
 
     def search_from_graph(
-        self, text: str, *, limit: int = 5, descending: bool = False, sort_by: str = ""
+        self,
+        text: str,
+        *,
+        threshold: float = 0.9,
+        limit: int = 5,
+        descending: bool = False,
+        sort_by: str = "",
     ) -> KnowledgeGraph:
         try:
-            similar_nodes = self.vector_store.vector_search_node(
-                {"body": text}, descending=descending, limit=limit, sort_by=sort_by
+            similar_nodes = self._similarity_search_node(
+                text,
+                threshold=threshold,
+                descending=descending,
+                limit=limit,
+                sort_by=sort_by,
             )
-            similar_edges = self.vector_store.vector_search_edge(
-                {"body": text}, descending=descending, limit=limit, sort_by=sort_by
+            similar_edges = self._similarity_search_edge(
+                text,
+                threshold=threshold,
+                descending=descending,
+                limit=limit,
+                sort_by=sort_by,
             )
 
             resultant_subgraph = KnowledgeGraph()
@@ -246,8 +330,12 @@ class Graph(AbstractContextManager):
             if node is None:
                 continue
 
-            similar_nodes = self.vector_store.vector_search_node(
-                node, threshold=threshold, descending=False, limit=2, sort_by=""
+            similar_nodes = self._similarity_search_node(
+                json.dumps(node),
+                threshold=threshold,
+                descending=False,
+                limit=1,
+                sort_by="",
             )
 
             if similar_nodes is None or len(similar_nodes) > 1:
@@ -314,15 +402,19 @@ class Graph(AbstractContextManager):
         nodes = self.db.find_nodes_by_label(label)
         similar_rows = []
         for node in nodes:
-            similar_nodes = self.vector_store.vector_search_node(
-                node, threshold=threshold, descending=False, limit=2, sort_by=""
+            similar_nodes = self._similarity_search_node(
+                json.dumps(node),
+                threshold=threshold,
+                descending=False,
+                limit=1,
+                sort_by="",
             )
 
             if len(similar_nodes) < 1:
                 continue
 
-            for rowid, _, _, _, _ in similar_nodes:
-                fetched_node_id = self.db.fetch_node_id(rowid)
+            for rowid in similar_nodes:
+                fetched_node_id = self.db.fetch_node_id(rowid[0])
                 node_data = self.db.search_node(fetched_node_id[0])
                 node_label = self.db.search_node_label(fetched_node_id[0])
 
@@ -349,8 +441,8 @@ class Graph(AbstractContextManager):
         return self.db.search_outdegree_edges(source)
 
     def is_unique_prompt(self, text: str, threshold: float) -> bool:
-        similar_nodes = self.vector_store.vector_search_node(
-            {"body": text}, threshold=threshold, descending=False, limit=1, sort_by=""
+        similar_nodes = self._similarity_search_node(
+            text, threshold=threshold, descending=False, limit=1, sort_by=""
         )
 
         if not similar_nodes:
@@ -374,13 +466,18 @@ class Graph(AbstractContextManager):
         self,
         text: str,
         *,
+        threshold: Optional[float] = None,
         descending: bool = False,
         limit: int = 1,
         sort_by: str = "",
     ):
         try:
-            similar_nodes = self.vector_store.vector_search_node(
-                {"body": text}, descending=descending, limit=limit, sort_by=sort_by
+            similar_nodes = self._similarity_search_node(
+                text,
+                threshold=threshold,
+                descending=descending,
+                limit=limit,
+                sort_by=sort_by,
             )
 
         except Exception as e:
