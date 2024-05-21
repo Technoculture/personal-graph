@@ -10,15 +10,11 @@ from graphviz import Digraph  # type: ignore
 from dotenv import load_dotenv
 
 from personal_graph.clients import LLMClient
-from personal_graph.persistence_layer.database.tursodb.turso import TursoDB
-from personal_graph.persistence_layer.database.sqlite.sqlite import SQLite
-
+from personal_graph.persistence_layer.database import TursoDB, SQLite
 from personal_graph.graph_generator import InstructorGraphGenerator
 from personal_graph.models import Node, EdgeInput, KnowledgeGraph, Edge
-from personal_graph.persistence_layer.vector_store.sqlitevss.sqlitevss import SQLiteVSS
-from personal_graph.persistence_layer.vector_store.vlite.vlitedatabase import (
-    VLiteDatabase,
-)
+from personal_graph.persistence_layer.vector_store import SQLiteVSS, VLiteDatabase
+
 
 load_dotenv()
 
