@@ -11,6 +11,9 @@ Personal-Graph is a Python library for creating, managing, and querying knowledg
 - 💬 **Natural Language Interfaces**: Natural language queries powered by Sqlite-vss and Instructor
 - 🤖 **ML-Ready**: Export data for machine learning libraries like Networkx and PyG
 
+- ✅ Supports local execution with Ollama LLMs and Embedding Models
+- ✅ Supports local db for both storing graph and embeddings
+
 ## Installation
 
 Install Personal-Graph using pip:
@@ -28,64 +31,28 @@ There are two vector store classes SQLiteVSS and VLiteDatabase. Let's dive down 
 from personal_graph.database import SQLiteVSS, DBClient, TursoDB
 from personal_graph import EmbeddingClient
 
-# Using SQLiteVSS vector database and connecting with Turso DB
-vector_store = SQLiteVSS(
-        persistence_layer=TursoDB(
-            db_client=DBClient(
-                db_url=args.db_url,
-                db_auth_token=args.db_auth_token,
-            ),
-            embedding_model_client=EmbeddingClient(),
-        )
-    )
-
-# Using SQLiteVSS vector database and connecting with local DB
-vector_store = SQLiteVSS(
-        persistence_layer=SQLite(
-            db_client=DBClient(
-                use_in_memory=True,
-                vector0_so_path="path/to/vector0.so",
-                vss0_so_path="path/to/vss0.so"
-            ),
-            embedding_model_client=EmbeddingClient(),
-        )
-    )
-
-# Using SQLiteVSS vector database and connecting with in-memory DB
-vector_store = SQLiteVSS(
-        persistence_layer=SQLite(
-            db_client=DBClient(
-                use_in_memory=True,
-                vector0_so_path="path/to/vector0.so",
-                vss0_so_path="path/to/vss0.so"
-            ),
-            embedding_model_client=EmbeddingClient(),
-        )
-    )
-
-# Using VLite vector database 
-from personal_graph.database import VLiteDatabase
-
-vector_store = VLiteDatabase(collection="your-collection-name", model_name="embedding-model-name")
-
+vector_store = VliteVSS()
+vector_store = VLiteDatabase(collection="memories", model_name="mxbai")
 ```
 
 ### Building a Working Memory for an AI
 
 ```python
 from personal_graph import Graph, LLMClient
-from personal_graph.database import SQLiteVSS, DBClient, TursoDB
+from personal_graph.database import DBClient, TursoDB
+from personal_graph.vector_store import SQLiteVSS
 from personal_graph.graph_generator import InstructorGraphGenerator
+from personal_graph.text import text_to_graph
 
-
-graph = Graph(vector_store=vector_store, graph_generator=InstructorGraphGenerator(llm_client=LLMClient()))
+graph = Graph(vector_store=vector_store)
 
 # Insert information into the graph
-graph.insert_into_graph(text="Alice is Bob's sister. Bob works at Google.")
+g = text_to_graph("Alice is Bob's sister. Bob works at Google.")
+graph.insert_graph(g)
 
 # Retrieve relevant information from the graph
 query = "Who is Alice?"
-results = graph.search(query, limit=1)
+results = graph.search(query)
 print(results["body"])
 
 # Use the retrieved information to answer questions
@@ -93,7 +60,7 @@ print(f"Question: {query}")
 print(f"Answer: Alice is Bob's sister.")
 
 query = "Where does Bob work?"
-results = graph.search(query, limit=1)
+results = graph.search(query)
 print(results["body"])
 print(f"Question: {query}")
 print(f"Answer: Bob works at Google.")
@@ -104,9 +71,8 @@ In this example, we insert information about Alice and Bob into the knowledge gr
 ### Building Long-Term Memory
 ```python
 from personal_graph import Graph, LLMClient
-from personal_graph.graph_generator import InstructorGraphGenerator
 
-graph = Graph(vector_store=vector_store, graph_generator=InstructorGraphGenerator(llm_client=LLMClient()))
+graph = Graph(vector_store=vector_store)
 
 # Insert information about conversations with the user over time
 graph.insert(
@@ -163,18 +129,21 @@ This example demonstrates how Personal-Graph can be used to build long-term memo
 
 ### Creating and Querying a Knowledge Graph
 ```py
-from personal_graph import Graph, LLMClient
+from personal_graph import GraphDB, LLMClient
 from personal_graph.graph_generator import InstructorGraphGenerator
+from personal_graph.text import text_to_graph
 
-graph = Graph(vector_store=vector_store, graph_generator=InstructorGraphGenerator(llm_client=LLMClient()))
+graphdb = GraphDB(vector_store=vector_store)
 
 nl_query = "Increased thirst, weight loss, increased hunger, and frequent urination are all symptoms of diabetes."
-graph = graph.insert_into_graph(text=nl_query)
+graphdb = graph.insert_into_graph(text=nl_query)
 
 search_query = "I am losing weight too frequently."
-knowledge_graph = graph.search_from_graph(search_query)
+#knowledge_graph = graph.search_from_graph(search_query)
+g = text_to_graph(search_query)
+print(g)
 
-print(knowledge_graph)
+graphdb.insert_graph(g)
 ```
 
 ### Retrieval and Question-Answering
@@ -183,8 +152,8 @@ import dspy
 from personal_graph.graph_generator import InstructorGraphGenerator
 from personal_graph import Graph, LLMClient, PersonalRM
 
-graph = Graph(vector_store=vector_store, graph_generator=InstructorGraphGenerator(llm_client=LLMClient()))
-retriever = PersonalRM(graph=graph, k=2)
+db = GraphDB() # storage_db is in-memory sqlite, vector_db is in vlite
+retriever = PersonalRM(db=db, k=2)
 
 class RAG(dspy.Module):
     def __init__(self, depth=3):
@@ -202,17 +171,58 @@ response = rag("How is Jack related to James?")
 print(response.answer)
 ```
 
-### Providing Custom LLMClient and EmbeddingClient
+### Local Usage
 
 ```py
-from personal_graph.graph import Graph, LLMClient, EmbeddingClient
+from personal_graph.graph import GraphDB, OllamaClient, OllamaEmbeddingClient
 from personal_graph.graph_generator import InstructorGraphGenerator
+from personal_graph.database import DBClient, Sqlite
+from personal_graph.vector_store import VliteVectorDB
 
-your_litellm_client = LLMClient(client="llm-client", model_name="llm-model-name")
-your_embedding_client = EmbeddingClient(client="embedding-client", model_name="embedding-model-name", dimensions="model-dimension")
+phi3 = OllamaClient(model_name="phi3")
+nomic_embed = OllamaEmbeddingClient(model_name="nomic-embed-text")
 
-graph = Graph(vector_store=vector_store, graph_generator=InstructorGraphGenerator(llm_client=your_litellm_client))
+storage_db = Sqlite(path="./local.db")
+vector_store = VliteVectorDB(path="./vectors")
 
+graph_generator=InstructorGraphGenerator(llm_client=phi3)
+print(graph_generator) # Should print the InstructorGraphGenerator 
+
+with GraphDB(
+    db=db, 
+    vector_store=vector_store, 
+    graph_generator=graph_generator
+  ) as db:
+    print(db)
+
+  # Graph(
+  #   db = Sqlite()
+  #   vector_store = SQLiteVSS(
+  #       persistence_layer=SQLite(
+  #           db_client=DBClient(
+  #               use_in_memory=True,
+  #               vector0_so_path="path/to/vector0.so",
+  #               vss0_so_path="path/to/vss0.so"
+  #           ),
+  #           embedding_model_client=EmbeddingClient(),
+  #       )
+  #   )
+  # )
+```
+
+### PersonalGraph to PyG, then back to PersonalGraph
+The following is just a sketch of the planned flow. WIP.
+
+```py
+graphdb = GraphDB(storage=db, vector_store=vector_store, graph_generator=graph_generator)
+
+graphdb.load_dataset("KarateClub")
+
+pyg_graph = graphdb.to_pyg()
+
+updated_graph = model(pyg_graph) # Run Neural Network algorithms here using PyG
+
+graphdb.from_pyg(updated_graph)
 ```
 
 For more details and API documentation, see the Personal-Graph Documentation.
