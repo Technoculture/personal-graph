@@ -216,9 +216,8 @@ class Graph(AbstractContextManager):
     ) -> List:
         return self.db.traverse(source, target, with_bodies)
 
-    def insert_into_graph(self, text: str) -> KnowledgeGraph:
+    def insert_graph(self, kg: KnowledgeGraph) -> KnowledgeGraph:
         uuid_dict = {}
-        kg = self.graph_generator.generate(text)
 
         try:
             for node in kg.nodes:
