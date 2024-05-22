@@ -63,6 +63,16 @@ class SQLite(DatabaseStore):
     def __eq__(self, other):
         return self.use_in_memory == other.use_in_memory
 
+    def __repr__(self):
+        return (
+            f"SQLite(\n"
+            f"    local_path={self.local_path},\n"
+            f"    use_in_memory={self.use_in_memory},\n"
+            f"    vector0_so_path='{self.vector0_so_path}',\n"
+            f"    vss0_so_path='{self.vss0_so_path}'\n"
+            f"  ),"
+        )
+
     def atomic(self, cursor_exec_fn: CursorExecFunction) -> Any:
         if not hasattr(self, "_connection"):
             if self.use_in_memory:

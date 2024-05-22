@@ -48,6 +48,14 @@ class TursoDB(SQLite):
     def __eq__(self, other):
         return self.db_url == other.db_url
 
+    def __repr__(self):
+        return (
+            f"TursoDB(\n"
+            f"    db_url={self.db_url},\n"
+            f"    db_auth_token='{self.db_auth_token}'\n"
+            f"  ),"
+        )
+
     def atomic(self, cursor_exec_fn: CursorExecFunction) -> Any:
         if not hasattr(self, "_connection"):
             self._connection = libsql.connect(

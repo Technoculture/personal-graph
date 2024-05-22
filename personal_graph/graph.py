@@ -49,6 +49,18 @@ class Graph(AbstractContextManager):
         self.db.save()
         self.vector_store.save()
 
+    def __repr__(self) -> str:
+        db_repr = repr(self.db)
+        vector_store_repr = repr(self.vector_store)
+        graph_generator_repr = repr(self.graph_generator)
+        return (
+            f"Graph(\n"
+            f"  db={db_repr}\n"
+            f"  vector_store={vector_store_repr},\n"
+            f"  graph_generator={graph_generator_repr}\n"
+            f")"
+        )
+
     def _similarity_search_node(
         self,
         text,

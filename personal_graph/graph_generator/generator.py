@@ -23,6 +23,15 @@ class OpenAITextToGraphParser(TextToGraphParserInterface):
         self.prompt = prompt
         self.llm_client = llm_client
 
+    def __repr__(self):
+        return (
+            f"OpenAITextToGraphParser(\n"
+            f"    llm_client={self.llm_client},\n"
+            f"    system_prompt={self.system_prompt},\n"
+            f"    prompt={self.prompt}\n"
+            f"  )"
+        )
+
     def generate(self, query: str) -> KnowledgeGraph:
         client = instructor.from_openai(self.llm_client.client)
         knowledge_graph = client.chat.completions.create(

@@ -20,6 +20,15 @@ class OpenAIEmbeddingsModel(EmbeddingsModel):
         self.model = embed_model
         self.dimension = embed_dimension
 
+    def __repr__(self) -> str:
+        return (
+            f"OpenAIEmbeddingsModel(\n"
+            f"    embed_client={self.client},\n"
+            f"    embed_model='{self.model}',\n"
+            f"    embed_dimension={self.dimension}\n"
+            f"  )"
+        )
+
     def get_embedding(self, text: str) -> list[float]:
         if self.client is None:
             return []

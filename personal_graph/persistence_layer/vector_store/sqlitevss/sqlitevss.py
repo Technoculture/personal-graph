@@ -46,6 +46,14 @@ class SQLiteVSS(VectorStore):
     def save(self):
         return self.db.save()
 
+    def __repr__(self) -> str:
+        return (
+            f"SQLiteVSS(\n"
+            f"  db={self.db}\n"
+            f"  embedding_model_client={self.embedding_model}\n"
+            f"  )"
+        )
+
     def _set_id(self, identifier: Any, data: Dict) -> Dict:
         if identifier is not None:
             data["id"] = identifier
