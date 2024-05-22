@@ -84,10 +84,6 @@ class SQLite(DatabaseStore):
             if self.vector0_so_path and self.vss0_so_path:
                 self._connection.load_extension(self.vector0_so_path)
                 self._connection.load_extension(self.vss0_so_path)
-            else:
-                raise ValueError(
-                    "vector0_so_path and vss0_so_path must be provided when use_in_memory is True."
-                )
 
         try:
             cursor = self._connection.cursor()

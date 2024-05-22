@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import uuid
-from pathlib import Path
 from typing import Any, List, Optional, Union, Dict
 
 from contextlib import AbstractContextManager
@@ -24,8 +23,10 @@ class Graph(AbstractContextManager):
     def __init__(
         self,
         *,
-        vector_store: Union[SQLiteVSS, VLiteDatabase],
-        database: Union[TursoDB, SQLite],
+        vector_store: Union[SQLiteVSS, VLiteDatabase] = VLiteDatabase(
+            collection="./vectors"
+        ),
+        database: Union[TursoDB, SQLite] = SQLite(use_in_memory=True),
         graph_generator: OpenAITextToGraphParser = OpenAITextToGraphParser(
             llm_client=OpenAILLMClient()
         ),
