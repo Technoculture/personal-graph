@@ -2,9 +2,9 @@ import json
 from functools import lru_cache
 from pathlib import Path
 import libsql_experimental as libsql  # type: ignore
-from typing import Any, Dict, Optional, Union, Callable, List
+from typing import Any, Dict, Union, Callable, List
 
-from personal_graph.clients import EmbeddingClient
+from personal_graph.clients import LiteLLMEmbeddingClient
 from personal_graph.embeddings import OpenAIEmbeddingsModel
 from personal_graph.persistence_layer.vector_store.vector_store import VectorStore
 from personal_graph.persistence_layer.database.tursodb.turso import TursoDB
@@ -23,7 +23,10 @@ def read_sql(sql_file: Path) -> str:
 
 class SQLiteVSS(VectorStore):
     def __init__(
-        self, *, db: Union[TursoDB, SQLite], embedding_model_client: EmbeddingClient
+        self,
+        *,
+        db: Union[TursoDB, SQLite],
+        embedding_model_client: LiteLLMEmbeddingClient = LiteLLMEmbeddingClient(),
     ):
         self.db = db
         self.embedding_model = OpenAIEmbeddingsModel(

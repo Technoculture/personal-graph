@@ -10,9 +10,9 @@ from contextlib import AbstractContextManager
 from graphviz import Digraph  # type: ignore
 from dotenv import load_dotenv
 
-from personal_graph.clients import LLMClient
+from personal_graph import OpenAILLMClient
 from personal_graph.persistence_layer.database import TursoDB, SQLite
-from personal_graph.graph_generator import InstructorGraphGenerator
+from personal_graph.graph_generator import OpenAITextToGraphParser
 from personal_graph.models import Node, EdgeInput, KnowledgeGraph, Edge
 from personal_graph.persistence_layer.vector_store import SQLiteVSS, VLiteDatabase
 
@@ -26,8 +26,8 @@ class Graph(AbstractContextManager):
         *,
         vector_store: Union[SQLiteVSS, VLiteDatabase],
         database: Union[TursoDB, SQLite],
-        graph_generator: InstructorGraphGenerator = InstructorGraphGenerator(
-            llm_client=LLMClient()
+        graph_generator: OpenAITextToGraphParser = OpenAITextToGraphParser(
+            llm_client=OpenAILLMClient()
         ),
     ):
         self.vector_store = vector_store
@@ -458,7 +458,7 @@ class Graph(AbstractContextManager):
         self,
         text: str,
         *,
-        threshold: Optional[float] = None,
+        threshold: float = None,
         descending: bool = False,
         limit: int = 1,
         sort_by: str = "",
