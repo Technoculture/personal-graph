@@ -164,10 +164,10 @@ class SQLiteVSS(VectorStore):
         self,
         data: str,
         *,
-        threshold: Optional[float] = None,
-        descending: bool,
-        limit: int,
-        sort_by: str,
+        threshold: float = None,
+        descending: bool = False,
+        limit: int = 1,
+        sort_by: str = "",
     ):
         def _search_node(cursor, connection):
             embed_json = json.dumps(self.embedding_model.get_embedding(data))
@@ -202,10 +202,10 @@ class SQLiteVSS(VectorStore):
         self,
         data: str,
         *,
-        threshold: Optional[float] = None,
-        descending: bool,
-        limit: int,
-        sort_by: str,
+        threshold: float = None,
+        descending: bool = False,
+        limit: int = 1,
+        sort_by: str = "",
     ):
         def _search_edge(cursor, connection):
             embed = json.dumps(self.embedding_model.get_embedding(data))
@@ -231,7 +231,7 @@ class SQLiteVSS(VectorStore):
         return self.db.atomic(_search_edge)
 
     def vector_search_node_from_multi_db(
-        self, data: str, *, threshold: Optional[float] = None, limit: int = 1
+        self, data: str, *, threshold: float = None, limit: int = 1
     ):
         def _search_node(cursor, connection):
             embed_json = json.dumps(self.embedding_model.get_embedding(data))
@@ -252,7 +252,7 @@ class SQLiteVSS(VectorStore):
         return self.db.atomic(_search_node)
 
     def vector_search_edge_from_multi_db(
-        self, data: str, *, threshold: Optional[float] = None, limit: int = 1
+        self, data: str, *, threshold: float = None, limit: int = 1
     ):
         def _search_node(cursor, connection):
             embed_json = json.dumps(self.embedding_model.get_embedding(data))
