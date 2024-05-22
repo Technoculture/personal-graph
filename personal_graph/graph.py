@@ -441,8 +441,8 @@ class Graph(AbstractContextManager):
 
         return similar_rows
 
-    def visualize(self, file: str, path: List[Path]) -> Digraph:
-        return self.db.graphviz_visualize(file, path)
+    def visualize(self, file: str, id: List[str]) -> Digraph:
+        return self.db.graphviz_visualize(file, id)
 
     def fetch_ids_from_db(self) -> List[str]:
         return self.db.fetch_ids_from_db()
