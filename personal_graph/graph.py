@@ -49,7 +49,15 @@ class Graph(AbstractContextManager):
         self.db.save()
         self.vector_store.save()
 
-    def _similarity_search_node(self, text, threshold, limit, descending, sort_by):
+    def _similarity_search_node(
+        self,
+        text,
+        *,
+        threshold: float = None,
+        descending: bool = False,
+        limit: int = 1,
+        sort_by: str = "",
+    ):
         use_direct_search = False
 
         if isinstance(self.vector_store.db, TursoDB) and isinstance(self.db, TursoDB):
@@ -88,7 +96,15 @@ class Graph(AbstractContextManager):
 
         return similar_nodes
 
-    def _similarity_search_edge(self, text, threshold, limit, descending, sort_by):
+    def _similarity_search_edge(
+        self,
+        text,
+        *,
+        threshold: float = None,
+        descending: bool = False,
+        limit: int = 1,
+        sort_by: str = "",
+    ):
         use_direct_search = False
 
         if isinstance(self.vector_store.db, TursoDB) and isinstance(self.db, TursoDB):
@@ -253,8 +269,8 @@ class Graph(AbstractContextManager):
         self,
         text: str,
         *,
-        threshold: float = 0.9,
-        limit: int = 5,
+        threshold: float = None,
+        limit: int = 1,
         descending: bool = False,
         sort_by: str = "",
     ) -> KnowledgeGraph:
@@ -314,7 +330,7 @@ class Graph(AbstractContextManager):
 
         return resultant_subgraph
 
-    def merge_by_similarity(self, threshold) -> None:
+    def merge_by_similarity(self, *, threshold: Optional[float] = 0.9) -> None:
         node_ids = self.db.fetch_ids_from_db()
 
         for node_id in node_ids:
@@ -323,11 +339,7 @@ class Graph(AbstractContextManager):
                 continue
 
             similar_nodes = self._similarity_search_node(
-                json.dumps(node),
-                threshold=threshold,
-                descending=False,
-                limit=1,
-                sort_by="",
+                json.dumps(node), threshold=threshold
             )
 
             if similar_nodes is None or len(similar_nodes) > 1:
@@ -390,16 +402,14 @@ class Graph(AbstractContextManager):
 
                     self.remove_node(similar_node_id)
 
-    def find_nodes_like(self, label: str, threshold: float) -> List[Node]:
+    def find_nodes_like(
+        self, label: str, *, threshold: Optional[float] = 0.9
+    ) -> List[Node]:
         nodes = self.db.find_nodes_by_label(label)
         similar_rows = []
         for node in nodes:
             similar_nodes = self._similarity_search_node(
-                json.dumps(node),
-                threshold=threshold,
-                descending=False,
-                limit=1,
-                sort_by="",
+                json.dumps(node), threshold=threshold
             )
 
             if len(similar_nodes) < 1:
@@ -431,10 +441,8 @@ class Graph(AbstractContextManager):
     def search_outdegree_edges(self, source: str) -> List[Any]:
         return self.db.search_outdegree_edges(source)
 
-    def is_unique_prompt(self, text: str, threshold: float) -> bool:
-        similar_nodes = self._similarity_search_node(
-            text, threshold=threshold, descending=False, limit=1, sort_by=""
-        )
+    def is_unique_prompt(self, text: str, *, threshold: Optional[float] = 0.9) -> bool:
+        similar_nodes = self._similarity_search_node(text, threshold=threshold, limit=1)
 
         if not similar_nodes:
             return True
