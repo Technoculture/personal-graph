@@ -13,7 +13,7 @@ from personal_graph import OpenAILLMClient
 from personal_graph.persistence_layer.database import TursoDB, SQLite
 from personal_graph.graph_generator import OpenAITextToGraphParser
 from personal_graph.models import Node, EdgeInput, KnowledgeGraph, Edge
-from personal_graph.persistence_layer.vector_store import SQLiteVSS, VLiteDatabase
+from personal_graph.persistence_layer.vector_store import SQLiteVSS, VliteVSS
 
 
 load_dotenv()
@@ -23,9 +23,7 @@ class Graph(AbstractContextManager):
     def __init__(
         self,
         *,
-        vector_store: Union[SQLiteVSS, VLiteDatabase] = VLiteDatabase(
-            collection="./vectors"
-        ),
+        vector_store: Union[SQLiteVSS, VliteVSS] = VliteVSS(collection="./vectors"),
         database: Union[TursoDB, SQLite] = SQLite(use_in_memory=True),
         graph_generator: OpenAITextToGraphParser = OpenAITextToGraphParser(
             llm_client=OpenAILLMClient()
@@ -73,7 +71,10 @@ class Graph(AbstractContextManager):
     ):
         use_direct_search = False
 
-        if isinstance(self.vector_store.db, TursoDB) and isinstance(self.db, TursoDB):
+        if isinstance(self.vector_store, VliteVSS):
+            use_direct_search = True
+
+        elif isinstance(self.vector_store.db, TursoDB) and isinstance(self.db, TursoDB):
             if (
                 self.vector_store.db.db_url == self.db.db_url
                 and self.vector_store.db.db_auth_token == self.db.db_auth_token
@@ -100,8 +101,18 @@ class Graph(AbstractContextManager):
             similarity_scores = self.vector_store.vector_search_node_from_multi_db(
                 text, threshold=threshold, limit=limit
             )
-            embed_ids = [score for score, distance in similarity_scores]
+
+            if isinstance(self.vector_store.db, VliteVSS):
+                embed_ids = [
+                    attributes["embed_id"]
+                    for id, label, attributes, distance in similarity_scores
+                ]
+            else:
+                embed_ids = [score for score, distance in similarity_scores]
             embed_ids_str = json.dumps(embed_ids)
+
+            if embed_ids is None:
+                return None
 
             similar_nodes = self.db.search_similar_nodes(
                 embed_ids_str, desc=descending, sort_by=sort_by
@@ -120,7 +131,10 @@ class Graph(AbstractContextManager):
     ):
         use_direct_search = False
 
-        if isinstance(self.vector_store.db, TursoDB) and isinstance(self.db, TursoDB):
+        if isinstance(self.vector_store, VliteVSS):
+            use_direct_search = True
+
+        elif isinstance(self.vector_store.db, TursoDB) and isinstance(self.db, TursoDB):
             if (
                 self.vector_store.db.db_url == self.db.db_url
                 and self.vector_store.db.db_auth_token == self.db.db_auth_token
@@ -147,8 +161,18 @@ class Graph(AbstractContextManager):
             similarity_scores = self.vector_store.vector_search_edge_from_multi_db(
                 text, threshold=threshold, limit=limit
             )
-            embed_ids = [score for score, distance in similarity_scores]
+            if isinstance(self.vector_store.db, VliteVSS):
+                embed_ids = [
+                    attributes["embed_id"]
+                    for id, label, attributes, distance in similarity_scores
+                ]
+            else:
+                embed_ids = [score for score, distance in similarity_scores]
+
             embed_ids_str = json.dumps(embed_ids)
+
+            if embed_ids is None:
+                return None
 
             similar_edges = self.db.search_similar_edges(
                 embed_ids_str, desc=descending, sort_by=sort_by
@@ -169,6 +193,7 @@ class Graph(AbstractContextManager):
 
             self.vector_store.add_node_embedding(
                 node.id,
+                node.label,
                 json.loads(node.attributes)
                 if isinstance(node.attributes, str)
                 else node.attributes,
@@ -213,7 +238,7 @@ class Graph(AbstractContextManager):
             self.db.update_node(node)
 
             updated_data = {**node_data, **node.attributes}
-            self.vector_store.add_node_embedding(node.id, updated_data)
+            self.vector_store.add_node_embedding(node.id, node.label, updated_data)
             self.vector_store.delete_node_embedding(embed_id_to_be_updated[0])
         else:
             self.add_node(node)
@@ -258,7 +283,7 @@ class Graph(AbstractContextManager):
                 )
 
                 self.vector_store.add_node_embedding(
-                    uuid_dict[node.id], {"body": node.attributes}
+                    uuid_dict[node.id], node.label, {"body": node.attributes}
                 )
 
             for edge in kg.edges:
@@ -309,7 +334,15 @@ class Graph(AbstractContextManager):
                 return resultant_subgraph
 
             for node in similar_nodes:
-                similar_node = Node(id=node[1], label=node[2], attributes=node[3])
+                if isinstance(self.vector_store, VliteVSS):
+                    similar_node = Node(
+                        id=node[0].rstrip("_0"),
+                        label=json.loads(node[1])["label"],
+                        attributes=(json.loads(node[1])),
+                    )
+
+                else:
+                    similar_node = Node(id=node[1], label=node[2], attributes=node[3])
                 resultant_subgraph.nodes.append(similar_node)
 
                 nodes = self.db.all_connected_nodes(similar_node)
@@ -322,12 +355,30 @@ class Graph(AbstractContextManager):
                         resultant_subgraph.nodes.append(i)
 
             for edge in similar_edges:
-                similar_edge = Edge(
-                    source=edge[1],
-                    target=edge[2],
-                    label=edge[3],
-                    attributes=edge[4],
-                )
+                if isinstance(self.vector_store, VliteVSS):
+                    edge = self.search_node(edge[0].rstrip("_0"))
+
+                    if edge is None:
+                        continue
+
+                    if "source" not in edge[0][2].keys():
+                        continue
+
+                    edge = json.loads(edge[2])
+
+                    similar_edge = Edge(
+                        source=edge["source"],
+                        target=edge["target"],
+                        label=edge["label"],
+                        attributes=edge,
+                    )
+                else:
+                    similar_edge = Edge(
+                        source=edge[1],
+                        target=edge[2],
+                        label=edge[3],
+                        attributes=edge[4],
+                    )
                 resultant_subgraph.edges.append(similar_edge)
 
                 nodes = self.db.all_connected_nodes(similar_edge)
@@ -419,17 +470,21 @@ class Graph(AbstractContextManager):
         self, label: str, *, threshold: Optional[float] = 0.9
     ) -> List[Node]:
         nodes = self.db.find_nodes_by_label(label)
+
         similar_rows = []
-        for node in nodes:
+        for id, text, attribute in nodes:
             similar_nodes = self._similarity_search_node(
-                json.dumps(node), threshold=threshold
+                json.dumps(text), threshold=threshold
             )
 
             if len(similar_nodes) < 1:
                 continue
 
             for rowid in similar_nodes:
-                fetched_node_id = self.db.fetch_node_id(rowid[0])
+                if isinstance(self.vector_store, VliteVSS):
+                    fetched_node_id = self.db.fetch_node_id(rowid[0].rstrip("_0"))
+                else:
+                    fetched_node_id = self.db.fetch_node_id(rowid[0])
                 node_data = self.db.search_node(fetched_node_id[0])
                 node_label = self.db.search_node_label(fetched_node_id[0])
 
@@ -498,7 +553,11 @@ class Graph(AbstractContextManager):
         if similar_nodes is None:
             return None
 
-        if limit == 1:
-            return json.loads(similar_nodes[0][3])
+        if isinstance(self.vector_store, VliteVSS):
+            if limit == 1:
+                return similar_nodes[0][2]
+        else:
+            if limit == 1:
+                return json.loads(similar_nodes[0][3])
 
         return similar_nodes

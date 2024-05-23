@@ -27,8 +27,8 @@ class VliteVSS(VectorStore):
         self.vlite.save()
 
     def add_node_embedding(self, id: Any, label: str, attribute: Dict):
-        count = not self.vlite.count() + 1
-        attribute.update({"label": label})
+        count = self.vlite.count() + 1
+        attribute.update({"label": label, "embed_id": count})
         self.vlite.add(
             item_id=id,
             data={"text": json.dumps(attribute)},
@@ -39,8 +39,8 @@ class VliteVSS(VectorStore):
     def add_edge_embedding(
         self, source: Any, target: Any, label: str, attributes: Dict
     ) -> None:
-        count = not self.vlite.count() + 1
-        attributes.update({"source": source, "target": target, "label": label})
+        count = self.vlite.count() + 1
+        attributes.update({"source": source, "target": target, "label": label, "embed_id": count})
         self.vlite.add({"text": json.dumps(attributes)}, metadata={"embed_id": count})
         self.vlite.save()
 
