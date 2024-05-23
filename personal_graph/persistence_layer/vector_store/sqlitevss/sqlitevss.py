@@ -54,14 +54,15 @@ class SQLiteVSS(VectorStore):
             f"  )"
         )
 
-    def _set_id(self, identifier: Any, data: Dict) -> Dict:
+    def _set_id(self, identifier: Any, label: str, data: Dict) -> Dict:
         if identifier is not None:
             data["id"] = identifier
+            data["label"] = label
         return data
 
-    def _add_embedding(self, id: Any, data: Dict) -> CursorExecFunction:
+    def _add_embedding(self, id: Any, label: str, data: Dict) -> CursorExecFunction:
         def _insert(cursor, connection):
-            set_data = self._set_id(id, data)
+            set_data = self._set_id(id, label, data)
 
             count = (
                 cursor.execute(
@@ -99,7 +100,7 @@ class SQLiteVSS(VectorStore):
                         count + i,
                         json.dumps(
                             self.embedding_model.get_embedding(
-                                json.dumps(self._set_id(x[0], x[2]))
+                                json.dumps(self._set_id(x[0], x[1], x[2]))
                             )
                         ),
                     ),
@@ -140,8 +141,10 @@ class SQLiteVSS(VectorStore):
 
         return _delete_node_embedding
 
-    def add_node_embedding(self, id: Any, attribute: Dict[Any, Any]) -> None:
-        self.db.atomic(self._add_embedding(id, attribute))
+    def add_node_embedding(
+        self, id: Any, label: str, attribute: Dict[Any, Any]
+    ) -> None:
+        self.db.atomic(self._add_embedding(id, label, attribute))
 
     def add_edge_embedding(
         self, source: Any, target: Any, label: str, attributes: Dict

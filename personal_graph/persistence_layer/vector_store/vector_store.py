@@ -18,7 +18,7 @@ class VectorStore(ABC):
         pass
 
     @abstractmethod
-    def add_node_embedding(self, id: Any, attribute: Dict):
+    def add_node_embedding(self, id: Any, label: str, attribute: Dict):
         """Add a single node to the database."""
         pass
 
