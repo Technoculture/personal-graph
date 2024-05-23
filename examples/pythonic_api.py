@@ -1,9 +1,6 @@
 import argparse
 import os
 import logging
-from personal_graph.clients import LiteLLMEmbeddingClient
-from personal_graph.persistence_layer.database import SQLite
-from personal_graph.persistence_layer.vector_store import SQLiteVSS
 from personal_graph.text import text_to_graph
 from personal_graph.visualizers import visualize_graph
 from personal_graph.ml import networkx_to_pg, pg_to_networkx

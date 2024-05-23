@@ -9,7 +9,7 @@ from personal_graph.models import Node, Edge
 CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
 
 
-class DatabaseStore(ABC):
+class DB(ABC):
     @abstractmethod
     def initialize(self):
         pass

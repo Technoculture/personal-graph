@@ -10,7 +10,7 @@ from personal_graph.models import Node, Edge
 from jinja2 import BaseLoader, Environment, select_autoescape
 
 from personal_graph.visualizers import _as_dot_node, _as_dot_label
-from personal_graph.persistence_layer.database.database_store import DatabaseStore
+from personal_graph.persistence_layer.database.db import DB
 
 CursorExecFunction = Callable[[sqlite3.Cursor, sqlite3.Connection], Any]
 
@@ -37,7 +37,7 @@ class SqlTemplateLoader(BaseLoader):
         return read_sql(template_path), template, uptodate
 
 
-class SQLite(DatabaseStore):
+class SQLite(DB):
     def __init__(
         self,
         *,
