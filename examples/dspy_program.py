@@ -1,20 +1,8 @@
 import os
 import dspy  # type: ignore
-from personal_graph import Graph, LLMClient, PersonalRM, EmbeddingClient
-from personal_graph.database import TursoDB, SQLiteVSS
-from personal_graph.graph_generator import InstructorGraphGenerator
+from personal_graph import Graph, PersonalRM
 
-vector_store = SQLiteVSS(
-    persistence_layer=TursoDB(
-        url=os.getenv("LIBSQL_URL"), auth_token=os.getenv("LIBSQL_AUTH_TOKEN")
-    ),
-    embedding_model_client=EmbeddingClient(),
-)
-
-graph = Graph(
-    vector_store=vector_store,
-    graph_generator=InstructorGraphGenerator(llm_client=LLMClient()),
-)
+graph = Graph()
 turbo = dspy.OpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPEN_API_KEY"))
 retriever = PersonalRM(graph=graph, k=2)
 dspy.settings.configure(lm=turbo, rm=retriever)

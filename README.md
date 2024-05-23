@@ -53,7 +53,7 @@ graph.insert_graph(g)
 # Retrieve relevant information from the graph
 query = "Who is Alice?"
 results = graph.search(query)
-print(results["body"])
+print(results)
 
 # Use the retrieved information to answer questions
 print(f"Question: {query}")
@@ -61,7 +61,7 @@ print(f"Answer: Alice is Bob's sister.")
 
 query = "Where does Bob work?"
 results = graph.search(query)
-print(results["body"])
+print(results)
 print(f"Question: {query}")
 print(f"Answer: Bob works at Google.")
 ```
