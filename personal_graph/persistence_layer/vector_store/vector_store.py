@@ -9,24 +9,24 @@ from typing import Any, Dict, List, Union, Optional
 class VectorStore(ABC):
     @abstractmethod
     def initialize(self):
-        """Initialize the database."""
+        """Initialize the vector store."""
         pass
 
     @abstractmethod
     def save(self):
-        """Save the data into the database"""
+        """Save the embeddings into the vector store"""
         pass
 
     @abstractmethod
     def add_node_embedding(self, id: Any, label: str, attribute: Dict):
-        """Add a single node to the database."""
+        """Add a single node embedding to the database."""
         pass
 
     @abstractmethod
     def add_edge_embedding(
         self, source: Any, target: Any, label: str, attributes: Dict
     ) -> None:
-        """Add a single edge to the database."""
+        """Add a single edge embedding to the database."""
         pass
 
     @abstractmethod
@@ -37,16 +37,17 @@ class VectorStore(ABC):
         labels: List[str],
         attributes: List[Union[Dict[str, str]]],
     ):
+        """Add edges embeddings to the vector store"""
         pass
 
     @abstractmethod
     def delete_node_embedding(self, id: Any) -> None:
-        """Remove a single node from the database."""
+        """Remove a single node embedding from the database."""
         pass
 
     @abstractmethod
     def delete_edge_embedding(self, ids: Any) -> None:
-        """Remove multiple nodes from the database."""
+        """Remove multiple nodes embedding from the database."""
         pass
 
     @abstractmethod
@@ -79,10 +80,12 @@ class VectorStore(ABC):
     def vector_search_node_from_multi_db(
         self, data: Dict, *, threshold: Optional[float] = None, limit: int = 1
     ):
+        """Perform a vector search for nodes across multiple databases"""
         pass
 
     @abstractmethod
     def vector_search_edge_from_multi_db(
         self, data: Dict, *, threshold: Optional[float] = None, limit: int = 1
     ):
+        """Perform a vector search for edges across multiple databases"""
         pass
