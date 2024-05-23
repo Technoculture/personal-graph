@@ -23,10 +23,6 @@ class DatabaseStore(ABC):
         pass
 
     @abstractmethod
-    def atomic(self, cursor_exec_fn: CursorExecFunction) -> Any:
-        pass
-
-    @abstractmethod
     def fetch_node_embed_id(self, node_id: Any):
         pass
 

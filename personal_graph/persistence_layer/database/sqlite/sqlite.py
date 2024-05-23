@@ -537,7 +537,8 @@ class SQLite(DatabaseStore):
     def find_nodes_by_label(self, label: str):
         def search_node_like(cursor, connection):
             nodes = cursor.execute(
-                "SELECT * FROM nodes WHERE label LIKE ?", ("%" + label + "%",)
+                "SELECT id, label, attributes FROM nodes WHERE label LIKE ?",
+                ("%" + label + "%",),
             )
 
             if nodes is None:
@@ -651,9 +652,6 @@ class SQLite(DatabaseStore):
                 (embed_ids, sort_by, desc, sort_by, sort_by, desc, sort_by),
             )
 
-            if not nodes:
-                return None
-
             return nodes.fetchall()
 
         return self.atomic(_search_node)
@@ -666,9 +664,6 @@ class SQLite(DatabaseStore):
                 read_sql(Path("search-edge-by-rowid.sql")),
                 (embed_ids, sort_by, desc, sort_by, sort_by, desc, sort_by),
             )
-
-            if not edges:
-                return None
 
             return edges.fetchall()
 
