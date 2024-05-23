@@ -1,30 +1,17 @@
 import argparse
 import os
 import logging
-from personal_graph import Graph, Node, KnowledgeGraph, Edge, EdgeInput
 from personal_graph.clients import LiteLLMEmbeddingClient
 from personal_graph.persistence_layer.database import SQLite
 from personal_graph.persistence_layer.vector_store import SQLiteVSS
-from personal_graph.ml import networkx_to_pg, pg_to_networkx
 from personal_graph.text import text_to_graph
 from personal_graph.visualizers import visualize_graph
+from personal_graph.ml import networkx_to_pg, pg_to_networkx
+from personal_graph import Graph, Node, KnowledgeGraph, Edge, EdgeInput
 
 
 def main(args):
-    vector_store = SQLiteVSS(
-        db=SQLite(
-            use_in_memory=True,
-            vector0_so_path="path/to/vector0.so",
-            vss0_so_path="path/to/vss0.so",
-        ),
-        embedding_model_client=LiteLLMEmbeddingClient(),
-    )
-    database = SQLite(
-        use_in_memory=True,
-        vector0_so_path="path/to/vector0.so",
-        vss0_so_path="path/to/vss0.so",
-    )
-    with Graph(vector_store=vector_store, database=database) as graph:
+    with Graph() as graph:
         # Define nodes and edges
         node1 = Node(
             id="3", label="close relative", attributes={"name": "Alice", "age": "30"}
@@ -146,7 +133,7 @@ def main(args):
 
         logging.info(graph.search_node(4))
 
-        graph.merge_by_similarity(threshold=1)
+        graph.merge_by_similarity(threshold=3000)
         logging.info("Merged nodes")
 
         # Insert natural language query into graph db
@@ -156,9 +143,12 @@ def main(args):
         graph.insert_graph(generated_kg)
 
         # Search natural language query from graph db
-        kg = graph.search_from_graph(text="I have a interest in Sri Lankan coral reefs")
+        kg = graph.search_from_graph(
+            text="The user has a brother who is interested in coral reefs near Sri Lanka.",
+            threshold=5500,
+        )
         visualize_graph(kg).render("sample.dot")
-        logging.info(graph.find_nodes_like(label="favorite hobbies ", threshold=3000))
+        logging.info(graph.find_nodes_like(label="favorite hobbies ", threshold=5000))
 
         graph.visualize("sample.dot", ["4"])
         kg = KnowledgeGraph(
