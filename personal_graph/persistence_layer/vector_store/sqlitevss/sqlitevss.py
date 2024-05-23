@@ -26,13 +26,13 @@ class SQLiteVSS(VectorStore):
         self,
         *,
         db: Union[TursoDB, SQLite],
-        embedding_model_client: LiteLLMEmbeddingClient = LiteLLMEmbeddingClient(),
+        embedding_client: LiteLLMEmbeddingClient = LiteLLMEmbeddingClient(),
     ):
         self.db = db
         self.embedding_model = OpenAIEmbeddingsModel(
-            embedding_model_client.client,
-            embedding_model_client.model_name,
-            embedding_model_client.dimensions,
+            embedding_client.client,
+            embedding_client.model_name,
+            embedding_client.dimensions,
         )
 
     def initialize(self):
@@ -50,7 +50,7 @@ class SQLiteVSS(VectorStore):
         return (
             f"SQLiteVSS(\n"
             f"  db={self.db}\n"
-            f"  embedding_model_client={self.embedding_model}\n"
+            f"  embedding_client={self.embedding_model}\n"
             f"  )"
         )
 
