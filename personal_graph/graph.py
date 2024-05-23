@@ -541,18 +541,14 @@ class Graph(AbstractContextManager):
         descending: bool = False,
         limit: int = 1,
         sort_by: str = "",
-    ):
-        try:
-            similar_nodes = self._similarity_search_node(
-                text,
-                threshold=threshold,
-                descending=descending,
-                limit=limit,
-                sort_by=sort_by,
-            )
-
-        except Exception as e:
-            return e
+    ) -> None | List[tuple[Any, str, dict, Any]] | list[tuple[Any, str, dict]]:
+        similar_nodes = self._similarity_search_node(
+            text,
+            threshold=threshold,
+            descending=descending,
+            limit=limit,
+            sort_by=sort_by,
+        )
 
         if similar_nodes is None:
             return None
