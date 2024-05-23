@@ -485,6 +485,10 @@ class Graph(AbstractContextManager):
                     fetched_node_id = self.db.fetch_node_id(rowid[0].rstrip("_0"))
                 else:
                     fetched_node_id = self.db.fetch_node_id(rowid[0])
+
+                if fetched_node_id is None:
+                    continue
+
                 node_data = self.db.search_node(fetched_node_id[0])
                 node_label = self.db.search_node_label(fetched_node_id[0])
 

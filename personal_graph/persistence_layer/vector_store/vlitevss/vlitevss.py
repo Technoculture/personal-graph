@@ -40,7 +40,9 @@ class VliteVSS(VectorStore):
         self, source: Any, target: Any, label: str, attributes: Dict
     ) -> None:
         count = self.vlite.count() + 1
-        attributes.update({"source": source, "target": target, "label": label, "embed_id": count})
+        attributes.update(
+            {"source": source, "target": target, "label": label, "embed_id": count}
+        )
         self.vlite.add({"text": json.dumps(attributes)}, metadata={"embed_id": count})
         self.vlite.save()
 
