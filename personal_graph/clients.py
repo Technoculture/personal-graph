@@ -1,8 +1,6 @@
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional
-
 import openai
 
 
@@ -34,7 +32,7 @@ class APIClient(ABC):
 @dataclass
 class LiteLLMEmbeddingClient(APIClient):
     model_name: str = "openai/text-embedding-3-small"
-    dimensions: Optional[int] = 384
+    dimensions: int = 384
     base_url: str = ""
 
     def __post_init__(self):

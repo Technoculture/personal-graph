@@ -1,7 +1,7 @@
 import json
 from typing import Dict, Optional, Any, List, Union
 
-from vlite import VLite
+from vlite import VLite  # type: ignore
 
 from personal_graph.persistence_layer.vector_store.vector_store import VectorStore
 

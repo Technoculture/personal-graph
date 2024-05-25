@@ -257,7 +257,7 @@ class SQLite(DB):
             result = new_edge.fetchone()
 
             if result is None:
-                return None
+                return
             else:
                 return result[0]
 
@@ -461,15 +461,15 @@ class SQLite(DB):
 
         return self.atomic(_get_all_connections)
 
-    def fetch_node_embed_id(self, node_id: Any, limit: Optional[int] = 1):
+    def fetch_node_embed_id(self, node_id: Any, limit: int = 1) -> None:
         return self.atomic(self._fetch_node_id(node_id, limit))
 
-    def fetch_edge_embed_ids(self, id: Any, *, limit: int = 10):
+    def fetch_edge_embed_ids(self, id: Any, limit: int = 10):
         return self.atomic(self._fetch_edge_ids(id, limit))
 
     def search_edge(
-        self, source: Any, target: Any, attributes: Dict, limit: Optional[int] = 1
-    ):
+        self, source: Any, target: Any, attributes: Dict, limit: int = 1
+    ) -> Dict[Any, Any]:
         return self.atomic(self._find_edge(source, target, attributes, limit))
 
     def add_node(self, label: str, attribute: Dict, id: Any):
@@ -665,9 +665,7 @@ class SQLite(DB):
 
         return self.atomic(_search_node)
 
-    def search_similar_edges(
-        self, embed_ids, *, desc: Optional[bool] = False, sort_by: str = ""
-    ):
+    def search_similar_edges(self, embed_ids, *, desc: bool = False, sort_by: str = ""):
         def _search_edge(cursor, connection):
             edges = cursor.execute(
                 read_sql(Path("search-edge-by-rowid.sql")),

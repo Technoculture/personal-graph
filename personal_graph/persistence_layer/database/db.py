@@ -139,15 +139,11 @@ class DB(ABC):
         pass
 
     @abstractmethod
-    def search_similar_nodes(
-        self, embed_id, *, desc: Optional[bool] = False, sort_by: Optional[str] = ""
-    ):
+    def search_similar_nodes(self, embed_id, *, desc: bool, sort_by: str):
         """Search for nodes similar to the given embedding ID"""
         pass
 
     @abstractmethod
-    def search_similar_edges(
-        self, embed_id, *, desc: Optional[bool] = False, sort_by: Optional[str] = ""
-    ):
+    def search_similar_edges(self, embed_id, *, desc: bool, sort_by: str):
         """Search for edges similar to the given embedding ID"""
         pass

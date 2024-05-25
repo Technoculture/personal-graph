@@ -3,7 +3,7 @@ Provide access to different vector databases
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Union, Optional
+from typing import Any, Dict, List, Union
 
 
 class VectorStore(ABC):
@@ -55,7 +55,7 @@ class VectorStore(ABC):
         self,
         data: Dict,
         *,
-        threshold: Optional[float] = None,
+        threshold: float,
         descending: bool,
         limit: int,
         sort_by: str,
@@ -68,7 +68,7 @@ class VectorStore(ABC):
         self,
         data: Dict,
         *,
-        threshold: Optional[float] = None,
+        threshold: float,
         descending: bool,
         limit: int,
         sort_by: str,
@@ -78,14 +78,14 @@ class VectorStore(ABC):
 
     @abstractmethod
     def vector_search_node_from_multi_db(
-        self, data: Dict, *, threshold: Optional[float] = None, limit: int = 1
+        self, data: Dict, *, threshold: float, limit: int
     ):
         """Perform a vector search for nodes across multiple databases"""
         pass
 
     @abstractmethod
     def vector_search_edge_from_multi_db(
-        self, data: Dict, *, threshold: Optional[float] = None, limit: int = 1
+        self, data: Dict, *, threshold: float, limit: int
     ):
         """Perform a vector search for edges across multiple databases"""
         pass

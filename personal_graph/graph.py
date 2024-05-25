@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from typing import Any, List, Optional, Union, Dict
+from typing import Any, List, Optional, Union, Dict, Tuple
 
 from contextlib import AbstractContextManager
 
@@ -66,7 +66,7 @@ class GraphDB(AbstractContextManager):
         self,
         text,
         *,
-        threshold: float = None,
+        threshold: float = 0.9,
         descending: bool = False,
         limit: int = 1,
         sort_by: str = "",
@@ -94,7 +94,7 @@ class GraphDB(AbstractContextManager):
 
         if use_direct_search:
             similar_nodes = self.vector_store.vector_search_node(
-                text,
+                {"body": text},
                 threshold=threshold,
                 descending=descending,
                 limit=limit,
@@ -102,10 +102,10 @@ class GraphDB(AbstractContextManager):
             )
         else:
             similarity_scores = self.vector_store.vector_search_node_from_multi_db(
-                text, threshold=threshold, limit=limit
+                {"body": text}, threshold=threshold, limit=limit
             )
 
-            if isinstance(self.vector_store.db, VliteVSS):
+            if isinstance(self.vector_store, VliteVSS):
                 embed_ids = [
                     attributes["embed_id"]
                     for id, label, attributes, distance in similarity_scores
@@ -127,7 +127,7 @@ class GraphDB(AbstractContextManager):
         self,
         text,
         *,
-        threshold: float = None,
+        threshold: float = 0.9,
         descending: bool = False,
         limit: int = 1,
         sort_by: str = "",
@@ -155,7 +155,7 @@ class GraphDB(AbstractContextManager):
 
         if use_direct_search:
             similar_edges = self.vector_store.vector_search_edge(
-                text,
+                {"body": text},
                 threshold=threshold,
                 descending=descending,
                 limit=limit,
@@ -163,9 +163,9 @@ class GraphDB(AbstractContextManager):
             )
         else:
             similarity_scores = self.vector_store.vector_search_edge_from_multi_db(
-                text, threshold=threshold, limit=limit
+                {"body": text}, threshold=threshold, limit=limit
             )
-            if isinstance(self.vector_store.db, VliteVSS):
+            if isinstance(self.vector_store, VliteVSS):
                 embed_ids = [
                     attributes["embed_id"]
                     for id, label, attributes, distance in similarity_scores
@@ -208,8 +208,13 @@ class GraphDB(AbstractContextManager):
             self.add_node(node)
 
     def add_edge(self, edge: EdgeInput) -> None:
+        attributes = (
+            json.loads(edge.attributes)
+            if isinstance(edge.attributes, str)
+            else edge.attributes
+        )
         if (
-            self.db.search_edge(edge.source.id, edge.target.id, edge.attributes) is None
+            self.db.search_edge(edge.source.id, edge.target.id, attributes) is None
             and (self.db.search_node(edge.source.id) is not None)
             and (self.db.search_node(edge.target.id) is not None)
         ):
@@ -239,11 +244,17 @@ class GraphDB(AbstractContextManager):
         if node_data is not None:
             embed_id_to_be_updated = self.db.fetch_node_embed_id(node.id)
 
-            self.db.update_node(node)
+            node_attributes = (
+                json.loads(node.attributes)
+                if isinstance(node.attributes, str)
+                else node.attributes
+            )
 
-            updated_data = {**node_data, **node.attributes}
+            self.db.update_node(node)
+            updated_data: Dict = {**node_data, **node_attributes}
+
             self.vector_store.add_node_embedding(node.id, node.label, updated_data)
-            self.vector_store.delete_node_embedding(embed_id_to_be_updated[0])
+            self.vector_store.delete_node_embedding(embed_id_to_be_updated)
         else:
             self.add_node(node)
 
@@ -311,7 +322,7 @@ class GraphDB(AbstractContextManager):
         self,
         text: str,
         *,
-        threshold: float = None,
+        threshold: float = 0.9,
         limit: int = 1,
         descending: bool = False,
         sort_by: str = "",
@@ -398,7 +409,7 @@ class GraphDB(AbstractContextManager):
 
         return resultant_subgraph
 
-    def merge_by_similarity(self, *, threshold: Optional[float] = 0.9) -> None:
+    def merge_by_similarity(self, *, threshold: float = 0.9) -> None:
         node_ids = self.db.fetch_ids_from_db()
 
         for node_id in node_ids:
@@ -423,7 +434,7 @@ class GraphDB(AbstractContextManager):
                 in_degree_ids = self.db.search_indegree_edges(similar_node_id)
                 out_degree_ids = self.db.search_outdegree_edges(similar_node_id)
 
-                concatenated_attributes = {}
+                concatenated_attributes: Dict = {}
                 concatenated_labels = ""
 
                 for data in in_degree_ids:
@@ -470,9 +481,7 @@ class GraphDB(AbstractContextManager):
 
                     self.remove_node(similar_node_id)
 
-    def find_nodes_like(
-        self, label: str, *, threshold: Optional[float] = 0.9
-    ) -> List[Node]:
+    def find_nodes_like(self, label: str, *, threshold: float = 0.9) -> List[Node]:
         nodes = self.db.find_nodes_by_label(label)
 
         similar_rows = []
@@ -517,7 +526,7 @@ class GraphDB(AbstractContextManager):
     def search_outdegree_edges(self, source: str) -> List[Any]:
         return self.db.search_outdegree_edges(source)
 
-    def is_unique_prompt(self, text: str, *, threshold: Optional[float] = 0.9) -> bool:
+    def is_unique_prompt(self, text: str, *, threshold: float = 0.9) -> bool:
         similar_nodes = self._similarity_search_node(text, threshold=threshold, limit=1)
 
         if not similar_nodes:
@@ -541,11 +550,11 @@ class GraphDB(AbstractContextManager):
         self,
         text: str,
         *,
-        threshold: float = None,
+        threshold: float = 0.9,
         descending: bool = False,
         limit: int = 1,
         sort_by: str = "",
-    ) -> None | List[tuple[Any, str, dict, Any]] | list[tuple[Any, str, dict]]:
+    ) -> None | List[Tuple[Any, str, dict, Any]]:
         similar_nodes = self._similarity_search_node(
             text,
             threshold=threshold,

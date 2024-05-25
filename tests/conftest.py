@@ -10,9 +10,6 @@ from personal_graph import (
     EdgeInput,
     OpenAIEmbeddingsModel,
 )
-from personal_graph.clients import LiteLLMEmbeddingClient
-from personal_graph.persistence_layer.database import SQLite
-from personal_graph.persistence_layer.vector_store import SQLiteVSS
 
 
 @pytest.fixture

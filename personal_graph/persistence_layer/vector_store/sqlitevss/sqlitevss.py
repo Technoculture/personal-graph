@@ -176,15 +176,17 @@ class SQLiteVSS(VectorStore):
 
     def vector_search_node(
         self,
-        data: str,
+        data: Dict,
         *,
-        threshold: float = None,
+        threshold: float = 0.9,
         descending: bool = False,
         limit: int = 1,
         sort_by: str = "",
     ):
         def _search_node(cursor, connection):
-            embed_json = json.dumps(self.embedding_model.get_embedding(data))
+            embed_json = json.dumps(
+                self.embedding_model.get_embedding(json.dumps(data))
+            )
 
             nodes = cursor.execute(
                 read_sql(Path("vector-search-node.sql")),
@@ -214,15 +216,15 @@ class SQLiteVSS(VectorStore):
     # TODO: check up the optional params, , mention default values, use enums Ordering(asc, desc): do ordering.asc
     def vector_search_edge(
         self,
-        data: str,
+        data: Dict,
         *,
-        threshold: float = None,
+        threshold: float = 0.9,
         descending: bool = False,
         limit: int = 1,
         sort_by: str = "",
     ):
         def _search_edge(cursor, connection):
-            embed = json.dumps(self.embedding_model.get_embedding(data))
+            embed = json.dumps(self.embedding_model.get_embedding(json.dumps(data)))
             if descending:
                 edges = cursor.execute(
                     read_sql(Path("vector-search-edge-desc.sql")), (embed, limit)
@@ -245,10 +247,12 @@ class SQLiteVSS(VectorStore):
         return self.db.atomic(_search_edge)
 
     def vector_search_node_from_multi_db(
-        self, data: str, *, threshold: float = None, limit: int = 1
+        self, data: Dict, *, threshold: float = 0.9, limit: int = 1
     ):
         def _search_node(cursor, connection):
-            embed_json = json.dumps(self.embedding_model.get_embedding(data))
+            embed_json = json.dumps(
+                self.embedding_model.get_embedding(json.dumps(data))
+            )
 
             nodes = cursor.execute(
                 read_sql(Path("similarity-search-node.sql")),
@@ -266,10 +270,12 @@ class SQLiteVSS(VectorStore):
         return self.db.atomic(_search_node)
 
     def vector_search_edge_from_multi_db(
-        self, data: str, *, threshold: float = None, limit: int = 1
+        self, data: Dict, *, threshold: float = 0.9, limit: int = 1
     ):
         def _search_node(cursor, connection):
-            embed_json = json.dumps(self.embedding_model.get_embedding(data))
+            embed_json = json.dumps(
+                self.embedding_model.get_embedding(json.dumps(data))
+            )
 
             nodes = cursor.execute(
                 read_sql(Path("similarity-search-edge.sql")),
