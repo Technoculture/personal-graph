@@ -73,20 +73,9 @@ def main(args):
         query = "User talked about his fears, achievements, hobbies and beliefs."
 
         deepest_conversation = graph.search(
-            query, descending=True, limit=1, sort_by="depth_score"
+            query, descending=True, limit=2, sort_by="depth_score"
         )
         logging.info(deepest_conversation)
-
-        if deepest_conversation:
-            logging.info(f"Question: {query}")
-            logging.info(
-                f"Answer: Our deepest conversation was on {deepest_conversation['date']} when we discussed {deepest_conversation['topic']}."
-            )
-        else:
-            logging.info(f"Question: {query}")
-            logging.info(
-                "Answer: I apologize, but I don't have enough information to determine our deepest conversation."
-            )
 
         query = "User discussed their fears and insecurities"
         logging.info(graph.is_unique_prompt(query))
@@ -130,7 +119,7 @@ def main(args):
 
         logging.info(graph.search_node(4))
 
-        graph.merge_by_similarity(threshold=3000)
+        graph.merge_by_similarity(threshold=0.8)
         logging.info("Merged nodes")
 
         # Insert natural language query into graph db
