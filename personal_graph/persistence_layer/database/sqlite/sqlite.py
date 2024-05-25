@@ -248,11 +248,11 @@ class SQLite(DB):
 
         return _find_single_node
 
-    def _find_edge(self, source: Any, target: Any, attributes: Dict):
+    def _find_edge(self, source: Any, target: Any, attributes: Dict, limit: int):
         def _search_edge(cursor, connection):
             new_edge = cursor.execute(
-                "SELECT embed_id from edges where source=? AND target=? AND attributes = json(?)",
-                (source, target, json.dumps(attributes)),
+                "SELECT embed_id from edges where source=? AND target=? AND attributes = json(?) LIMIT ?",
+                (source, target, json.dumps(attributes), limit),
             )
             result = new_edge.fetchone()
 
@@ -387,10 +387,10 @@ class SQLite(DB):
 
         return self.atomic(_get_connections)
 
-    def _fetch_node_id(self, node_id: Any):
+    def _fetch_node_id(self, node_id: Any, limit: int):
         def _get_node_id(cursor, connection):
             embed_id = cursor.execute(
-                "SELECT embed_id from nodes where id=?", (node_id,)
+                "SELECT embed_id from nodes where id=? LIMIT ?", (node_id, limit)
             )
 
             if embed_id is None:
@@ -400,10 +400,11 @@ class SQLite(DB):
 
         return _get_node_id
 
-    def _fetch_edge_ids(self, id: Any):
+    def _fetch_edge_ids(self, id: Any, limit: int):
         def _get_edge_embed_ids(cursor, connection):
             ids = cursor.execute(
-                "SELECT embed_id from edges where source=? or target=?", (id, id)
+                "SELECT embed_id from edges where source=? or target=? LIMIT ?",
+                (id, id, limit),
             )
             if ids is None:
                 return
@@ -412,20 +413,22 @@ class SQLite(DB):
 
         return _get_edge_embed_ids
 
-    def all_connected_nodes(self, node_or_edge: Union[Node | Edge]) -> Any:
+    def all_connected_nodes(
+        self, node_or_edge: Union[Node | Edge], limit: Optional[int] = 1
+    ) -> Any:
         def _connected_nodes(cursor, connection):
             nodes = None
             if isinstance(node_or_edge, Node):
                 index = node_or_edge.id
                 nodes = cursor.execute(
-                    "SELECT source, target FROM edges WHERE source=? OR target=?",
-                    (index, index),
+                    "SELECT source, target FROM edges WHERE source=? OR target=? LIMIT ?",
+                    (index, index, limit),
                 )
             elif isinstance(node_or_edge, Edge):
                 index1, index2 = node_or_edge.source, node_or_edge.target
                 nodes = cursor.execute(
-                    "SELECT source, target FROM edges WHERE source=? OR target=? OR source=? OR target=?",
-                    (index1, index1, index2, index2),
+                    "SELECT source, target FROM edges WHERE source=? OR target=? OR source=? OR target=? LIMIT ?",
+                    (index1, index1, index2, index2, limit),
                 )
 
             resultant_connected_nodes = []
@@ -434,8 +437,8 @@ class SQLite(DB):
                 for connected_node in connected_nodes:
                     for id in connected_node:
                         res = cursor.execute(
-                            "SELECT id, label, attributes from nodes where id=?",
-                            (id,),
+                            "SELECT id, label, attributes from nodes where id=? LIMIT ?",
+                            (id, limit),
                         ).fetchone()
                         if res not in resultant_connected_nodes:
                             resultant_connected_nodes.append(
@@ -458,14 +461,16 @@ class SQLite(DB):
 
         return self.atomic(_get_all_connections)
 
-    def fetch_node_embed_id(self, node_id: Any):
-        return self.atomic(self._fetch_node_id(node_id))
+    def fetch_node_embed_id(self, node_id: Any, limit: Optional[int] = 1):
+        return self.atomic(self._fetch_node_id(node_id, limit))
 
-    def fetch_edge_embed_ids(self, id: Any):
-        return self.atomic(self._fetch_edge_ids(id))
+    def fetch_edge_embed_ids(self, id: Any, *, limit: int = 10):
+        return self.atomic(self._fetch_edge_ids(id, limit))
 
-    def search_edge(self, source: Any, target: Any, attributes: Dict):
-        return self.atomic(self._find_edge(source, target, attributes))
+    def search_edge(
+        self, source: Any, target: Any, attributes: Dict, limit: Optional[int] = 1
+    ):
+        return self.atomic(self._find_edge(source, target, attributes, limit))
 
     def add_node(self, label: str, attribute: Dict, id: Any):
         self.atomic(
@@ -501,10 +506,10 @@ class SQLite(DB):
     def search_node(self, node_id: Any) -> Any:
         return self.atomic(self._find_node(node_id))
 
-    def search_node_label(self, node_id: Any) -> Any:
+    def search_node_label(self, node_id: Any, limit: Optional[int] = 1) -> Any:
         def _search_label(cursor, connection):
             node_label = cursor.execute(
-                "SELECT label from nodes where id=?", (node_id,)
+                "SELECT label from nodes where id=? LIMIT ?", (node_id, limit)
             ).fetchone()
 
             return node_label
@@ -525,20 +530,20 @@ class SQLite(DB):
         )
         return path
 
-    def fetch_node_id(self, id: Any):
+    def fetch_node_id(self, id: Any, limit: Optional[int] = 1):
         def _get_id(cursor, connection):
             similar_node_id = cursor.execute(
-                "SELECT id from nodes where embed_id=?", (id,)
+                "SELECT id from nodes where embed_id=? LIMIT ?", (id, limit)
             ).fetchone()
             return similar_node_id
 
         return self.atomic(_get_id)
 
-    def find_nodes_by_label(self, label: str):
+    def find_nodes_by_label(self, label: str, limit: Optional[int] = 1):
         def search_node_like(cursor, connection):
             nodes = cursor.execute(
-                "SELECT id, label, attributes FROM nodes WHERE label LIKE ?",
-                ("%" + label + "%",),
+                "SELECT id, label, attributes FROM nodes WHERE label LIKE ? LIMIT ?",
+                ("%" + label + "%", limit),
             )
 
             if nodes is None:
@@ -606,20 +611,22 @@ class SQLite(DB):
         dot.render(dot_file, format=format)
         return dot
 
-    def fetch_ids_from_db(self) -> List[str]:
+    def fetch_ids_from_db(self, limit: Optional[int] = 10) -> List[str]:
         def _fetch_nodes_from_db(cursor, connection):
-            nodes = cursor.execute("SELECT id from nodes").fetchall()
+            nodes = cursor.execute("SELECT id from nodes LIMIT ?", (limit,)).fetchall()
             ids = [id[0] for id in nodes]
 
             return ids
 
         return self.atomic(_fetch_nodes_from_db)
 
-    def search_indegree_edges(self, target: Any) -> List[Any]:
+    def search_indegree_edges(
+        self, target: Any, limit: Optional[int] = 10
+    ) -> List[Any]:
         def _indegree_edges(cursor, connection):
             indegree = cursor.execute(
-                "SELECT source, label, attributes from edges where target=? ",
-                (target,),
+                "SELECT source, label, attributes from edges where target=? LIMIT ?",
+                (target, limit),
             )
 
             if not indegree:
@@ -629,11 +636,13 @@ class SQLite(DB):
 
         return self.atomic(_indegree_edges)
 
-    def search_outdegree_edges(self, source: Any) -> List[Any]:
+    def search_outdegree_edges(
+        self, source: Any, limit: Optional[int] = 10
+    ) -> List[Any]:
         def _outdegree_edges(cursor, connection):
             outdegree = cursor.execute(
-                "SELECT target, label, attributes from edges where source=? ",
-                (source,),
+                "SELECT target, label, attributes from edges where source=? LIMIT ?",
+                (source, limit),
             )
 
             if not outdegree:
