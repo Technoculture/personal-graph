@@ -89,11 +89,7 @@ def graph(mock_openai_client, mock_embeddings_model):
             "personal_graph.embeddings.OpenAIEmbeddingsModel",
             return_value=mock_embeddings_model,
         ):
-            vector_store = SQLiteVSS(
-                db=SQLite(use_in_memory=True),
-                embedding_client=LiteLLMEmbeddingClient(),
-            )
-            graph = GraphDB(vector_store=vector_store)
+            graph = GraphDB()
             yield graph
 
 
@@ -122,11 +118,7 @@ def mock_generate_graph():
 
 @pytest.fixture
 def mock_personal_graph(mock_openai_client, mock_db_connection_and_cursor):
-    vector_store = SQLiteVSS(
-        db=SQLite(use_in_memory=True),
-        embedding_client=LiteLLMEmbeddingClient(),
-    )
-    graph = GraphDB(vector_store=vector_store)
+    graph = GraphDB()
 
     node1 = Node(id=1, label="Sample Label", attributes={"Person": "scholar"})
     node2 = Node(id=2, label="Researching", attributes={"University": "Stanford"})

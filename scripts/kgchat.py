@@ -156,7 +156,7 @@ def main():
         db=TursoDB(
             url=os.getenv("LIBSQL_URL_2"), auth_token=os.getenv("LIBSQL_AUTH_TOKEN_2")
         ),
-        embedding_client=LiteLLMEmbeddingClient()
+        embedding_client=LiteLLMEmbeddingClient(),
     )
 
     database = TursoDB(
