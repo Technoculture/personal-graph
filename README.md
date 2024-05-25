@@ -28,23 +28,23 @@ There are two vector store classes SQLiteVSS and VLiteDatabase. Let's dive down 
 
 
 ```
-from personal_graph.database import SQLiteVSS, DBClient, TursoDB
+from personal_graph.persistence_layer.database import TursoDB
+from personal_graph.persistence_layer.vector_store import SQLiteVSS
 from personal_graph import EmbeddingClient
 
-vector_store = VliteVSS()
-vector_store = VLiteDatabase(collection="memories", model_name="mxbai")
+vector_store = VliteVSS(collection="memories", model_name="mxbai")
 ```
 
 ### Building a Working Memory for an AI
 
 ```python
-from personal_graph import Graph, LLMClient
-from personal_graph.database import DBClient, TursoDB
-from personal_graph.vector_store import SQLiteVSS
-from personal_graph.graph_generator import InstructorGraphGenerator
+from personal_graph import GraphDB
+from personal_graph.persistence_layer.database import TursoDB
+from personal_graph.persistence_layer.vector_store import SQLiteVSS
+from personal_graph.graph_generator import OpenAITextToGraphParser
 from personal_graph.text import text_to_graph
 
-graph = Graph(vector_store=vector_store)
+graph = GraphDB(vector_store=vector_store)
 
 # Insert information into the graph
 g = text_to_graph("Alice is Bob's sister. Bob works at Google.")
@@ -70,9 +70,9 @@ In this example, we insert information about Alice and Bob into the knowledge gr
 
 ### Building Long-Term Memory
 ```python
-from personal_graph import Graph, LLMClient
+from personal_graph import GraphDB
 
-graph = Graph(vector_store=vector_store)
+graph = GraphDB(vector_store=vector_store)
 
 # Insert information about conversations with the user over time
 graph.insert(
@@ -129,17 +129,16 @@ This example demonstrates how Personal-Graph can be used to build long-term memo
 
 ### Creating and Querying a Knowledge Graph
 ```py
-from personal_graph import GraphDB, LLMClient
-from personal_graph.graph_generator import InstructorGraphGenerator
+from personal_graph import GraphDB
 from personal_graph.text import text_to_graph
 
 graphdb = GraphDB(vector_store=vector_store)
 
 nl_query = "Increased thirst, weight loss, increased hunger, and frequent urination are all symptoms of diabetes."
-graphdb = graph.insert_into_graph(text=nl_query)
+kg = text_to_graph(text=nl_query)
+graphdb.insert_graph(kg)
 
 search_query = "I am losing weight too frequently."
-#knowledge_graph = graph.search_from_graph(search_query)
 g = text_to_graph(search_query)
 print(g)
 
@@ -149,8 +148,7 @@ graphdb.insert_graph(g)
 ### Retrieval and Question-Answering
 ```py
 import dspy
-from personal_graph.graph_generator import InstructorGraphGenerator
-from personal_graph import Graph, LLMClient, PersonalRM
+from personal_graph import GraphDB, OpenAILLMClient, PersonalRM
 
 db = GraphDB() # storage_db is in-memory sqlite, vector_db is in vlite
 retriever = PersonalRM(db=db, k=2)
@@ -175,17 +173,17 @@ print(response.answer)
 
 ```py
 from personal_graph.graph import GraphDB, OllamaClient, OllamaEmbeddingClient
-from personal_graph.graph_generator import InstructorGraphGenerator
-from personal_graph.database import DBClient, Sqlite
-from personal_graph.vector_store import VliteVectorDB
+from personal_graph.graph_generator import OpenAITextToGraphParser
+from personal_graph.persistence_layer.database import SQLite
+from personal_graph.persistence_layer.vector_store import VliteVSS
 
 phi3 = OllamaClient(model_name="phi3")
 nomic_embed = OllamaEmbeddingClient(model_name="nomic-embed-text")
 
-storage_db = Sqlite(path="./local.db")
-vector_store = VliteVectorDB(path="./vectors")
+storage_db = SQLite(path="./local.db")
+vector_store = VliteVSS(path="./vectors")
 
-graph_generator=InstructorGraphGenerator(llm_client=phi3)
+graph_generator=OpenAITextToGraphParser(llm_client=phi3)
 print(graph_generator) # Should print the InstructorGraphGenerator 
 
 with GraphDB(

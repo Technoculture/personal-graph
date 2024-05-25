@@ -4,7 +4,7 @@ Unit test for high level apis
 
 import networkx as nx  # type: ignore
 
-from personal_graph import Graph, Node, EdgeInput, KnowledgeGraph
+from personal_graph import GraphDB, Node, EdgeInput, KnowledgeGraph
 from personal_graph.ml import networkx_to_pg, pg_to_networkx
 from personal_graph.text import text_to_graph
 
@@ -174,7 +174,7 @@ def test_from_networkx(graph, mock_personal_graph, mock_db_connection_and_cursor
     )
 
     # Check if the returned object is a Personal Graph
-    assert isinstance(personal_graph, Graph)
+    assert isinstance(personal_graph, GraphDB)
 
 
 def test_graphviz_visualize(

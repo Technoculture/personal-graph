@@ -3,7 +3,7 @@ import pytest
 from unittest.mock import patch, Mock
 
 from personal_graph import (
-    Graph,
+    GraphDB,
     KnowledgeGraph,
     Node,
     Edge,
@@ -93,7 +93,7 @@ def graph(mock_openai_client, mock_embeddings_model):
                 db=SQLite(use_in_memory=True),
                 embedding_client=LiteLLMEmbeddingClient(),
             )
-            graph = Graph(vector_store=vector_store)
+            graph = GraphDB(vector_store=vector_store)
             yield graph
 
 
@@ -126,7 +126,7 @@ def mock_personal_graph(mock_openai_client, mock_db_connection_and_cursor):
         db=SQLite(use_in_memory=True),
         embedding_client=LiteLLMEmbeddingClient(),
     )
-    graph = Graph(vector_store=vector_store)
+    graph = GraphDB(vector_store=vector_store)
 
     node1 = Node(id=1, label="Sample Label", attributes={"Person": "scholar"})
     node2 = Node(id=2, label="Researching", attributes={"University": "Stanford"})
