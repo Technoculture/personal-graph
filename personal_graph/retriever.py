@@ -1,6 +1,6 @@
 import dspy  # type: ignore
 from typing import List, Optional, Union
-from personal_graph.graph import Graph, Node
+from personal_graph.graph import GraphDB, Node
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -9,7 +9,7 @@ load_dotenv()
 class PersonalRM(dspy.Retrieve):
     def __init__(
         self,
-        graph: Graph,
+        graph: GraphDB,
         k: int = 5,
     ):
         super().__init__(k=k)

@@ -5,7 +5,7 @@ import dspy  # type: ignore
 import joblib  # type: ignore
 import streamlit as st
 from personal_graph import (
-    Graph,
+    GraphDB,
     Node,
     Edge,
     KnowledgeGraph,
@@ -102,7 +102,7 @@ class MessageAnalyzerModule(dspy.Module):
 def create_and_save_cache(rag):
     list_of_context = []
 
-    with Graph() as graph:
+    with GraphDB() as graph:
         turbo = dspy.OpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPEN_API_KEY"))
 
         kg = text_to_graph("DEFAULT_BACKSTORY")
@@ -163,7 +163,7 @@ def main():
         url=os.getenv("LIBSQL_URL"), auth_token=os.getenv("LIBSQL_AUTH_TOKEN")
     )
 
-    with Graph(vector_store=vector_store, database=database) as graph:
+    with GraphDB(vector_store=vector_store, database=database) as graph:
         turbo = dspy.OpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPEN_API_KEY"))
         cached_backstory, cached_kg, cached_context = load_cache()
 

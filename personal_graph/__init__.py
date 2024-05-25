@@ -2,11 +2,11 @@ from personal_graph.clients import OpenAILLMClient
 from personal_graph.retriever import PersonalRM
 from personal_graph.visualizers import graphviz_visualize_bodies
 from personal_graph.embeddings import OpenAIEmbeddingsModel
-from personal_graph.graph import Graph
+from personal_graph.graph import GraphDB
 from personal_graph.models import Node, Edge, EdgeInput, KnowledgeGraph
 
 __all__ = [
-    "Graph",
+    "GraphDB",
     "Node",
     "Edge",
     "EdgeInput",

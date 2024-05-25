@@ -4,11 +4,11 @@ import logging
 from personal_graph.text import text_to_graph
 from personal_graph.visualizers import visualize_graph
 from personal_graph.ml import networkx_to_pg, pg_to_networkx
-from personal_graph import Graph, Node, KnowledgeGraph, Edge, EdgeInput
+from personal_graph import GraphDB, Node, KnowledgeGraph, Edge, EdgeInput
 
 
 def main(args):
-    with Graph() as graph:
+    with GraphDB() as graph:
         # Define nodes and edges
         node1 = Node(
             id="3", label="close relative", attributes={"name": "Alice", "age": "30"}

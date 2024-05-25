@@ -4,12 +4,12 @@ import logging
 import argparse
 from dotenv import load_dotenv
 
-from personal_graph import Graph
+from personal_graph import GraphDB
 from personal_graph.text import text_to_graph
 
 
 def main(args):
-    with Graph() as graph:
+    with GraphDB() as graph:
         # Testing insert query into graph db
         nl_query = "increased thirst, weight loss, increased hunger, frequent urination etc. are all symptoms of diabetes."
         kg = text_to_graph(text=nl_query)

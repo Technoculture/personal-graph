@@ -1,9 +1,9 @@
 import logging
-from personal_graph import Graph, PersonalRM
+from personal_graph import GraphDB, PersonalRM
 
 
 def main():
-    with Graph() as graph:
+    with GraphDB() as graph:
         query = "What is the similarity between Jack and Ronaldo?"
         retriever = PersonalRM(graph)
 

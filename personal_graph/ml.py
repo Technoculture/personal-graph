@@ -5,11 +5,11 @@ import networkx as nx  # type: ignore
 from graphviz import Digraph  # type: ignore
 from matplotlib import pyplot as plt
 
-from personal_graph import Graph
+from personal_graph import GraphDB
 from personal_graph import KnowledgeGraph, Node, Edge, EdgeInput
 
 
-def pg_to_networkx(graph: Graph, *, post_visualize: bool = False):
+def pg_to_networkx(graph: GraphDB, *, post_visualize: bool = False):
     """
     Convert the graph database to a NetworkX DiGraph object.
     """
@@ -78,7 +78,7 @@ def pg_to_networkx(graph: Graph, *, post_visualize: bool = False):
 
 def networkx_to_pg(
     networkx_graph: nx,
-    graph: Graph,
+    graph: GraphDB,
     *,
     post_visualize: bool = False,
     override: bool = True,

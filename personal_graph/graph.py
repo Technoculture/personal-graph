@@ -19,7 +19,7 @@ from personal_graph.persistence_layer.vector_store import SQLiteVSS, VliteVSS
 load_dotenv()
 
 
-class Graph(AbstractContextManager):
+class GraphDB(AbstractContextManager):
     def __init__(
         self,
         *,
@@ -34,12 +34,12 @@ class Graph(AbstractContextManager):
         self.graph_generator = graph_generator
 
     def __eq__(self, other):
-        if not isinstance(other, Graph):
-            return "Not of Graph Type"
+        if not isinstance(other, GraphDB):
+            return "Not of GraphDB Type"
         else:
             return self.db == other.db
 
-    def __enter__(self) -> Graph:
+    def __enter__(self) -> GraphDB:
         self.db.initialize()
         self.vector_store.initialize()
         return self
