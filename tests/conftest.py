@@ -2,29 +2,24 @@ import json
 import pytest
 from unittest.mock import patch, Mock
 
-from personal_graph.database import SQLiteVSS, TursoDB
-from personal_graph.graph_generator import InstructorGraphGenerator
 from personal_graph import (
     Graph,
-    LLMClient,
     KnowledgeGraph,
     Node,
     Edge,
     EdgeInput,
     OpenAIEmbeddingsModel,
-    EmbeddingClient,
 )
-
-
-@pytest.fixture
-def mock_atomic():
-    with patch("personal_graph.database.SQLiteVSS._atomic") as mock_atomic:
-        yield mock_atomic
+from personal_graph.clients import LiteLLMEmbeddingClient
+from personal_graph.persistence_layer.database import SQLite
+from personal_graph.persistence_layer.vector_store import SQLiteVSS
 
 
 @pytest.fixture
 def mock_db_connection_and_cursor():
-    with patch("personal_graph.graph.libsql.connect") as mock_connect:
+    with patch(
+        "personal_graph.persistence_layer.database.sqlite.sqlite.SQLite.atomic"
+    ) as mock_connect:
         mock_connection = mock_connect.return_value
         mock_cursor = mock_connection.cursor.return_value
         yield mock_connection, mock_cursor
@@ -37,14 +32,16 @@ def embedding_model():
 
 @pytest.fixture
 def mock_find_node():
-    with patch("personal_graph.database.SQLiteVSS._find_node") as mock_find_node:
+    with patch(
+        "personal_graph.persistence_layer.database.sqlite.sqlite.SQLite._find_node"
+    ) as mock_find_node:
         yield mock_find_node
 
 
 @pytest.fixture
 def mock_get_connections():
     with patch(
-        "personal_graph.database.SQLiteVSS.get_connections"
+        "personal_graph.persistence_layer.database.sqlite.sqlite.SQLite.get_connections"
     ) as mock_get_connections:
         yield mock_get_connections
 
@@ -93,14 +90,10 @@ def graph(mock_openai_client, mock_embeddings_model):
             return_value=mock_embeddings_model,
         ):
             vector_store = SQLiteVSS(
-                persistence_layer=TursoDB(url=None, auth_token=None),
-                embedding_model_client=EmbeddingClient(),
+                db=SQLite(use_in_memory=True),
+                embedding_client=LiteLLMEmbeddingClient(),
             )
-
-            graph = Graph(
-                vector_store=vector_store,
-                graph_generator=InstructorGraphGenerator(llm_client=LLMClient()),
-            )
+            graph = Graph(vector_store=vector_store)
             yield graph
 
 
@@ -121,23 +114,19 @@ def mock_generate_graph():
         ],
     )
     with patch(
-        "personal_graph.graph_generator.InstructorGraphGenerator.generate",
+        "personal_graph.graph_generator.OpenAITextToGraphParser.generate",
         return_value=mock_knowledge_graph,
     ):
         yield mock_knowledge_graph
 
 
 @pytest.fixture
-def mock_personal_graph(mock_openai_client, mock_atomic, mock_db_connection_and_cursor):
+def mock_personal_graph(mock_openai_client, mock_db_connection_and_cursor):
     vector_store = SQLiteVSS(
-        persistence_layer=TursoDB(url=None, auth_token=None),
-        embedding_model_client=EmbeddingClient(),
+        db=SQLite(use_in_memory=True),
+        embedding_client=LiteLLMEmbeddingClient(),
     )
-
-    graph = Graph(
-        vector_store=vector_store,
-        graph_generator=InstructorGraphGenerator(llm_client=LLMClient()),
-    )
+    graph = Graph(vector_store=vector_store)
 
     node1 = Node(id=1, label="Sample Label", attributes={"Person": "scholar"})
     node2 = Node(id=2, label="Researching", attributes={"University": "Stanford"})

@@ -6,9 +6,10 @@ import networkx as nx  # type: ignore
 
 from personal_graph import Graph, Node, EdgeInput, KnowledgeGraph
 from personal_graph.ml import networkx_to_pg, pg_to_networkx
+from personal_graph.text import text_to_graph
 
 
-def test_add_node(graph, mock_atomic, mock_db_connection_and_cursor):
+def test_add_node(graph, mock_db_connection_and_cursor):
     node = Node(
         id=1,
         attributes={"name": "Jack", "body": "Jack is Joe's cousin brother"},
@@ -17,7 +18,7 @@ def test_add_node(graph, mock_atomic, mock_db_connection_and_cursor):
     assert graph.add_node(node) is None
 
 
-def test_add_nodes(graph, mock_atomic, mock_db_connection_and_cursor):
+def test_add_nodes(graph, mock_db_connection_and_cursor):
     nodes = [
         Node(
             id=1,
@@ -34,7 +35,7 @@ def test_add_nodes(graph, mock_atomic, mock_db_connection_and_cursor):
     assert graph.add_nodes(nodes) is None
 
 
-def test_add_edge(graph, mock_atomic, mock_db_connection_and_cursor):
+def test_add_edge(graph, mock_db_connection_and_cursor):
     node1 = Node(
         id=3,
         label="relative",
@@ -54,7 +55,7 @@ def test_add_edge(graph, mock_atomic, mock_db_connection_and_cursor):
     assert graph.add_edge(edge) is None
 
 
-def test_add_edges(graph, mock_atomic, mock_db_connection_and_cursor):
+def test_add_edges(graph, mock_db_connection_and_cursor):
     node1 = Node(id=3, label="Person", attributes={"name": "Alice", "age": "30"})
     node2 = Node(id=4, label="Person", attributes={"name": "Bob", "age": "25"})
     node3 = Node(
@@ -82,13 +83,13 @@ def test_add_edges(graph, mock_atomic, mock_db_connection_and_cursor):
     assert graph.add_edges([edge1, edge2, edge3]) is None
 
 
-def test_update_node(graph, mock_atomic, mock_db_connection_and_cursor):
+def test_update_node(graph, mock_db_connection_and_cursor):
     node = Node(id=1, attributes={"name": "Alice", "age": "30"}, label="relative")
 
     assert graph.update_node(node) is None
 
 
-def test_update_nodes(graph, mock_atomic, mock_db_connection_and_cursor):
+def test_update_nodes(graph, mock_db_connection_and_cursor):
     nodes = [
         Node(id=1, attributes={"name": "Peri", "age": "90"}, label="relative"),
         Node(id=2, attributes={"name": "Peri", "age": "90"}, label="relative"),
@@ -97,19 +98,19 @@ def test_update_nodes(graph, mock_atomic, mock_db_connection_and_cursor):
     assert graph.update_nodes(nodes) is None
 
 
-def test_remove_node(graph, mock_atomic, mock_db_connection_and_cursor):
+def test_remove_node(graph, mock_db_connection_and_cursor):
     assert graph.remove_node(1) is None
 
 
-def test_remove_nodes(graph, mock_atomic, mock_db_connection_and_cursor):
+def test_remove_nodes(graph, mock_db_connection_and_cursor):
     assert graph.remove_node([1, 6, 8]) is None
 
 
-def test_search_node(graph, mock_atomic, mock_db_connection_and_cursor):
+def test_search_node(graph, mock_db_connection_and_cursor):
     assert graph.search_node(1) is not None
 
 
-def test_traverse(graph, mock_atomic, mock_db_connection_and_cursor):
+def test_traverse(graph, mock_db_connection_and_cursor):
     assert graph.traverse(1, 2) is not None
 
 
@@ -117,14 +118,15 @@ def test_insert(
     graph,
     mock_openai_client,
     mock_generate_graph,
-    mock_atomic,
     mock_db_connection_and_cursor,
 ):
     mock_openai_client.chat.completions.create.return_value = mock_generate_graph
 
-    test_add_nodes(graph, mock_atomic, mock_db_connection_and_cursor)
+    test_add_nodes(graph, mock_db_connection_and_cursor)
 
-    result = graph.insert_into_graph("Alice has suffocation at night.")
+    query = "Alice has suffocation at night"
+    kg = text_to_graph(query)
+    result = graph.insert_graph(kg)
     assert result == mock_generate_graph
 
 
@@ -132,7 +134,6 @@ def test_search_query(
     graph,
     mock_openai_client,
     mock_generate_graph,
-    mock_atomic,
     mock_db_connection_and_cursor,
 ):
     mock_openai_client.chat.completions.create.return_value = mock_generate_graph
@@ -140,7 +141,6 @@ def test_search_query(
         graph,
         mock_openai_client,
         mock_generate_graph,
-        mock_atomic,
         mock_db_connection_and_cursor,
     )
 
@@ -148,17 +148,17 @@ def test_search_query(
     assert isinstance(result, KnowledgeGraph)
 
 
-def test_merge_by_similarity(graph, mock_atomic, mock_db_connection_and_cursor):
-    test_add_nodes(graph, mock_atomic, mock_db_connection_and_cursor)
+def test_merge_by_similarity(graph, mock_db_connection_and_cursor):
+    test_add_nodes(graph, mock_db_connection_and_cursor)
 
-    assert graph.merge_by_similarity(0.9) is None
-
-
-def test_find_nodes_like(graph, mock_atomic, mock_db_connection_and_cursor):
-    assert graph.find_nodes_like("relative", 0.9) is not None
+    assert graph.merge_by_similarity(threshold=0.9) is None
 
 
-def test_to_networkx(mock_personal_graph, mock_atomic, mock_db_connection_and_cursor):
+def test_find_nodes_like(graph, mock_db_connection_and_cursor):
+    assert graph.find_nodes_like("relative", threshold=0.9) is not None
+
+
+def test_to_networkx(mock_personal_graph, mock_db_connection_and_cursor):
     networkx_graph = pg_to_networkx(mock_personal_graph)
 
     # Check if the returned object is a NetworkX graph
@@ -167,13 +167,9 @@ def test_to_networkx(mock_personal_graph, mock_atomic, mock_db_connection_and_cu
     return networkx_graph
 
 
-def test_from_networkx(
-    graph, mock_personal_graph, mock_atomic, mock_db_connection_and_cursor
-):
+def test_from_networkx(graph, mock_personal_graph, mock_db_connection_and_cursor):
     personal_graph = networkx_to_pg(
-        test_to_networkx(
-            mock_personal_graph, mock_atomic, mock_db_connection_and_cursor
-        ),
+        test_to_networkx(mock_personal_graph, mock_db_connection_and_cursor),
         mock_personal_graph,
     )
 
@@ -183,7 +179,6 @@ def test_from_networkx(
 
 def test_graphviz_visualize(
     graph,
-    mock_atomic,
     mock_db_connection_and_cursor,
     mock_find_node,
     mock_get_connections,
@@ -213,5 +208,5 @@ def test_graphviz_visualize(
 
     graph.visualize(
         file="mock_dot_file.dot",
-        path=[1, 2, 3],
+        id=[1, 2, 3],
     )

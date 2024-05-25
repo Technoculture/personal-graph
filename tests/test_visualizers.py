@@ -2,7 +2,6 @@ from personal_graph import graphviz_visualize_bodies
 
 
 def test_graphviz_visualize_bodies(
-    mock_atomic,
     mock_db_connection_and_cursor,
     mock_find_node,
     mock_get_connections,
