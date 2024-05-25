@@ -7,7 +7,8 @@ setup(
     author='Anubhuti Bhardwaj',
     author_email='anubhutibhardwaj11@gmail.com',
     license='MIT',
-    packages=find_packages(),
+    package_data={"personal_graph": ["py.typed"]},
+    packages=["personal_graph"],
     install_requires=[
         'graphviz>=0.20.1',
         'jinja2>=3.1.3',
