@@ -3,7 +3,6 @@ from personal_graph import Graph, PersonalRM
 
 
 def main():
-
     with Graph() as graph:
         query = "What is the similarity between Jack and Ronaldo?"
         retriever = PersonalRM(graph)

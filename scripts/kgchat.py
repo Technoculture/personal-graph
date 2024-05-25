@@ -11,9 +11,8 @@ from personal_graph import (
     KnowledgeGraph,
     PersonalRM,
 )
-from personal_graph.clients import LiteLLMEmbeddingClient, OpenAILLMClient
-from personal_graph.graph_generator import OpenAITextToGraphParser
-from personal_graph.persistence_layer.database import TursoDB, SQLite
+from personal_graph.clients import LiteLLMEmbeddingClient
+from personal_graph.persistence_layer.database import TursoDB
 from personal_graph.persistence_layer.vector_store import SQLiteVSS
 from personal_graph.text import text_to_graph
 from personal_graph.visualizers import visualize_graph
@@ -154,11 +153,15 @@ def main():
 
     st.title("Knowledge Graph Chat")
     vector_store = SQLiteVSS(
-        db=TursoDB(url=os.getenv("LIBSQL_URL_2"), auth_token=os.getenv("LIBSQL_AUTH_TOKEN_2")),
+        db=TursoDB(
+            url=os.getenv("LIBSQL_URL_2"), auth_token=os.getenv("LIBSQL_AUTH_TOKEN_2")
+        ),
         embedding_client=LiteLLMEmbeddingClient(),
     )
 
-    database = TursoDB(url=os.getenv("LIBSQL_URL"), auth_token=os.getenv("LIBSQL_AUTH_TOKEN"))
+    database = TursoDB(
+        url=os.getenv("LIBSQL_URL"), auth_token=os.getenv("LIBSQL_AUTH_TOKEN")
+    )
 
     with Graph(vector_store=vector_store, database=database) as graph:
         turbo = dspy.OpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPEN_API_KEY"))

@@ -9,7 +9,6 @@ from personal_graph.text import text_to_graph
 
 
 def main(args):
-
     with Graph() as graph:
         # Testing insert query into graph db
         nl_query = "increased thirst, weight loss, increased hunger, frequent urination etc. are all symptoms of diabetes."

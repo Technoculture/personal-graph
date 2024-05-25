@@ -6,11 +6,15 @@ from personal_graph.persistence_layer.database import TursoDB
 from personal_graph.persistence_layer.vector_store import SQLiteVSS
 
 vector_store = SQLiteVSS(
-    db=TursoDB(url=os.getenv("LIBSQL_URL_2"), auth_token=os.getenv("LIBSQL_AUTH_TOKEN_2")),
+    db=TursoDB(
+        url=os.getenv("LIBSQL_URL_2"), auth_token=os.getenv("LIBSQL_AUTH_TOKEN_2")
+    ),
     embedding_client=LiteLLMEmbeddingClient(),
 )
 
-database = TursoDB(url=os.getenv("LIBSQL_URL"), auth_token=os.getenv("LIBSQL_AUTH_TOKEN"))
+database = TursoDB(
+    url=os.getenv("LIBSQL_URL"), auth_token=os.getenv("LIBSQL_AUTH_TOKEN")
+)
 
 graph = Graph(vector_store=vector_store, database=database)
 turbo = dspy.OpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPEN_API_KEY"))
