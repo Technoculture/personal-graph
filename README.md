@@ -3,6 +3,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Checks and Test](https://github.com/Technoculture/personal-graph/actions/workflows/personal-graph.yaml/badge.svg)](https://github.com/Technoculture/personal-graph/actions/workflows/personal-graph.yaml)
 
+
+[![](https://dcbadge.limes.pink/api/server/https://discord.gg/YPJCBwy5M6)](https://discord.gg/YPJCBwy5M6)
+
 Personal-Graph is a Python library for creating, managing, and querying knowledge graphs. It aims to help solve working and long-term memory challenges in AI systems, particularly Large Language Models (LLMs).
 
 ## Features
@@ -10,9 +13,12 @@ Personal-Graph is a Python library for creating, managing, and querying knowledg
 - 👨 **One DB per User**: Integrate with Turso DB for private, user-specific knowledge graphs
 - 💬 **Natural Language Interfaces**: Natural language queries powered by Sqlite-vss and Instructor
 - 🤖 **ML-Ready**: Export data for machine learning libraries like Networkx and PyG
-
 - ✅ Supports local execution with Ollama LLMs and Embedding Models
 - ✅ Supports local db for both storing graph and embeddings
+
+## WIP
+- Adding support for Columnar Database: DuckDB
+- Implementing Graph Neural Network Algorithms: TransE, TransE, Query2Box
 
 ## Installation
 
@@ -23,27 +29,13 @@ pip install personal-graph
 
 ## Usage
 
-### Usage of Vector store classes
-There are two vector store classes SQLiteVSS and VLiteDatabase. Let's dive down into the implementation of both the vector store classes.
-
-
-```
-from personal_graph.persistence_layer.database import TursoDB
-from personal_graph.persistence_layer.vector_store import SQLiteVSS
-from personal_graph import EmbeddingClient
-
-vector_store = VliteVSS(collection="memories", model_name="mxbai")
-```
-
 ### Building a Working Memory for an AI
 
 ```python
 from personal_graph import GraphDB
-from personal_graph.persistence_layer.database import TursoDB
-from personal_graph.persistence_layer.vector_store import SQLiteVSS
-from personal_graph.graph_generator import OpenAITextToGraphParser
-from personal_graph.text import text_to_graph
+from personal_graph.vector_store import VliteVSS
 
+vector_store = VliteVSS(collection="memories", model_name="mxbai")
 graph = GraphDB(vector_store=vector_store)
 
 # Insert information into the graph
@@ -71,7 +63,9 @@ In this example, we insert information about Alice and Bob into the knowledge gr
 ### Building Long-Term Memory
 ```python
 from personal_graph import GraphDB
+from personal_graph.vector_store import VliteVSS
 
+vector_store = VliteVSS(collection="memories", model_name="mxbai")
 graph = GraphDB(vector_store=vector_store)
 
 # Insert information about conversations with the user over time
@@ -124,6 +118,9 @@ This example demonstrates how Personal-Graph can be used to build long-term memo
 ```py
 from personal_graph import GraphDB
 from personal_graph.text import text_to_graph
+from personal_graph.vector_store import VliteVSS
+
+vector_store = VliteVSS(collection="memories", model_name="mxbai")
 
 graphdb = GraphDB(vector_store=vector_store)
 
@@ -167,8 +164,8 @@ print(response.answer)
 ```py
 from personal_graph.graph import GraphDB, OllamaClient, OllamaEmbeddingClient
 from personal_graph.graph_generator import OpenAITextToGraphParser
-from personal_graph.persistence_layer.database import SQLite
-from personal_graph.persistence_layer.vector_store import VliteVSS
+from personal_graph.database import SQLite
+from personal_graph.vector_store import VliteVSS
 
 phi3 = OllamaClient(model_name="phi3")
 nomic_embed = OllamaEmbeddingClient(model_name="nomic-embed-text")
@@ -205,7 +202,7 @@ graphdb.from_pyg(updated_graph)
 For more details and API documentation, see the Personal-Graph Documentation.
 
 ## Contributing
-Contributions are welcome! Please read our Contribution Guidelines and Code of Conduct.
+Contributions are welcome! Feel free to create issues for BUGs and feature requests.
 
 ## License
 Personal-Graph is released under the MIT License.
