@@ -1,20 +1,15 @@
 import json
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, Union, Callable, List
+from typing import Any, Dict, Union, List
 
 from personal_graph.clients import LiteLLMEmbeddingClient
 from personal_graph.embeddings import OpenAIEmbeddingsModel
-from personal_graph.persistence_layer.vector_store.vector_store import VectorStore
-from personal_graph.persistence_layer.database.tursodb.turso import TursoDB
-from personal_graph.persistence_layer.database.sqlite.sqlite import SQLite
-from personal_graph.persistence_layer.database.db import CursorExecFunction
+from personal_graph.vector_store.vector_store import VectorStore
+from personal_graph.database import TursoDB
+from personal_graph.database import SQLite
+from personal_graph.database.db import CursorExecFunction
 
-
-try:
-    import libsql_experimental as libsql  # type: ignore
-except ImportError:
-    pass
 
 @lru_cache(maxsize=None)
 def read_sql(sql_file: Path) -> str:

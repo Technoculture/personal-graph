@@ -1,17 +1,11 @@
 from abc import ABC, abstractmethod
-
-try:
-    import libsql_experimental as libsql  # type: ignore
-except ImportError:
-    pass
-
 from typing import Any, Callable, Dict, Optional, List, Union
 from graphviz import Digraph  # type: ignore
 
 from personal_graph.models import Node, Edge
 
 # CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
-CursorExecFunction = Callable[[Any, Any], Any] # TODO: Constraint the type
+CursorExecFunction = Callable[[Any, Any], Any]  # TODO: Constraint the type
 
 
 class DB(ABC):

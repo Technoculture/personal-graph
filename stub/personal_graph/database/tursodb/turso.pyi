@@ -1,10 +1,9 @@
 from jinja2 import BaseLoader, Environment, Template
-import libsql_experimental as libsql  # type: ignore
 
 from pathlib import Path
 from personal_graph.database.sqlite.sqlite import SQLite as SQLite
 from typing import Any, Callable, Tuple, Optional
-from personal_graph.persistence_layer.database.db import CursorExecFunction
+from personal_graph.database.db import CursorExecFunction
 
 def read_sql(sql_file: Path) -> str: ...
 
