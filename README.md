@@ -111,13 +111,6 @@ graph.insert(
 query = "What was the deepest conversation we've ever had?"
 
 deepest_conversation = graph.search(query, sort_by="depth_score", descending=True, limit=1)
-
-if deepest_conversation:
-    print(f"Question: {query}")
-    print(f"Answer: Our deepest conversation was on {deepest_conversation['date']} when we discussed {deepest_conversation['topic']}.")
-else:
-    print(f"Question: {query}")
-    print("Answer: I apologize, but I don't have enough information to determine our deepest conversation.")
 ```
 In this example, we store information about conversations with the user, including the date, topic, and a depth score. The depth score represents how meaningful the conversation was.
 
@@ -180,8 +173,8 @@ from personal_graph.persistence_layer.vector_store import VliteVSS
 phi3 = OllamaClient(model_name="phi3")
 nomic_embed = OllamaEmbeddingClient(model_name="nomic-embed-text")
 
-storage_db = SQLite(path="./local.db")
-vector_store = VliteVSS(path="./vectors")
+storage_db = SQLite(local_path="./local.db", vector0_so_path="/path/to/vector0/extension", vss0_so_path="/path/to/vss0/extension")
+vector_store = VliteVSS(collection="./vectors")
 
 graph_generator=OpenAITextToGraphParser(llm_client=phi3)
 print(graph_generator) # Should print the InstructorGraphGenerator 
@@ -192,20 +185,6 @@ with GraphDB(
     graph_generator=graph_generator
   ) as db:
     print(db)
-
-  # Graph(
-  #   db = Sqlite()
-  #   vector_store = SQLiteVSS(
-  #       persistence_layer=SQLite(
-  #           db_client=DBClient(
-  #               use_in_memory=True,
-  #               vector0_so_path="path/to/vector0.so",
-  #               vss0_so_path="path/to/vss0.so"
-  #           ),
-  #           embedding_model_client=EmbeddingClient(),
-  #       )
-  #   )
-  # )
 ```
 
 ### PersonalGraph to PyG, then back to PersonalGraph
