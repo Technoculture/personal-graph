@@ -33,7 +33,7 @@ pip install personal-graph
 
 ```python
 from personal_graph import GraphDB
-from personal_graph.vector_store import VliteVSS
+from personal_graph.persistence_layer.vector_store import VliteVSS
 
 vector_store = VliteVSS(collection="memories", model_name="mxbai")
 graph = GraphDB(vector_store=vector_store)
@@ -63,7 +63,7 @@ In this example, we insert information about Alice and Bob into the knowledge gr
 ### Building Long-Term Memory
 ```python
 from personal_graph import GraphDB
-from personal_graph.vector_store import VliteVSS
+from personal_graph.persistence_layer.vector_store import VliteVSS
 
 vector_store = VliteVSS(collection="memories", model_name="mxbai")
 graph = GraphDB(vector_store=vector_store)
@@ -118,7 +118,7 @@ This example demonstrates how Personal-Graph can be used to build long-term memo
 ```py
 from personal_graph import GraphDB
 from personal_graph.text import text_to_graph
-from personal_graph.vector_store import VliteVSS
+from personal_graph.persistence_layer.vector_store import VliteVSS
 
 vector_store = VliteVSS(collection="memories", model_name="mxbai")
 
