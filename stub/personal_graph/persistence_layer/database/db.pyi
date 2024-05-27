@@ -4,8 +4,7 @@ import libsql_experimental as libsql  # type: ignore
 from graphviz import Digraph  # type: ignore
 from personal_graph.models import Edge as Edge, Node as Node
 from typing import Any, Dict, List, Callable
-
-CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
+from personal_graph.persistence_layer.database.db import CursorExecFunction
 
 class DB(ABC, metaclass=abc.ABCMeta):
     @abstractmethod

@@ -4,8 +4,7 @@ import libsql_experimental as libsql  # type: ignore
 from pathlib import Path
 from personal_graph.persistence_layer.database.sqlite.sqlite import SQLite as SQLite
 from typing import Any, Callable, Tuple, Optional
-
-CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
+from personal_graph.persistence_layer.database.db import CursorExecFunction
 
 def read_sql(sql_file: Path) -> str: ...
 

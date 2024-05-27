@@ -8,8 +8,7 @@ from personal_graph.persistence_layer.vector_store.vector_store import (
 )
 import libsql_experimental as libsql  # type: ignore
 from typing import Any, Dict, Callable, Union
-
-CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
+from personal_graph.persistence_layer.database.db import CursorExecFunction
 
 def read_sql(sql_file: Path) -> str: ...
 

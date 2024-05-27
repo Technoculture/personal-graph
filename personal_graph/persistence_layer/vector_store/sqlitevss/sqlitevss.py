@@ -8,14 +8,13 @@ from personal_graph.embeddings import OpenAIEmbeddingsModel
 from personal_graph.persistence_layer.vector_store.vector_store import VectorStore
 from personal_graph.persistence_layer.database.tursodb.turso import TursoDB
 from personal_graph.persistence_layer.database.sqlite.sqlite import SQLite
+from personal_graph.persistence_layer.database.db import CursorExecFunction
+
 
 try:
     import libsql_experimental as libsql  # type: ignore
 except ImportError:
     pass
-
-CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
-
 
 @lru_cache(maxsize=None)
 def read_sql(sql_file: Path) -> str:

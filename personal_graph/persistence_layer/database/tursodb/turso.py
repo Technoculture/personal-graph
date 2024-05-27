@@ -4,15 +4,13 @@ from pathlib import Path
 from typing import Optional, Any, Callable, Tuple
 
 from jinja2 import BaseLoader, Environment, select_autoescape
+from personal_graph.persistence_layer.database.db import CursorExecFunction
 from personal_graph.persistence_layer.database.sqlite.sqlite import SQLite
 
 try:
     import libsql_experimental as libsql  # type: ignore
 except ImportError:
     pass
-
-
-CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
 
 
 @lru_cache(maxsize=None)
