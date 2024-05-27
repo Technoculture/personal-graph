@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="personal-graph",
-    version="0.1.8",
+    version="0.1.9",
     description="Graph database in LibSQL",
     author="Anubhuti Bhardwaj",
     author_email="anubhutibhardwaj11@gmail.com",
