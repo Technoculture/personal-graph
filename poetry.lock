@@ -1596,32 +1596,6 @@ files = [
 ]
 
 [[package]]
-name = "libsql-experimental"
-version = "0.0.28"
-description = ""
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "libsql_experimental-0.0.28-cp310-cp310-macosx_10_12_x86_64.whl", hash = "sha256:d22c028770a4dedaf3d02e8c72e66cf2d6289f15c5eca120677fb30c79bb30d4"},
-    {file = "libsql_experimental-0.0.28-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:f5db41f9e4181254aefba3d0c1e9f66986020a0a084656b3d8360817ce3da982"},
-    {file = "libsql_experimental-0.0.28-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ec57d300f06f6a2ad09bcd4bd2f249ec3b7c51393ecdd81510edf01cfe967e92"},
-    {file = "libsql_experimental-0.0.28-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:fac1751fcaee9644730089933d635fb76eeffe2d7f9d37a41f2ed70d1bf20d0c"},
-    {file = "libsql_experimental-0.0.28-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:8409808be223314746415ead3078fbcb6229b4d9829295d464ed49ec5abafc93"},
-    {file = "libsql_experimental-0.0.28-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:3326cb8d49d9b41acaf32b6b72d6bba1162d8f9d138fced5a422177bc2382d33"},
-    {file = "libsql_experimental-0.0.28-cp312-cp312-macosx_10_12_x86_64.whl", hash = "sha256:5cec486dd3d4268dc9a8ba249b91eb93812bb27957a95b3dddca39edbe4f98c2"},
-    {file = "libsql_experimental-0.0.28-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:15a46b3340b1483dc2397912ffaeed54551849988c3b58a77a984e311ecd46c2"},
-    {file = "libsql_experimental-0.0.28-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6bd1b6e5d8b022599fb2cb322617e3e42d4a3c4b900928d40f2771f0715faec8"},
-    {file = "libsql_experimental-0.0.28-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e0d57714ede7c021097f90b8c8d6f4e94838763f3e7e7709a11ac4b680cc4e86"},
-    {file = "libsql_experimental-0.0.28-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:de807be737079dcb3ac5d36facf9506c1b11704e6c6c88b71b0c79b353efca09"},
-    {file = "libsql_experimental-0.0.28-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6e393a315f3d9cbfcb96459eb531bf5648c87ba26acc60c50bc762b097979fa6"},
-    {file = "libsql_experimental-0.0.28-pp310-pypy310_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c532641de3ccd01664424e16d6701ed75e68290a176974f322034f32366820cd"},
-    {file = "libsql_experimental-0.0.28-pp37-pypy37_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:69fe1689c665584b67a9bf24a1d1de5e33ba4d626f1a2b921e6c03f5cf7d949e"},
-    {file = "libsql_experimental-0.0.28-pp38-pypy38_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:71d5728ede8f6ef3ed2194422e982827ab75d145efd110bd4526f5dc66f1be52"},
-    {file = "libsql_experimental-0.0.28-pp39-pypy39_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c50235d2c0ca05aa3eb38bbe9b66f278f12522af550abf9f4d0da1720f5ae09d"},
-    {file = "libsql_experimental-0.0.28.tar.gz", hash = "sha256:3a97f318a4d31ea99422298ef113c7a606608240ca91ffa49614a2f62104dc21"},
-]
-
-[[package]]
 name = "litellm"
 version = "1.35.26"
 description = "Library to easily interface with LLM API providers"
@@ -4840,8 +4814,9 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 
 [extras]
 scrollable-textbox = []
+turso = []
 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "559e7c3a37bf209a82340e323f74a07ca23ef179146a6af9517b226aeb54473b"
+content-hash = "98fdab8032f464418d391a39036238fca8809b8c4a08a8aed080e0f83d6b0b14"

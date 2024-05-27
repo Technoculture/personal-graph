@@ -1,7 +1,6 @@
 import json
 from functools import lru_cache
 from pathlib import Path
-import libsql_experimental as libsql  # type: ignore
 from typing import Any, Dict, Union, Callable, List
 
 from personal_graph.clients import LiteLLMEmbeddingClient
@@ -9,6 +8,11 @@ from personal_graph.embeddings import OpenAIEmbeddingsModel
 from personal_graph.persistence_layer.vector_store.vector_store import VectorStore
 from personal_graph.persistence_layer.database.tursodb.turso import TursoDB
 from personal_graph.persistence_layer.database.sqlite.sqlite import SQLite
+
+try:
+    import libsql_experimental as libsql  # type: ignore
+except ImportError:
+    pass
 
 CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
 
