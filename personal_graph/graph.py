@@ -10,10 +10,10 @@ from graphviz import Digraph  # type: ignore
 from dotenv import load_dotenv
 
 from personal_graph import OpenAILLMClient
-from personal_graph.persistence_layer.database import TursoDB, SQLite
+from personal_graph.database import TursoDB, SQLite
 from personal_graph.graph_generator import OpenAITextToGraphParser
 from personal_graph.models import Node, EdgeInput, KnowledgeGraph, Edge
-from personal_graph.persistence_layer.vector_store import SQLiteVSS, VliteVSS
+from personal_graph.vector_store import SQLiteVSS, VliteVSS
 
 
 load_dotenv()
@@ -565,12 +565,5 @@ class GraphDB(AbstractContextManager):
 
         if similar_nodes is None:
             return None
-
-        if isinstance(self.vector_store, VliteVSS):
-            if limit == 1:
-                return similar_nodes[0][2]
-        else:
-            if limit == 1:
-                return json.loads(similar_nodes[0][3])
 
         return similar_nodes

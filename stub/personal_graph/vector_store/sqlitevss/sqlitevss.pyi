@@ -1,9 +1,9 @@
 from pathlib import Path
 from personal_graph.clients import LiteLLMEmbeddingClient as LiteLLMEmbeddingClient
 from personal_graph.embeddings import OpenAIEmbeddingsModel as OpenAIEmbeddingsModel
-from personal_graph.persistence_layer.database.sqlite.sqlite import SQLite as SQLite
-from personal_graph.persistence_layer.database.tursodb.turso import TursoDB as TursoDB
-from personal_graph.persistence_layer.vector_store.vector_store import (
+from personal_graph.database.sqlite.sqlite import SQLite as SQLite
+from personal_graph.database.tursodb.turso import TursoDB as TursoDB
+from personal_graph.vector_store.vector_store import (
     VectorStore as VectorStore,
 )
 import libsql_experimental as libsql  # type: ignore

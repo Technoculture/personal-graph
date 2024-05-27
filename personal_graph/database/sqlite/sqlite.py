@@ -10,7 +10,7 @@ from personal_graph.models import Node, Edge
 from jinja2 import BaseLoader, Environment, select_autoescape
 
 from personal_graph.visualizers import _as_dot_node, _as_dot_label
-from personal_graph.persistence_layer.database.db import DB
+from personal_graph.database.db import DB
 
 CursorExecFunction = Callable[[sqlite3.Cursor, sqlite3.Connection], Any]
 

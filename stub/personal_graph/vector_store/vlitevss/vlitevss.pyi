@@ -1,6 +1,6 @@
 from vlite import VLite  # type: ignore
 
-from personal_graph.persistence_layer.vector_store.vector_store import (
+from personal_graph.vector_store.vector_store import (
     VectorStore as VectorStore,
 )
 from typing import Any, Dict, List

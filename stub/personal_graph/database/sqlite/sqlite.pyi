@@ -3,7 +3,7 @@ from jinja2 import BaseLoader, Environment, Template
 from pathlib import Path
 import sqlean as sqlite3  # type: ignore
 from personal_graph.models import Edge as Edge, Node as Node
-from personal_graph.persistence_layer.database.db import DB as DB
+from personal_graph.database.db import DB as DB
 from typing import Any, Callable, Dict, List, Tuple, Optional
 
 CursorExecFunction = Callable[[sqlite3.Cursor, sqlite3.Connection], Any]

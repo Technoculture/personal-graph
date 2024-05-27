@@ -35,6 +35,7 @@ setup(
             "mypy>=1.9.0",
         ],
         "scrollable-textbox": ["streamlit-scrollable-textbox"],
+        "turso": ["libsql-experimental"],
     },
     python_requires=">=3.11",
 )

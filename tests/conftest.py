@@ -14,9 +14,7 @@ from personal_graph import (
 
 @pytest.fixture
 def mock_db_connection_and_cursor():
-    with patch(
-        "personal_graph.persistence_layer.database.sqlite.sqlite.SQLite.atomic"
-    ) as mock_connect:
+    with patch("personal_graph.database.sqlite.sqlite.SQLite.atomic") as mock_connect:
         mock_connection = mock_connect.return_value
         mock_cursor = mock_connection.cursor.return_value
         yield mock_connection, mock_cursor
@@ -30,7 +28,7 @@ def embedding_model():
 @pytest.fixture
 def mock_find_node():
     with patch(
-        "personal_graph.persistence_layer.database.sqlite.sqlite.SQLite._find_node"
+        "personal_graph.database.sqlite.sqlite.SQLite._find_node"
     ) as mock_find_node:
         yield mock_find_node
 
@@ -38,7 +36,7 @@ def mock_find_node():
 @pytest.fixture
 def mock_get_connections():
     with patch(
-        "personal_graph.persistence_layer.database.sqlite.sqlite.SQLite.get_connections"
+        "personal_graph.database.sqlite.sqlite.SQLite.get_connections"
     ) as mock_get_connections:
         yield mock_get_connections
 

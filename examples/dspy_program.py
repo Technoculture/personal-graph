@@ -2,8 +2,8 @@ import os
 import dspy  # type: ignore
 from personal_graph import GraphDB, PersonalRM
 from personal_graph.clients import LiteLLMEmbeddingClient
-from personal_graph.persistence_layer.database import TursoDB
-from personal_graph.persistence_layer.vector_store import SQLiteVSS
+from personal_graph.database import TursoDB
+from personal_graph.vector_store import SQLiteVSS
 
 vector_store = SQLiteVSS(
     db=TursoDB(

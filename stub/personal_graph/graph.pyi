@@ -12,11 +12,11 @@ from personal_graph.models import (
     KnowledgeGraph as KnowledgeGraph,
     Node as Node,
 )
-from personal_graph.persistence_layer.database import (
+from personal_graph.database import (
     SQLite as SQLite,
     TursoDB as TursoDB,
 )
-from personal_graph.persistence_layer.vector_store import (
+from personal_graph.vector_store import (
     SQLiteVSS as SQLiteVSS,
     VliteVSS as VliteVSS,
 )
