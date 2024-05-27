@@ -1,0 +1,1 @@
+SELECT rowid, distance FROM nodes_embedding WHERE vss_search(vector_nodes, vss_search_params(json(?), ?))

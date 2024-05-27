@@ -2,9 +2,8 @@
 Provide access to different embeddings models
 """
 
-import os
 from abc import ABC, abstractmethod
-from openai import OpenAI  # type: ignore
+import openai
 
 
 class EmbeddingsModel(ABC):
@@ -14,13 +13,21 @@ class EmbeddingsModel(ABC):
 
 
 class OpenAIEmbeddingsModel(EmbeddingsModel):
-    def __init__(self) -> None:
-        self.client = (
-            OpenAI(api_key=os.getenv("OPEN_API_KEY"))
-            if os.getenv("OPEN_API_KEY")
-            else None
+    def __init__(
+        self, embed_client: openai.OpenAI, embed_model: str, embed_dimension: int
+    ) -> None:
+        self.client = embed_client if embed_client else None
+        self.model = embed_model
+        self.dimension = embed_dimension
+
+    def __repr__(self) -> str:
+        return (
+            f"OpenAIEmbeddingsModel(\n"
+            f"    embed_client={self.client},\n"
+            f"    embed_model='{self.model}',\n"
+            f"    embed_dimension={self.dimension}\n"
+            f"  )"
         )
-        self.model = "text-embedding-3-small"
 
     def get_embedding(self, text: str) -> list[float]:
         if self.client is None:
@@ -28,7 +35,10 @@ class OpenAIEmbeddingsModel(EmbeddingsModel):
         text = text.replace("\n", " ")
         return (
             self.client.embeddings.create(
-                input=[text], model=self.model, dimensions=384, encoding_format="float"
+                input=[text],
+                model=self.model,
+                dimensions=self.dimension,
+                encoding_format="float",
             )
             .data[0]
             .embedding

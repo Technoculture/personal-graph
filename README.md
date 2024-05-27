@@ -11,6 +11,9 @@ Personal-Graph is a Python library for creating, managing, and querying knowledg
 - 💬 **Natural Language Interfaces**: Natural language queries powered by Sqlite-vss and Instructor
 - 🤖 **ML-Ready**: Export data for machine learning libraries like Networkx and PyG
 
+- ✅ Supports local execution with Ollama LLMs and Embedding Models
+- ✅ Supports local db for both storing graph and embeddings
+
 ## Installation
 
 Install Personal-Graph using pip:
@@ -20,19 +23,37 @@ pip install personal-graph
 
 ## Usage
 
+### Usage of Vector store classes
+There are two vector store classes SQLiteVSS and VLiteDatabase. Let's dive down into the implementation of both the vector store classes.
+
+
+```
+from personal_graph.persistence_layer.database import TursoDB
+from personal_graph.persistence_layer.vector_store import SQLiteVSS
+from personal_graph import EmbeddingClient
+
+vector_store = VliteVSS(collection="memories", model_name="mxbai")
+```
+
 ### Building a Working Memory for an AI
 
 ```python
-from personal_graph import Graph
+from personal_graph import GraphDB
+from personal_graph.persistence_layer.database import TursoDB
+from personal_graph.persistence_layer.vector_store import SQLiteVSS
+from personal_graph.graph_generator import OpenAITextToGraphParser
+from personal_graph.text import text_to_graph
 
-graph = Graph("your_db_url", "your_auth_token")
+graph = GraphDB(vector_store=vector_store)
 
 # Insert information into the graph
-graph.insert(text="Alice is Bob's sister. Bob works at Google.")
+g = text_to_graph("Alice is Bob's sister. Bob works at Google.")
+graph.insert_graph(g)
 
 # Retrieve relevant information from the graph
 query = "Who is Alice?"
 results = graph.search(query)
+print(results)
 
 # Use the retrieved information to answer questions
 print(f"Question: {query}")
@@ -40,6 +61,7 @@ print(f"Answer: Alice is Bob's sister.")
 
 query = "Where does Bob work?"
 results = graph.search(query)
+print(results)
 print(f"Question: {query}")
 print(f"Answer: Bob works at Google.")
 ```
@@ -48,9 +70,9 @@ In this example, we insert information about Alice and Bob into the knowledge gr
 
 ### Building Long-Term Memory
 ```python
-from personal_graph import Graph
+from personal_graph import GraphDB
 
-graph = Graph("your_db_url", "your_auth_token")
+graph = GraphDB(vector_store=vector_store)
 
 # Insert information about conversations with the user over time
 graph.insert(
@@ -88,15 +110,7 @@ graph.insert(
 # User queries about the deepest conversation
 query = "What was the deepest conversation we've ever had?"
 
-results = graph.search(query, sort_by="depth_score", descending=True, limit=1)
-
-if results:
-    deepest_conversation = results[0]
-    print(f"Question: {query}")
-    print(f"Answer: Our deepest conversation was on {deepest_conversation['date']} when we discussed {deepest_conversation['topic']}.")
-else:
-    print(f"Question: {query}")
-    print("Answer: I apologize, but I don't have enough information to determine our deepest conversation.")
+deepest_conversation = graph.search(query, sort_by="depth_score", descending=True, limit=1)
 ```
 In this example, we store information about conversations with the user, including the date, topic, and a depth score. The depth score represents how meaningful the conversation was.
 
@@ -108,27 +122,29 @@ This example demonstrates how Personal-Graph can be used to build long-term memo
 
 ### Creating and Querying a Knowledge Graph
 ```py
-from personal_graph import Graph, natural
+from personal_graph import GraphDB
+from personal_graph.text import text_to_graph
 
-graph = Graph("your_db_url", "your_auth_token")
+graphdb = GraphDB(vector_store=vector_store)
 
 nl_query = "Increased thirst, weight loss, increased hunger, and frequent urination are all symptoms of diabetes."
-graph = natural.insert(text=nl_query)
+kg = text_to_graph(text=nl_query)
+graphdb.insert_graph(kg)
 
 search_query = "I am losing weight too frequently."
-knowledge_graph = natural.search_from_graph(search_query)
+g = text_to_graph(search_query)
+print(g)
 
-print(knowledge_graph)
+graphdb.insert_graph(g)
 ```
 
 ### Retrieval and Question-Answering
 ```py
 import dspy
-from personal_graph.graph import Graph
-from personal_graph.retriever import PersonalRM
+from personal_graph import GraphDB, OpenAILLMClient, PersonalRM
 
-graph = Graph("your_db_url", "your_auth_token")
-retriever = PersonalRM(graph=graph, k=2)
+db = GraphDB() # storage_db is in-memory sqlite, vector_db is in vlite
+retriever = PersonalRM(db=db, k=2)
 
 class RAG(dspy.Module):
     def __init__(self, depth=3):
@@ -142,8 +158,48 @@ class RAG(dspy.Module):
         return dspy.Prediction(context=context, answer=prediction.answer)
 
 rag = RAG(depth=2)
-answer = rag("How is Jack related to James?")
-print(answer)
+response = rag("How is Jack related to James?")
+print(response.answer)
+```
+
+### Local Usage
+
+```py
+from personal_graph.graph import GraphDB, OllamaClient, OllamaEmbeddingClient
+from personal_graph.graph_generator import OpenAITextToGraphParser
+from personal_graph.persistence_layer.database import SQLite
+from personal_graph.persistence_layer.vector_store import VliteVSS
+
+phi3 = OllamaClient(model_name="phi3")
+nomic_embed = OllamaEmbeddingClient(model_name="nomic-embed-text")
+
+storage_db = SQLite(local_path="./local.db", vector0_so_path="/path/to/vector0/extension", vss0_so_path="/path/to/vss0/extension")
+vector_store = VliteVSS(collection="./vectors")
+
+graph_generator=OpenAITextToGraphParser(llm_client=phi3)
+print(graph_generator) # Should print the InstructorGraphGenerator 
+
+with GraphDB(
+    db=db, 
+    vector_store=vector_store, 
+    graph_generator=graph_generator
+  ) as db:
+    print(db)
+```
+
+### PersonalGraph to PyG, then back to PersonalGraph
+The following is just a sketch of the planned flow. WIP.
+
+```py
+graphdb = GraphDB(storage=db, vector_store=vector_store, graph_generator=graph_generator)
+
+graphdb.load_dataset("KarateClub")
+
+pyg_graph = graphdb.to_pyg()
+
+updated_graph = model(pyg_graph) # Run Neural Network algorithms here using PyG
+
+graphdb.from_pyg(updated_graph)
 ```
 
 For more details and API documentation, see the Personal-Graph Documentation.

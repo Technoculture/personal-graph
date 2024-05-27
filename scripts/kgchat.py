@@ -4,9 +4,18 @@ from typing import List
 import dspy  # type: ignore
 import joblib  # type: ignore
 import streamlit as st
-from personal_graph.graph import Graph
-from personal_graph.models import Node, Edge, KnowledgeGraph
-from personal_graph.retriever import PersonalRM
+from personal_graph import (
+    GraphDB,
+    Node,
+    Edge,
+    KnowledgeGraph,
+    PersonalRM,
+)
+from personal_graph.clients import LiteLLMEmbeddingClient
+from personal_graph.persistence_layer.database import TursoDB
+from personal_graph.persistence_layer.vector_store import SQLiteVSS
+from personal_graph.text import text_to_graph
+from personal_graph.visualizers import visualize_graph
 
 try:
     import streamlit_scrollable_textbox as stx  # type: ignore
@@ -93,10 +102,10 @@ class MessageAnalyzerModule(dspy.Module):
 def create_and_save_cache(rag):
     list_of_context = []
 
-    with Graph(os.getenv("LIBSQL_URL"), os.getenv("LIBSQL_AUTH_TOKEN")) as graph:
+    with GraphDB() as graph:
         turbo = dspy.OpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPEN_API_KEY"))
 
-        kg = graph.insert("DEFAULT_BACKSTORY")
+        kg = text_to_graph("DEFAULT_BACKSTORY")
         retriever = PersonalRM(graph=graph, k=2)
         dspy.settings.configure(lm=turbo, rm=retriever)
 
@@ -143,8 +152,18 @@ def main():
     analyzer = MessageAnalyzerModule()
 
     st.title("Knowledge Graph Chat")
+    vector_store = SQLiteVSS(
+        db=TursoDB(
+            url=os.getenv("LIBSQL_URL_2"), auth_token=os.getenv("LIBSQL_AUTH_TOKEN_2")
+        ),
+        embedding_client=LiteLLMEmbeddingClient(),
+    )
 
-    with Graph(os.getenv("LIBSQL_URL"), os.getenv("LIBSQL_AUTH_TOKEN")) as graph:
+    database = TursoDB(
+        url=os.getenv("LIBSQL_URL"), auth_token=os.getenv("LIBSQL_AUTH_TOKEN")
+    )
+
+    with GraphDB(vector_store=vector_store, database=database) as graph:
         turbo = dspy.OpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPEN_API_KEY"))
         cached_backstory, cached_kg, cached_context = load_cache()
 
@@ -183,11 +202,12 @@ def main():
         if len(backstory) < 2000:
             st.sidebar.warning("Please enter a backstory with at least 2000 tokens.")
         else:
-            kg = graph.insert(backstory)
+            kg = text_to_graph(backstory)
+            graph.insert_graph(kg)
             st.session_state["kg"] = kg
             st.session_state["backstory"] = backstory
             with st.sidebar.status("Retrieved knowledge graph visualization:"):
-                st.sidebar.graphviz_chart(graph.visualize_graph(kg))
+                st.sidebar.graphviz_chart(visualize_graph(kg))
 
                 for idx, context in enumerate(rag(backstory).context, start=1):
                     body = json.loads(context).get("body", "")
@@ -196,7 +216,7 @@ def main():
             dspy.settings.configure(lm=turbo, rm=retriever)
 
     if cached_context and cached_kg and "loaded" not in st.session_state:
-        st.sidebar.graphviz_chart(graph.visualize_graph(cached_kg))
+        st.sidebar.graphviz_chart(visualize_graph(cached_kg))
         for context in cached_context:
             st.sidebar.write(context)
         st.session_state.loaded = True
@@ -227,10 +247,11 @@ def main():
                     st.write(f"{body}")
 
             with st.status("Generating response..."):
-                is_unique = graph.is_unique_prompt(prompt, 0.6)
+                is_unique = graph.is_unique_prompt(prompt, threshold=0.6)
                 if is_unique and kg:
-                    question_graph = graph.insert(prompt)
-                    sub_graph = graph.search_query(response.answer)
+                    question_graph = text_to_graph(prompt)
+                    graph.insert_graph(question_graph)
+                    sub_graph = graph.search_from_graph(response.answer)
                     for sg_node in question_graph.nodes:
                         kg.nodes.append(sg_node)
 
@@ -242,18 +263,18 @@ def main():
                     st.session_state["kg"] = kg
 
                     # Update the sidebar graph with the new information
-                    st.sidebar.graphviz_chart(graph.visualize_graph(kg))
+                    st.sidebar.graphviz_chart(visualize_graph(kg))
                     for idx, context in enumerate(
                         rag(st.session_state.backstory).context, start=1
                     ):
                         body = json.loads(context).get("body", "")
                         st.sidebar.write(f"{idx}. {body}")
-                    st.graphviz_chart(graph.visualize_graph(sub_graph))
+                    st.graphviz_chart(visualize_graph(sub_graph))
 
                 else:
-                    sub_graph = graph.search_query(response.answer)
-                    st.graphviz_chart(graph.visualize_graph(sub_graph))
-                    st.sidebar.graphviz_chart(graph.visualize_graph(kg))
+                    sub_graph = graph.search_from_graph(response.answer)
+                    st.graphviz_chart(visualize_graph(sub_graph))
+                    st.sidebar.graphviz_chart(visualize_graph(kg))
                     for idx, context in enumerate(
                         rag(st.session_state.backstory).context, start=1
                     ):

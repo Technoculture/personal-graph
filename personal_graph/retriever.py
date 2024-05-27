@@ -1,7 +1,6 @@
 import dspy  # type: ignore
 from typing import List, Optional, Union
-from personal_graph.graph import Graph
-from personal_graph.models import Node
+from personal_graph.graph import GraphDB, Node
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -10,7 +9,7 @@ load_dotenv()
 class PersonalRM(dspy.Retrieve):
     def __init__(
         self,
-        graph: Graph,
+        graph: GraphDB,
         k: int = 5,
     ):
         super().__init__(k=k)
@@ -24,7 +23,7 @@ class PersonalRM(dspy.Retrieve):
             return passages
 
         for query in queries:
-            kg = self.graph.search_query(query)
+            kg = self.graph.search_from_graph(query)
             passages.extend(kg.nodes)
         return passages
 

@@ -10,8 +10,9 @@ and extensible to other libraries.
 
 import json
 from graphviz import Digraph  # type: ignore
-from personal_graph import database as db
-from typing import List, Dict, Any, Tuple, Optional
+from typing import List, Dict, Any, Tuple
+
+from personal_graph.models import KnowledgeGraph
 
 
 def _as_dot_label(
@@ -39,60 +40,6 @@ def _as_dot_node(
     exclude_keys.append("id")
     label = _as_dot_label(body, exclude_keys, hide_key_name, kv_separator)
     return str(name), label
-
-
-def graphviz_visualize(
-    db_url: Optional[str] = None,
-    auth_token: Optional[str] = None,
-    dot_file: Optional[str] = None,
-    path: List[Any] = [],
-    connections: Any = db.get_connections,
-    format: str = "png",
-    exclude_node_keys: List[str] = [],
-    hide_node_key: bool = False,
-    node_kv: str = " ",
-    exclude_edge_keys: List[str] = [],
-    hide_edge_key: bool = False,
-    edge_kv: str = " ",
-) -> Digraph:
-    ids = []
-    for i in path:
-        ids.append(str(i))
-        for edge in db.atomic(connections(i), db_url, auth_token):  # type: ignore
-            print("Here", edge)
-            _, src, tgt, _, _, _, _ = edge
-            if src not in ids:
-                ids.append(src)
-            if tgt not in ids:
-                ids.append(tgt)
-
-    dot = Digraph()
-
-    visited = []
-    edges = []
-    for i in ids:
-        if i not in visited:
-            node = db.atomic(db.find_node(i), db_url, auth_token)  # type: ignore
-            name, label = _as_dot_node(node, exclude_node_keys, hide_node_key, node_kv)
-            dot.node(name, label=label)
-            for edge in db.atomic(connections(i), db_url, auth_token):  # type: ignore
-                if edge not in edges:
-                    _, src, tgt, _, prps, _, _ = edge
-                    props = json.loads(prps)
-                    dot.edge(
-                        str(src),
-                        str(tgt),
-                        label=_as_dot_label(
-                            props, exclude_edge_keys, hide_edge_key, edge_kv
-                        )
-                        if props
-                        else None,
-                    )
-                    edges.append(edge)
-            visited.append(i)
-
-    dot.render(dot_file, format=format)
-    return dot
 
 
 def graphviz_visualize_bodies(
@@ -131,3 +78,17 @@ def graphviz_visualize_bodies(
                 )
                 edges.append(edge)
     dot.render(dot_file, format=format)
+
+
+def visualize_graph(kg: KnowledgeGraph) -> Digraph:
+    dot = Digraph(comment="Knowledge Graph")
+
+    # Add nodes
+    for node in kg.nodes:
+        dot.node(str(node.id), node.label, color="black")
+
+    # Add edges
+    for edge in kg.edges:
+        dot.edge(str(edge.source), str(edge.target), edge.label, color="black")
+
+    return dot
