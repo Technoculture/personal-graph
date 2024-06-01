@@ -191,7 +191,7 @@ graph_generator=OpenAITextToGraphParser(llm_client=phi3)
 print(graph_generator) # Should print the InstructorGraphGenerator 
 
 with GraphDB(
-    database=db, 
+    database=storage_db, 
     vector_store=vector_store, 
     graph_generator=graph_generator
   ) as db:
