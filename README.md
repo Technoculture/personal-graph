@@ -138,11 +138,24 @@ graphdb.insert_graph(g)
 
 ### Retrieval and Question-Answering
 ```py
+import os
 import dspy
 from personal_graph import GraphDB, OpenAILLMClient, PersonalRM
 
 db = GraphDB() # storage_db is in-memory sqlite, vector_db is in vlite
-retriever = PersonalRM(db=db, k=2)
+turbo = dspy.OpenAI(api_key=os.getenv("OPEN_API_KEY"))
+retriever = PersonalRM(graph=db, k=2)
+dspy.settings.configure(lm=turbo, rm=retriever)
+
+
+class GenerateAnswer(dspy.Signature):
+    """Answer questions with short factoid answers."""
+
+    context = dspy.InputField(desc="may contain relevant facts from user's graph")
+    question = dspy.InputField()
+    answer = dspy.OutputField(
+        desc="a short answer to the question, deduced from the information found in the user's graph"
+    )
 
 class RAG(dspy.Module):
     def __init__(self, depth=3):
@@ -178,7 +191,7 @@ graph_generator=OpenAITextToGraphParser(llm_client=phi3)
 print(graph_generator) # Should print the InstructorGraphGenerator 
 
 with GraphDB(
-    db=db, 
+    database=storage_db, 
     vector_store=vector_store, 
     graph_generator=graph_generator
   ) as db:
