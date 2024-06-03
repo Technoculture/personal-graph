@@ -46,7 +46,7 @@ class LiteLLMEmbeddingClient(APIClient):
                 "Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN', '')}"
             },
             *args,
-            **kwargs
+            **kwargs,
         )
 
 
@@ -75,7 +75,7 @@ class LiteLLMClient(APIClient):
                 "Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN', '')}"
             },
             *args,
-            **kwargs
+            **kwargs,
         )
 
 
