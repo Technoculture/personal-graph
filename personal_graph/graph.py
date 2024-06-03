@@ -9,7 +9,7 @@ from contextlib import AbstractContextManager
 from graphviz import Digraph  # type: ignore
 from dotenv import load_dotenv
 
-from personal_graph import OpenAILLMClient
+from personal_graph import OpenAIClient
 from personal_graph.database import TursoDB, SQLite
 from personal_graph.graph_generator import OpenAITextToGraphParser
 from personal_graph.models import Node, EdgeInput, KnowledgeGraph, Edge
@@ -26,7 +26,7 @@ class GraphDB(AbstractContextManager):
         vector_store: Union[SQLiteVSS, VliteVSS] = VliteVSS(collection="./vectors"),
         database: Union[TursoDB, SQLite] = SQLite(use_in_memory=True),
         graph_generator: OpenAITextToGraphParser = OpenAITextToGraphParser(
-            llm_client=OpenAILLMClient()
+            llm_client=OpenAIClient()
         ),
     ):
         self.vector_store = vector_store

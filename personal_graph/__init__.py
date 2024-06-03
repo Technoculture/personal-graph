@@ -1,4 +1,4 @@
-from personal_graph.clients import OpenAILLMClient
+from personal_graph.clients import OpenAIClient, LiteLLMClient
 from personal_graph.retriever import PersonalRM
 from personal_graph.visualizers import graphviz_visualize_bodies
 from personal_graph.embeddings import OpenAIEmbeddingsModel
@@ -14,5 +14,6 @@ __all__ = [
     "PersonalRM",
     "graphviz_visualize_bodies",
     "OpenAIEmbeddingsModel",
-    "OpenAILLMClient",
+    "OpenAIClient",
+    "LiteLLMClient",
 ]
