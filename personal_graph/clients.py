@@ -58,7 +58,7 @@ class LiteLLMEmbeddingClient(APIClient):
 
 
 @dataclass
-class OpenAILLMClient(APIClient):
+class LiteLLMClient(APIClient):
     base_url: str = ""
     model_name: str = "openai/gpt-3.5-turbo"
 
@@ -73,3 +73,15 @@ class OpenAILLMClient(APIClient):
                 "Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN', '')}"
             },
         )
+
+
+@dataclass
+class OpenAIClient(APIClient):
+    api_key: str = os.getenv("OPEN_AI_KEY", "")
+    model_name: str = "gpt-3.5-turbo"
+
+    def __post_init__(self):
+        self.client = self._create_default_client()
+
+    def _create_default_client(self):
+        return openai.OpenAI(api_key=os.getenv("OPEN_API_KEY", self.api_key))
