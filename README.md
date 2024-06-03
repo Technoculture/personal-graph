@@ -140,7 +140,7 @@ graphdb.insert_graph(g)
 ```py
 import os
 import dspy
-from personal_graph import GraphDB, OpenAILLMClient, PersonalRM
+from personal_graph import GraphDB, OpenAIClient, PersonalRM
 
 db = GraphDB() # storage_db is in-memory sqlite, vector_db is in vlite
 turbo = dspy.OpenAI(api_key=os.getenv("OPEN_API_KEY"))
