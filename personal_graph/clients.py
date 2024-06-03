@@ -35,16 +35,18 @@ class LiteLLMEmbeddingClient(APIClient):
     dimensions: int = 384
     base_url: str = ""
 
-    def __post_init__(self):
-        self.client = self._create_default_client()
+    def __post_init__(self, *args, **kwargs):
+        self.client = self._create_default_client(*args, **kwargs)
 
-    def _create_default_client(self):
+    def _create_default_client(self, *args, **kwargs):
         return openai.OpenAI(
             api_key="",
             base_url=os.getenv("LITE_LLM_BASE_URL", self.base_url),
             default_headers={
                 "Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN', '')}"
             },
+            *args,
+            **kwargs
         )
 
 
@@ -62,16 +64,18 @@ class LiteLLMClient(APIClient):
     base_url: str = ""
     model_name: str = "openai/gpt-3.5-turbo"
 
-    def __post_init__(self):
-        self.client = self._create_default_client()
+    def __post_init__(self, *args, **kwargs):
+        self.client = self._create_default_client(*args, **kwargs)
 
-    def _create_default_client(self):
+    def _create_default_client(self, *args, **kwargs):
         return openai.OpenAI(
             api_key="",
             base_url=os.getenv("LITE_LLM_BASE_URL", self.base_url),
             default_headers={
                 "Authorization": f"Bearer {os.getenv('LITE_LLM_TOKEN', '')}"
             },
+            *args,
+            **kwargs
         )
 
 
