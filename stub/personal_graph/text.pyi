@@ -1,6 +1,6 @@
 from personal_graph import (
     KnowledgeGraph as KnowledgeGraph,
-    OpenAILLMClient as OpenAILLMClient,
+    OpenAIClient as OpenAIClient,
 )
 from personal_graph.graph_generator import (
     OpenAITextToGraphParser as OpenAITextToGraphParser,

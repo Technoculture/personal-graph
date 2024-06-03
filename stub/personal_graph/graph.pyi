@@ -2,7 +2,6 @@ import types
 from _typeshed import Incomplete
 from contextlib import AbstractContextManager
 from graphviz import Digraph  # type: ignore
-from personal_graph import OpenAILLMClient as OpenAILLMClient
 from personal_graph.graph_generator import (
     OpenAITextToGraphParser as OpenAITextToGraphParser,
 )

@@ -1,6 +1,8 @@
 import abc
 from abc import ABC, abstractmethod
-from personal_graph.clients import OpenAILLMClient as OpenAILLMClient
+from typing import Union
+
+from personal_graph.clients import OpenAIClient, LiteLLMClient
 from personal_graph.models import KnowledgeGraph as KnowledgeGraph
 
 class TextToGraphParserInterface(ABC, metaclass=abc.ABCMeta):
@@ -10,8 +12,8 @@ class TextToGraphParserInterface(ABC, metaclass=abc.ABCMeta):
 class OpenAITextToGraphParser(TextToGraphParserInterface):
     system_prompt: str
     prompt: str
-    llm_client: OpenAILLMClient
+    llm_client: Union[OpenAIClient, LiteLLMClient]
     def __init__(
-        self, llm_client: OpenAILLMClient, system_prompt: str = ..., prompt: str = ...
+        self, llm_client: OpenAIClient, system_prompt: str = ..., prompt: str = ...
     ) -> None: ...
     def generate(self, query: str) -> KnowledgeGraph: ...
