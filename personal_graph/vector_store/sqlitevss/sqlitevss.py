@@ -3,7 +3,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, Union, List
 
-from personal_graph.clients import LiteLLMEmbeddingClient
+from personal_graph.clients import OpenAIEmbeddingModel, LiteLLMEmbeddingClient
 from personal_graph.embeddings import OpenAIEmbeddingsModel
 from personal_graph.vector_store.vector_store import VectorStore
 from personal_graph.database import TursoDB
@@ -24,7 +24,9 @@ class SQLiteVSS(VectorStore):
         self,
         *,
         db: Union[TursoDB, SQLite],
-        embedding_client: LiteLLMEmbeddingClient = LiteLLMEmbeddingClient(),
+        embedding_client: Union[
+            OpenAIEmbeddingModel, LiteLLMEmbeddingClient
+        ] = OpenAIEmbeddingModel(),
     ):
         self.db = db
         self.embedding_model = OpenAIEmbeddingsModel(
