@@ -13,14 +13,14 @@ class APIClient(ABC):
         pass
 
 
-class EmbeddingModel(ABC):
+class EmbeddingClient(ABC):
     @abstractmethod
     def _create_default_client(self):
         pass
 
 
 @dataclass
-class OpenAIEmbeddingModel(EmbeddingModel):
+class OpenAIEmbeddingClient(EmbeddingClient):
     dimensions: int = 384
     model_name: str = "text-embedding-3-small"
     api_key: str = ""
@@ -55,8 +55,8 @@ class LiteLLMEmbeddingClient(APIClient):
 
 @dataclass
 class OllamaEmbeddingClient(APIClient):
-    dimensions: Optional[int] = 512
-    model_name: str = "text-embedding-3-small"
+    model_name: str
+    dimensions: int = 768
 
     def __post_init__(self, *args, **kwargs):
         self.client = self._create_default_client(*args, **kwargs)
