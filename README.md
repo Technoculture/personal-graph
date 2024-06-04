@@ -36,7 +36,7 @@ from personal_graph import GraphDB
 from personal_graph.text import text_to_graph
 from personal_graph.vector_store import VliteVSS
 
-vector_store = VliteVSS(collection="memories", model_name="mxbai")
+vector_store = VliteVSS(collection="memories")
 graph = GraphDB(vector_store=vector_store)
 
 # Insert information into the graph
@@ -66,7 +66,7 @@ In this example, we insert information about Alice and Bob into the knowledge gr
 from personal_graph import GraphDB
 from personal_graph.vector_store import VliteVSS
 
-vector_store = VliteVSS(collection="memories", model_name="mxbai")
+vector_store = VliteVSS(collection="memories")
 graph = GraphDB(vector_store=vector_store)
 
 # Insert information about conversations with the user over time
@@ -121,7 +121,7 @@ from personal_graph import GraphDB
 from personal_graph.text import text_to_graph
 from personal_graph.vector_store import VliteVSS
 
-vector_store = VliteVSS(collection="memories", model_name="mxbai")
+vector_store = VliteVSS(collection="memories")
 
 graphdb = GraphDB(vector_store=vector_store)
 
@@ -176,15 +176,16 @@ print(response.answer)
 ### Local Usage
 
 ```py
-from personal_graph.graph import GraphDB, OllamaClient, OllamaEmbeddingClient
+from personal_graph.graph import GraphDB
 from personal_graph.graph_generator import OpenAITextToGraphParser
 from personal_graph.database import SQLite
 from personal_graph.vector_store import VliteVSS
+from personal_graph.clients import OllamaClient, OllamaEmbeddingClient
 
 phi3 = OllamaClient(model_name="phi3")
 nomic_embed = OllamaEmbeddingClient(model_name="nomic-embed-text")
 
-storage_db = SQLite(local_path="./local.db", vector0_so_path="/path/to/vector0/extension", vss0_so_path="/path/to/vss0/extension")
+storage_db = SQLite(local_path="./local.db")
 vector_store = VliteVSS(collection="./vectors")
 
 graph_generator=OpenAITextToGraphParser(llm_client=phi3)
