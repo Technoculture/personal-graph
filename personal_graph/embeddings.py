@@ -14,7 +14,7 @@ class EmbeddingsModel(ABC):
 
 class OpenAIEmbeddingsModel(EmbeddingsModel):
     def __init__(
-        self, embed_client: openai.OpenAI, embed_model: str, embed_dimension: int
+        self, embed_client: openai.OpenAI, embed_model: str, embed_dimension: int = 384
     ) -> None:
         self.client = embed_client if embed_client else None
         self.model = embed_model
