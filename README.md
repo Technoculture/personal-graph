@@ -140,10 +140,10 @@ graphdb.insert_graph(g)
 ```py
 import os
 import dspy
-from personal_graph import GraphDB, OpenAIClient, PersonalRM
+from personal_graph import GraphDB, PersonalRM
 
 db = GraphDB() # storage_db is in-memory sqlite, vector_db is in vlite
-turbo = dspy.OpenAI(api_key=os.getenv("OPEN_API_KEY"))
+turbo = dspy.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 retriever = PersonalRM(graph=db, k=2)
 dspy.settings.configure(lm=turbo, rm=retriever)
 
@@ -177,7 +177,7 @@ print(response.answer)
 
 ```py
 from personal_graph.graph import GraphDB
-from personal_graph.graph_generator import OpenAITextToGraphParser
+from personal_graph.graph_generator import OllamaTextToGraphParser
 from personal_graph.database import SQLite
 from personal_graph.vector_store import VliteVSS
 from personal_graph.clients import OllamaClient, OllamaEmbeddingClient
@@ -188,7 +188,7 @@ nomic_embed = OllamaEmbeddingClient(model_name="nomic-embed-text")
 storage_db = SQLite(local_path="./local.db")
 vector_store = VliteVSS(collection="./vectors")
 
-graph_generator=OpenAITextToGraphParser(llm_client=phi3)
+graph_generator=OllamaTextToGraphParser(llm_client=phi3)
 print(graph_generator) # Should print the InstructorGraphGenerator 
 
 with GraphDB(
