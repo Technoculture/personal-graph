@@ -214,6 +214,10 @@ updated_graph = model(pyg_graph) # Run Neural Network algorithms here using PyG
 graphdb.from_pyg(updated_graph)
 ```
 
+## Video Description
+This video best describes the personal graph library.
+[[!personal graph]](https://www.loom.com/share/6c715563b8ec45f280213e5466f0be14)
+
 For more details and API documentation, see the Personal-Graph Documentation.
 
 ## Contributing
