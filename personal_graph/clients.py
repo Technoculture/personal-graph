@@ -1,6 +1,7 @@
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from personal_graph.embeddings import OpenAIEmbeddingsModel, OllamaEmbeddingModel
 
 import openai
 import ollama  # type: ignore
@@ -17,6 +18,10 @@ class EmbeddingClient(ABC):
     def _create_default_client(self):
         pass
 
+    @abstractmethod
+    def get_embedding_model(self):
+        pass
+
 
 @dataclass
 class OpenAIEmbeddingClient(EmbeddingClient):
@@ -29,6 +34,9 @@ class OpenAIEmbeddingClient(EmbeddingClient):
 
     def _create_default_client(self):
         return openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY", self.api_key))
+
+    def get_embedding_model(self):
+        return OpenAIEmbeddingsModel(self.client, self.model_name, self.dimensions)
 
 
 @dataclass
@@ -51,6 +59,9 @@ class LiteLLMEmbeddingClient(APIClient):
             **kwargs,
         )
 
+    def get_embedding_model(self):
+        return OpenAIEmbeddingsModel(self.client, self.model_name, self.dimensions)
+
 
 @dataclass
 class OllamaEmbeddingClient(APIClient):
@@ -62,6 +73,9 @@ class OllamaEmbeddingClient(APIClient):
 
     def _create_default_client(self, *args, **kwargs):
         return ollama.Client(*args, **kwargs)
+
+    def get_embedding_model(self):
+        return OllamaEmbeddingModel(self.client, self.model_name, self.dimensions)
 
 
 @dataclass

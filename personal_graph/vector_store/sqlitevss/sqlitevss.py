@@ -8,7 +8,6 @@ from personal_graph.clients import (
     LiteLLMEmbeddingClient,
     OllamaEmbeddingClient,
 )
-from personal_graph.embeddings import OllamaEmbeddingModel
 from personal_graph.vector_store.vector_store import VectorStore
 from personal_graph.database import TursoDB
 from personal_graph.database import SQLite
@@ -34,11 +33,8 @@ class SQLiteVSS(VectorStore):
         ] = OpenAIEmbeddingClient(),
     ):
         self.db = db
-        self.embedding_model = OllamaEmbeddingModel(
-            embedding_client.client,
-            embedding_client.model_name,
-            embedding_client.dimensions,
-        )
+        self.embedding_model = embedding_client.get_embedding_model()
+
         if index_dimension is None:
             raise ValueError("index_dimension cannot be None")
         self.index_dimension = index_dimension
