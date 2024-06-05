@@ -11,8 +11,9 @@ from personal_graph import (
     KnowledgeGraph,
     PersonalRM,
 )
-from personal_graph.clients import LiteLLMEmbeddingClient
-from personal_graph.database import TursoDB
+from personal_graph.clients import OllamaEmbeddingClient, OllamaClient
+from personal_graph.database import TursoDB, SQLite
+from personal_graph.graph_generator import OpenAITextToGraphParser
 from personal_graph.vector_store import SQLiteVSS
 from personal_graph.text import text_to_graph
 from personal_graph.visualizers import visualize_graph
@@ -103,7 +104,7 @@ def create_and_save_cache(rag):
     list_of_context = []
 
     with GraphDB() as graph:
-        turbo = dspy.OpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPEN_API_KEY"))
+        turbo = dspy.OpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPENAI_API_KEY"))
 
         kg = text_to_graph("DEFAULT_BACKSTORY")
         retriever = PersonalRM(graph=graph, k=2)
@@ -154,17 +155,20 @@ def main():
     st.title("Knowledge Graph Chat")
     vector_store = SQLiteVSS(
         db=TursoDB(
-            url=os.getenv("LIBSQL_URL_2"), auth_token=os.getenv("LIBSQL_AUTH_TOKEN_2")
+            url=os.getenv("LIBSQL_URL"), auth_token=os.getenv("LIBSQL_AUTH_TOKEN")
         ),
-        embedding_client=LiteLLMEmbeddingClient(),
+        embedding_client=OllamaEmbeddingClient(model_name="nomic-embed-text"),
     )
 
-    database = TursoDB(
-        url=os.getenv("LIBSQL_URL"), auth_token=os.getenv("LIBSQL_AUTH_TOKEN")
-    )
-
-    with GraphDB(vector_store=vector_store, database=database) as graph:
-        turbo = dspy.OpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPEN_API_KEY"))
+    database = SQLite(local_path="./local.db")
+    with GraphDB(
+        vector_store=vector_store,
+        database=database,
+        graph_generator=OpenAITextToGraphParser(
+            llm_client=OllamaClient(model_name="phi3")
+        ),
+    ) as graph:
+        turbo = dspy.OpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPENAI_API_KEY"))
         cached_backstory, cached_kg, cached_context = load_cache()
 
         if "initialized" not in st.session_state:
@@ -234,7 +238,7 @@ def main():
                 # TODO: Add system_prompt when it's available in dspy package
                 ella = dspy.OpenAI(
                     model="gpt-3.5-turbo",
-                    api_key=os.getenv("OPEN_API_KEY"),
+                    api_key=os.getenv("OPENAI_API_KEY"),
                     max_tokens=4000,
                 )
                 with dspy.context(lm=ella):

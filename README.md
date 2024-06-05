@@ -36,7 +36,7 @@ from personal_graph import GraphDB
 from personal_graph.text import text_to_graph
 from personal_graph.vector_store import VliteVSS
 
-vector_store = VliteVSS(collection="memories", model_name="mxbai")
+vector_store = VliteVSS(collection="memories")
 graph = GraphDB(vector_store=vector_store)
 
 # Insert information into the graph
@@ -66,7 +66,7 @@ In this example, we insert information about Alice and Bob into the knowledge gr
 from personal_graph import GraphDB
 from personal_graph.vector_store import VliteVSS
 
-vector_store = VliteVSS(collection="memories", model_name="mxbai")
+vector_store = VliteVSS(collection="memories")
 graph = GraphDB(vector_store=vector_store)
 
 # Insert information about conversations with the user over time
@@ -121,7 +121,7 @@ from personal_graph import GraphDB
 from personal_graph.text import text_to_graph
 from personal_graph.vector_store import VliteVSS
 
-vector_store = VliteVSS(collection="memories", model_name="mxbai")
+vector_store = VliteVSS(collection="memories")
 
 graphdb = GraphDB(vector_store=vector_store)
 
@@ -140,10 +140,10 @@ graphdb.insert_graph(g)
 ```py
 import os
 import dspy
-from personal_graph import GraphDB, OpenAIClient, PersonalRM
+from personal_graph import GraphDB, PersonalRM
 
 db = GraphDB() # storage_db is in-memory sqlite, vector_db is in vlite
-turbo = dspy.OpenAI(api_key=os.getenv("OPEN_API_KEY"))
+turbo = dspy.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 retriever = PersonalRM(graph=db, k=2)
 dspy.settings.configure(lm=turbo, rm=retriever)
 
@@ -176,18 +176,19 @@ print(response.answer)
 ### Local Usage
 
 ```py
-from personal_graph.graph import GraphDB, OllamaClient, OllamaEmbeddingClient
-from personal_graph.graph_generator import OpenAITextToGraphParser
+from personal_graph.graph import GraphDB
+from personal_graph.graph_generator import OllamaTextToGraphParser
 from personal_graph.database import SQLite
 from personal_graph.vector_store import VliteVSS
+from personal_graph.clients import OllamaClient, OllamaEmbeddingClient
 
 phi3 = OllamaClient(model_name="phi3")
 nomic_embed = OllamaEmbeddingClient(model_name="nomic-embed-text")
 
-storage_db = SQLite(local_path="./local.db", vector0_so_path="/path/to/vector0/extension", vss0_so_path="/path/to/vss0/extension")
+storage_db = SQLite(local_path="./local.db")
 vector_store = VliteVSS(collection="./vectors")
 
-graph_generator=OpenAITextToGraphParser(llm_client=phi3)
+graph_generator=OllamaTextToGraphParser(llm_client=phi3)
 print(graph_generator) # Should print the InstructorGraphGenerator 
 
 with GraphDB(

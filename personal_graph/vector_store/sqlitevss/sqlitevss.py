@@ -3,8 +3,11 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, Union, List
 
-from personal_graph.clients import LiteLLMEmbeddingClient
-from personal_graph.embeddings import OpenAIEmbeddingsModel
+from personal_graph.clients import (
+    OpenAIEmbeddingClient,
+    LiteLLMEmbeddingClient,
+    OllamaEmbeddingClient,
+)
 from personal_graph.vector_store.vector_store import VectorStore
 from personal_graph.database import TursoDB
 from personal_graph.database import SQLite
@@ -24,18 +27,23 @@ class SQLiteVSS(VectorStore):
         self,
         *,
         db: Union[TursoDB, SQLite],
-        embedding_client: LiteLLMEmbeddingClient = LiteLLMEmbeddingClient(),
+        index_dimension: int,
+        embedding_client: Union[
+            OpenAIEmbeddingClient, LiteLLMEmbeddingClient, OllamaEmbeddingClient
+        ] = OpenAIEmbeddingClient(),
     ):
         self.db = db
-        self.embedding_model = OpenAIEmbeddingsModel(
-            embedding_client.client,
-            embedding_client.model_name,
-            embedding_client.dimensions,
-        )
+        self.embedding_model = embedding_client.get_embedding_model()
+
+        if index_dimension is None:
+            raise ValueError("index_dimension cannot be None")
+        self.index_dimension = index_dimension
 
     def initialize(self):
         def _init(cursor, connection):
             vector_schema = read_sql(Path("vector-store-schema.sql"))
+            vector_schema = vector_schema.replace("{{size}}", str(self.index_dimension))
+
             connection.executescript(vector_schema)
             connection.commit()
 

@@ -1,7 +1,10 @@
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from personal_graph.embeddings import OpenAIEmbeddingsModel, OllamaEmbeddingModel
+
 import openai
+import ollama  # type: ignore
 
 
 class APIClient(ABC):
@@ -10,23 +13,30 @@ class APIClient(ABC):
         pass
 
 
-# class EmbeddingModel(ABC):
-#     @abstractmethod
-#     def _create_default_client(self):
-#         pass
+class EmbeddingClient(ABC):
+    @abstractmethod
+    def _create_default_client(self):
+        pass
+
+    @abstractmethod
+    def get_embedding_model(self):
+        pass
 
 
-# @dataclass
-# class OpenAIEmbeddingModel(EmbeddingModel):
-#     model_name: str = "text-embedding-3-small"
-#     dimensions: Optional[int] = 384
-#     api_key: str = ""
-#
-#     def __post_init__(self):
-#         self.client = self._create_default_client()
-#
-#     def _create_default_client(self):
-#         return openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY", self.api_key))
+@dataclass
+class OpenAIEmbeddingClient(EmbeddingClient):
+    dimensions: int = 384
+    model_name: str = "text-embedding-3-small"
+    api_key: str = ""
+
+    def __post_init__(self):
+        self.client = self._create_default_client()
+
+    def _create_default_client(self):
+        return openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY", self.api_key))
+
+    def get_embedding_model(self):
+        return OpenAIEmbeddingsModel(self.client, self.model_name, self.dimensions)
 
 
 @dataclass
@@ -49,14 +59,23 @@ class LiteLLMEmbeddingClient(APIClient):
             **kwargs,
         )
 
+    def get_embedding_model(self):
+        return OpenAIEmbeddingsModel(self.client, self.model_name, self.dimensions)
 
-# @dataclass
-# class OllamaEmbeddingClient(APIClient):
-#     model_name: str = "text-embedding-3-small"
-#     dimensions: Optional[int]
-#
-#     def _create_default_client(self):
-#         return ollama.Ollama()
+
+@dataclass
+class OllamaEmbeddingClient(APIClient):
+    model_name: str
+    dimensions: int = 768
+
+    def __post_init__(self, *args, **kwargs):
+        self.client = self._create_default_client(*args, **kwargs)
+
+    def _create_default_client(self, *args, **kwargs):
+        return ollama.Client(*args, **kwargs)
+
+    def get_embedding_model(self):
+        return OllamaEmbeddingModel(self.client, self.model_name, self.dimensions)
 
 
 @dataclass
@@ -89,3 +108,16 @@ class OpenAIClient(APIClient):
 
     def _create_default_client(self, *args, **kwargs):
         return openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY", ""), *args, **kwargs)
+
+
+@dataclass
+class OllamaClient(APIClient):
+    model_name: str
+    base_url: str = "http://localhost:11434/v1"
+    api_key: str = "ollama"
+
+    def __post_init__(self, *args, **kwargs):
+        self.client = self._create_default_client(*args, **kwargs)
+
+    def _create_default_client(self, *args, **kwargs):
+        return ollama.Client(*args, **kwargs)
