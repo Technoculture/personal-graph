@@ -1,10 +1,13 @@
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from dotenv import load_dotenv
 from personal_graph.embeddings import OpenAIEmbeddingsModel, OllamaEmbeddingModel
 
 import openai
 import ollama  # type: ignore
+
+load_dotenv()
 
 
 class APIClient(ABC):
@@ -29,11 +32,11 @@ class OpenAIEmbeddingClient(EmbeddingClient):
     model_name: str = "text-embedding-3-small"
     api_key: str = ""
 
-    def __post_init__(self):
-        self.client = self._create_default_client()
+    def __post_init__(self, *args, **kwargs):
+        self.client = self._create_default_client(*args, **kwargs)
 
-    def _create_default_client(self):
-        return openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY", self.api_key))
+    def _create_default_client(self, *args, **kwargs):
+        return openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY", self.api_key), *args, **kwargs)
 
     def get_embedding_model(self):
         return OpenAIEmbeddingsModel(self.client, self.model_name, self.dimensions)
