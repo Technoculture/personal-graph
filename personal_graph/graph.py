@@ -11,7 +11,10 @@ from dotenv import load_dotenv
 
 from personal_graph import OpenAIClient
 from personal_graph.database import TursoDB, SQLite
-from personal_graph.graph_generator import OpenAITextToGraphParser
+from personal_graph.graph_generator import (
+    OpenAITextToGraphParser,
+    OllamaTextToGraphParser,
+)
 from personal_graph.models import Node, EdgeInput, KnowledgeGraph, Edge
 from personal_graph.vector_store import SQLiteVSS, VliteVSS
 
@@ -25,9 +28,9 @@ class GraphDB(AbstractContextManager):
         *,
         vector_store: Union[SQLiteVSS, VliteVSS] = VliteVSS(collection="./vectors"),
         database: Union[TursoDB, SQLite] = SQLite(use_in_memory=True),
-        graph_generator: OpenAITextToGraphParser = OpenAITextToGraphParser(
-            llm_client=OpenAIClient()
-        ),
+        graph_generator: Union[
+            OpenAITextToGraphParser, OllamaTextToGraphParser
+        ] = OpenAITextToGraphParser(llm_client=OpenAIClient()),
     ):
         self.vector_store = vector_store
         self.db = database
