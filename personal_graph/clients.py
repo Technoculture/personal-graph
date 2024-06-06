@@ -110,7 +110,7 @@ class OpenAIClient(APIClient):
         self.client = self._create_default_client(*args, **kwargs)
 
     def _create_default_client(self, *args, **kwargs):
-        return openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY", ""), *args, **kwargs)
+        return openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY", self.api_key), *args, **kwargs)
 
 
 @dataclass
