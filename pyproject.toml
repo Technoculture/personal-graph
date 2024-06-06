@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "personal-graph"
-version = "2.0"
+version = "2.1"
 description = "Graph database in LibSQL"
 authors = ["Anubhuti Bhardwaj <anubhutibhardwaj11@gmail.com>"]
 license = "MIT"
