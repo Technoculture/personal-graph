@@ -65,13 +65,10 @@ class TursoDB(SQLite):
             auth_token=self.db_auth_token,
         )
 
-        try:
-            cursor = self._connection.cursor()
-            cursor.execute("PRAGMA foreign_keys = TRUE;")
-            results = cursor_exec_fn(cursor, self._connection)
-            self._connection.commit()
-        finally:
-            pass
+        cursor = self._connection.cursor()
+        cursor.execute("PRAGMA foreign_keys = TRUE;")
+        results = cursor_exec_fn(cursor, self._connection)
+        self._connection.commit()
         return results
 
     def save(self):
