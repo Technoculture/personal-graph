@@ -60,11 +60,10 @@ class TursoDB(SQLite):
         )
 
     def atomic(self, cursor_exec_fn: CursorExecFunction) -> Any:
-        if not hasattr(self, "_connection"):
-            self._connection = libsql.connect(
-                database=self.db_url,
-                auth_token=self.db_auth_token,
-            )
+        self._connection = libsql.connect(
+            database=self.db_url,
+            auth_token=self.db_auth_token,
+        )
 
         try:
             cursor = self._connection.cursor()
