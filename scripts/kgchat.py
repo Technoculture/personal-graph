@@ -13,7 +13,7 @@ from personal_graph import (
 )
 from personal_graph.clients import OllamaEmbeddingClient, OllamaClient
 from personal_graph.database import TursoDB, SQLite
-from personal_graph.graph_generator import OpenAITextToGraphParser
+from personal_graph.graph_generator import OllamaTextToGraphParser
 from personal_graph.vector_store import SQLiteVSS
 from personal_graph.text import text_to_graph
 from personal_graph.visualizers import visualize_graph
@@ -164,7 +164,7 @@ def main():
     with GraphDB(
         vector_store=vector_store,
         database=database,
-        graph_generator=OpenAITextToGraphParser(
+        graph_generator=OllamaTextToGraphParser(
             llm_client=OllamaClient(model_name="phi3")
         ),
     ) as graph:

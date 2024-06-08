@@ -87,7 +87,9 @@ class GraphDB(AbstractContextManager):
                 use_direct_search = True
 
         elif isinstance(self.vector_store.db, SQLite) and isinstance(self.db, SQLite):
-            if not isinstance(self.vector_store.db, TursoDB) and not isinstance(self.db, TursoDB):
+            if not isinstance(self.vector_store.db, TursoDB) and not isinstance(
+                self.db, TursoDB
+            ):
                 if (
                     self.vector_store.db.local_path == self.db.local_path
                     and self.vector_store.db.local_path is not None
@@ -148,7 +150,9 @@ class GraphDB(AbstractContextManager):
                 use_direct_search = True
 
         elif isinstance(self.vector_store.db, SQLite) and isinstance(self.db, SQLite):
-            if not isinstance(self.vector_store.db, TursoDB) and not isinstance(self.db, TursoDB):
+            if not isinstance(self.vector_store.db, TursoDB) and not isinstance(
+                self.db, TursoDB
+            ):
                 if (
                     self.vector_store.db.local_path == self.db.local_path
                     and self.vector_store.db.local_path is not None
