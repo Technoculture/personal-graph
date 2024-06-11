@@ -17,7 +17,7 @@ from personal_graph.graph_generator import (
 )
 from personal_graph.models import Node, EdgeInput, KnowledgeGraph, Edge
 from personal_graph.vector_store import SQLiteVSS, VliteVSS
-from owlready2 import Ontology
+from owlready2 import Ontology  # type: ignore
 
 
 load_dotenv()
@@ -32,7 +32,7 @@ class GraphDB(AbstractContextManager):
         graph_generator: Union[
             OpenAITextToGraphParser, OllamaTextToGraphParser
         ] = OpenAITextToGraphParser(llm_client=OpenAIClient()),
-        ontologies: Optional[List[Ontology]] = None
+        ontologies: Optional[List[Ontology]] = None,
     ):
         self.vector_store = vector_store
         self.db = database
