@@ -30,6 +30,8 @@ dspy-ai = "2.3.0"
 instructor = "^1.2.2"
 vlite = "^0.2.7"
 ollama = "^0.2.0"
+libsql-experimental = "^0.0.34"
+owlready2 = "^0.46"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.1.1"
