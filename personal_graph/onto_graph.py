@@ -20,9 +20,10 @@ class OntoGraph(GraphDB):
                         break
 
                 if concept is None:
-                    raise ValueError(f"Node concept '{node_type}' is not a valid concept in the ontology.")
+                    raise ValueError(
+                        f"Node concept '{node_type}' is not a valid concept in the ontology."
+                    )
 
-                node.label = concept.name
             else:
                 raise ValueError("Node type not provided.")
 
