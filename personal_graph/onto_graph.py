@@ -5,15 +5,20 @@ from personal_graph import GraphDB, Node
 
 
 class OntoGraph(GraphDB):
-    def __init__(self, ontology):
+    def __init__(self, ontologies):
         super().__init__()
-        self.ontology = ontology
+        self.ontologies = ontologies
 
     def add_node(self, node: Node, node_type: Optional[str] = None) -> None:
-        if self.ontology is not None:
+        if self.ontologies is not None:
             if node_type is not None:
-                # Check if the node label matches a concept in the ontology
-                concept = self.ontology.search_one(label=node_type)
+                # Check if the node type matches a concept in the ontology
+                concept = None
+                for ontology in self.ontologies:
+                    concept = ontology.search_one(label=node_type)
+                    if concept is not None:
+                        break
+
                 if concept is None:
                     raise ValueError(f"Node concept '{node_type}' is not a valid concept in the ontology.")
 

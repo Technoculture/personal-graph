@@ -4,7 +4,7 @@ from personal_graph.ontology import from_rdf
 
 ontologies = from_rdf("/path/to/rdffile")
 
-with OntoGraph(ontology=ontologies) as graph_db:
+with OntoGraph(ontologies=[ontologies]) as graph_db:
     try:
         node = Node(id="1", label="Pabelo", attributes={"age": 30})
         graph_db.add_node(node, "device")
