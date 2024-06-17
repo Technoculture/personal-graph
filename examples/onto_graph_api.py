@@ -16,7 +16,7 @@ with OntoGraph(ontologies=[ontologies]) as db:
                 "individual": "personality",
             },
         )
-        db.add_node(node, node_type="administrative")
+        db.add_node(node, node_type="administrative", delete_if_properties_not_match=True)
         db.visualize("sample.dot", ["1"])
     except ValueError as e:
         print(f"Error adding node: {e}")
