@@ -1,4 +1,5 @@
 import json
+import uuid
 from typing import Optional
 
 from personal_graph import GraphDB, Node
@@ -9,7 +10,16 @@ class OntoGraph(GraphDB):
         super().__init__()
         self.ontologies = ontologies
 
-    def add_node(self, node: Node, node_type: Optional[str] = None) -> None:
+    def add_node(
+        self,
+        node: Node,
+        node_type: Optional[str] = None
+    ) -> None:
+        node_properties = (
+            list(node.attributes.keys())
+            if isinstance(node.attributes, dict)
+            else list(json.loads(node.attributes).keys())
+        )
         if self.ontologies is not None:
             if node_type is not None:
                 # Check if the node type matches a concept in the ontology
@@ -44,4 +54,40 @@ class OntoGraph(GraphDB):
                 else node.attributes,
             )
 
-            # TODO: Create an edge with an ontology node type
+            # Fetch ontology properties of the particular node type
+            node_type_properties = []
+            fetch_properties = False
+            for ontology in self.ontologies:
+                if not fetch_properties:
+                    for cls in ontology.classes():
+                        if node_type in cls.name and node_type != cls.name:
+                            node_type_properties.append(cls.label[0])
+                            fetch_properties = True
+
+                if sorted(node_type_properties) == sorted(node_properties):
+                    # Create instance_of edge if properties matches with the attribute
+                    node_id = str(uuid.uuid4())
+
+                    # Check if node type not exists, then add a node_type
+                    if not self.db.search_node(node_id):
+                        self.db.add_node(node_type, {}, node_id)  # type: ignore
+                        self.vector_store.add_node_embedding(node_id, node_type, {})  # type: ignore
+
+                    # Establish an instance_of relation between node and node_type
+                    self.db.add_edge(
+                        source=node.id,
+                        target=node_id,
+                        label="instance_of",
+                        attributes=node.attributes
+                        if isinstance(node.attributes, dict)
+                        else json.loads(node.attributes),
+                    )
+
+                    self.vector_store.add_edge_embedding(
+                        source=node.id,
+                        target=node_id,
+                        label="instance_of",
+                        attributes=node.attributes
+                        if isinstance(node.attributes, dict)
+                        else json.loads(node.attributes),
+                    )
