@@ -13,7 +13,9 @@ class OntoGraph(GraphDB):
     def add_node(
         self,
         node: Node,
-        node_type: Optional[str] = None
+        *,
+        node_type: Optional[str] = None,
+        delete_if_properties_not_match: Optional[bool] = False,
     ) -> None:
         node_properties = (
             list(node.attributes.keys())
@@ -91,3 +93,11 @@ class OntoGraph(GraphDB):
                         if isinstance(node.attributes, dict)
                         else json.loads(node.attributes),
                     )
+                else:
+                    # Delete the node if node attributes do not match with node_type properties
+                    if delete_if_properties_not_match:
+                        self.db.remove_node(node.id)
+                    else:
+                        raise ValueError(
+                            "Properties do not match with the node attributes."
+                        )
