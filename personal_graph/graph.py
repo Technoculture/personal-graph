@@ -19,7 +19,6 @@ from personal_graph.models import Node, EdgeInput, KnowledgeGraph, Edge
 from personal_graph.vector_store import SQLiteVSS, VliteVSS
 from owlready2 import Ontology  # type: ignore
 
-
 load_dotenv()
 
 
@@ -288,9 +287,28 @@ class GraphDB(AbstractContextManager):
                                 "Properties do not match with the node attributes."
                             )
 
-    def add_nodes(self, nodes: List[Node]) -> None:
-        for node in nodes:
-            self.add_node(node)
+    def add_nodes(
+        self,
+        nodes: List[Node],
+        *,
+        node_types: List[str],
+        delete_if_properties_not_match: List[bool],
+    ) -> None:
+        if self.ontologies is not None:
+            if len(nodes) != len(node_types) != len(delete_if_properties_not_match):
+                raise ValueError("The lengths of the input lists must be equal.")
+
+            for node, node_type, delete_flag in zip(
+                nodes, node_types, delete_if_properties_not_match
+            ):
+                self.add_node(
+                    node,
+                    node_type=node_type,
+                    delete_if_properties_not_match=delete_flag,
+                )
+        else:
+            for node in nodes:
+                self.add_node(node)
 
     def add_edge(self, edge: EdgeInput) -> None:
         attributes = (
