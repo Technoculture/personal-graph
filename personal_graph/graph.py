@@ -641,13 +641,23 @@ class GraphDB(AbstractContextManager):
         self,
         text: str,
         attributes: Dict,
+        *,
+        node_type: Optional[str] = None,
+        delete_if_properties_not_match: Optional[bool] = False,
     ) -> None:
         node = Node(
             id=str(uuid.uuid4()),
             label=text,
             attributes=json.dumps(attributes),
         )
-        self.add_node(node)
+        if self.ontologies is not None:
+            self.add_node(
+                node,
+                node_type=node_type,
+                delete_if_properties_not_match=delete_if_properties_not_match,
+            )
+        else:
+            self.add_node(node)
 
     def search(
         self,
