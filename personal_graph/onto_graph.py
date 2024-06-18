@@ -1,6 +1,6 @@
 import json
 import uuid
-from typing import Optional
+from typing import Optional, List
 
 from personal_graph import GraphDB, Node
 
@@ -101,3 +101,20 @@ class OntoGraph(GraphDB):
                         raise ValueError(
                             "Properties do not match with the node attributes."
                         )
+
+    def add_nodes(
+        self,
+        nodes: List[Node],
+        *,
+        node_types: List[str],
+        delete_if_properties_not_match: List[bool],
+    ) -> None:
+        if len(nodes) != len(node_types) != len(delete_if_properties_not_match):
+            raise ValueError("The lengths of the input lists must be equal.")
+
+        for node, node_type, delete_flag in zip(
+            nodes, node_types, delete_if_properties_not_match
+        ):
+            self.add_node(
+                node, node_type=node_type, delete_if_properties_not_match=delete_flag
+            )
