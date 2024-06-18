@@ -34,5 +34,16 @@ with OntoGraph(ontologies=[ontologies]) as db:
             node_types=["administrative", "clinical"],
             delete_if_properties_not_match=[True, False],
         )
+        db.insert(
+            text="User mentioned their favorite hobbies and weekend activities.",
+            attributes={
+                "careprovision": "sample provision",
+                "diagnostics": "CT scan",
+                "general": "ward",
+                "medication": "long time",
+            },
+            node_type="clinical",
+            delete_if_properties_not_match=True,
+        )
     except ValueError as e:
         print(f"Error adding node: {e}")

@@ -1,6 +1,6 @@
 import json
 import uuid
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 from personal_graph import GraphDB, Node
 
@@ -118,3 +118,26 @@ class OntoGraph(GraphDB):
             self.add_node(
                 node, node_type=node_type, delete_if_properties_not_match=delete_flag
             )
+
+    def insert(
+        self,
+        text: str,
+        attributes: Dict,
+        *,
+        node_type: Optional[str] = None,
+        delete_if_properties_not_match: Optional[bool] = False,
+    ) -> None:
+        node = Node(
+            id=str(uuid.uuid4()),
+            label=text,
+            attributes=json.dumps(attributes),
+        )
+
+        if self.ontologies is not None:
+            self.add_node(
+                node,
+                node_type=node_type,
+                delete_if_properties_not_match=delete_if_properties_not_match,
+            )
+        else:
+            self.add_node(node)
