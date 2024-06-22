@@ -210,7 +210,13 @@ class GraphDB(AbstractContextManager):
                 else node.attributes,
             )
 
-    def add_nodes(self, nodes: List[Node]) -> None:
+    def add_nodes(
+        self,
+        nodes: List[Node],
+        *,
+        node_types: List[str],
+        delete_if_properties_not_match: List[bool],
+    ) -> None:
         for node in nodes:
             self.add_node(node)
 
