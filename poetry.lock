@@ -718,6 +718,26 @@ files = [
 ]
 
 [[package]]
+name = "dnspython"
+version = "2.6.1"
+description = "DNS toolkit"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "dnspython-2.6.1-py3-none-any.whl", hash = "sha256:5ef3b9680161f6fa89daf8ad451b5f1a33b18ae8a1c6778cdf4b43f08c0a6e50"},
+    {file = "dnspython-2.6.1.tar.gz", hash = "sha256:e8f0f9c23a7b7cb99ded64e6c3a6f3e701d78f50c55e002b839dea7225cff7cc"},
+]
+
+[package.extras]
+dev = ["black (>=23.1.0)", "coverage (>=7.0)", "flake8 (>=7)", "mypy (>=1.8)", "pylint (>=3)", "pytest (>=7.4)", "pytest-cov (>=4.1.0)", "sphinx (>=7.2.0)", "twine (>=4.0.0)", "wheel (>=0.42.0)"]
+dnssec = ["cryptography (>=41)"]
+doh = ["h2 (>=4.1.0)", "httpcore (>=1.0.0)", "httpx (>=0.26.0)"]
+doq = ["aioquic (>=0.9.25)"]
+idna = ["idna (>=3.6)"]
+trio = ["trio (>=0.23)"]
+wmi = ["wmi (>=1.5.1)"]
+
+[[package]]
 name = "docstring-parser"
 version = "0.16"
 description = "Parse Python docstrings in reST, Google and Numpydoc format"
@@ -771,6 +791,21 @@ qdrant = ["fastembed", "fastembed (>=0.1.0,<0.2.0)", "qdrant-client", "qdrant-cl
 weaviate = ["weaviate-client (>=3.26.1,<3.27.0)"]
 
 [[package]]
+name = "email-validator"
+version = "2.2.0"
+description = "A robust email address syntax and deliverability validation library."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "email_validator-2.2.0-py3-none-any.whl", hash = "sha256:561977c2d73ce3611850a06fa56b414621e0c8faa9d66f2611407d87465da631"},
+    {file = "email_validator-2.2.0.tar.gz", hash = "sha256:cb690f344c617a714f22e66ae771445a1ceb46821152df8e165c5f9a364582b7"},
+]
+
+[package.dependencies]
+dnspython = ">=2.0.0"
+idna = ">=2.0.0"
+
+[[package]]
 name = "executing"
 version = "2.0.1"
 description = "Get the currently executing AST node of a frame, and other information"
@@ -802,6 +837,28 @@ typing-extensions = ">=4.8.0"
 
 [package.extras]
 all = ["email-validator (>=2.0.0)", "httpx (>=0.23.0)", "itsdangerous (>=1.1.0)", "jinja2 (>=2.11.2)", "orjson (>=3.2.1)", "pydantic-extra-types (>=2.0.0)", "pydantic-settings (>=2.0.0)", "python-multipart (>=0.0.7)", "pyyaml (>=5.3.1)", "ujson (>=4.0.1,!=4.0.2,!=4.1.0,!=4.2.0,!=4.3.0,!=5.0.0,!=5.1.0)", "uvicorn[standard] (>=0.12.0)"]
+
+[[package]]
+name = "fhir-resources"
+version = "7.1.0"
+description = "FHIR Resources as Model Class"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "fhir.resources-7.1.0-py2.py3-none-any.whl", hash = "sha256:4d37c3aadb3afbabad28ca7701b87323680468a13f6a6426bb6c282d4efd5c62"},
+    {file = "fhir.resources-7.1.0.tar.gz", hash = "sha256:fae2d43c03dacf85a9f9fbce3b62148f3166fe297471cd43b74d91abbf69f818"},
+]
+
+[package.dependencies]
+pydantic = {version = ">=2.0.1,<3.0", extras = ["email"]}
+
+[package.extras]
+all = ["PyYAML (>=5.4.1)", "lxml", "orjson (>=3.4.3)"]
+dev = ["Jinja2 (==2.11.1)", "MarkupSafe (==1.1.1)", "black", "certifi", "colorlog (==2.10.0)", "coverage", "fhirspec", "flake8 (==6.0)", "flake8-bugbear (>=22.12.6)", "flake8-isort (>=6.0.0)", "importlib-metadata (>=5.2.0)", "isort (>=5.11.4)", "mypy", "pytest (>5.4.0)", "pytest-cov (>=2.10.0)", "requests (==2.23.0)", "setuptools (==65.6.3)", "typed-ast (>=1.5.4)", "types-PyYAML", "types-requests", "types-simplejson", "zest-releaser[recommended]"]
+orjson = ["orjson (>=3.4.3)"]
+test = ["PyYAML (>=5.4.1)", "black", "coverage", "flake8 (==6.0)", "flake8-bugbear (>=22.12.6)", "flake8-isort (>=6.0.0)", "importlib-metadata (>=5.2.0)", "isort (>=5.11.4)", "lxml", "mypy", "orjson (>=3.4.3)", "pytest (>5.4.0)", "pytest-cov (>=2.10.0)", "pytest-runner", "requests (==2.23.0)", "setuptools (==65.6.3)", "typed-ast (>=1.5.4)", "types-PyYAML", "types-requests", "types-simplejson"]
+xml = ["lxml"]
+yaml = ["PyYAML (>=5.4.1)"]
 
 [[package]]
 name = "filelock"
@@ -2224,6 +2281,7 @@ description = "Nvidia JIT LTO Library"
 optional = false
 python-versions = ">=3"
 files = [
+    {file = "nvidia_nvjitlink_cu12-12.4.127-py3-none-manylinux2014_aarch64.whl", hash = "sha256:4abe7fef64914ccfa909bc2ba39739670ecc9e820c83ccc7a6ed414122599b83"},
     {file = "nvidia_nvjitlink_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl", hash = "sha256:06b3b9b25bf3f8af351d664978ca26a16d2c5127dbd53c0497e28d1fb9611d57"},
     {file = "nvidia_nvjitlink_cu12-12.4.127-py3-none-win_amd64.whl", hash = "sha256:fd9020c501d27d135f983c6d3e244b197a7ccad769e34df53a42e276b0e25fa1"},
 ]
@@ -2735,6 +2793,7 @@ files = [
 
 [package.dependencies]
 annotated-types = ">=0.4.0"
+email-validator = {version = ">=2.0.0", optional = true, markers = "extra == \"email\""}
 pydantic-core = "2.18.1"
 typing-extensions = ">=4.6.1"
 
@@ -4833,4 +4892,4 @@ turso = []
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "8f4dffb20fa940618d0eea5767b32e2bec9c338b77990046bb3f89733bf1cb3e"
+content-hash = "5c175426e4ab94893d1ac23a9dc96faf0a5fac39ff9cba0baef9b6cbf17255fc"
