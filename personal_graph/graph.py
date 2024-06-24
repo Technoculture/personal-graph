@@ -8,6 +8,7 @@ from contextlib import AbstractContextManager
 
 from graphviz import Digraph  # type: ignore
 from dotenv import load_dotenv
+from owlready2 import Ontology
 
 from personal_graph import OpenAIClient
 from personal_graph.database import TursoDB, SQLite
@@ -31,6 +32,7 @@ class GraphDB(AbstractContextManager):
         graph_generator: Union[
             OpenAITextToGraphParser, OllamaTextToGraphParser
         ] = OpenAITextToGraphParser(llm_client=OpenAIClient()),
+        ontologies: Optional[List[Ontology]] = None,
     ):
         self.vector_store = vector_store
         self.db = database

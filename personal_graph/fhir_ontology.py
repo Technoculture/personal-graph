@@ -1,10 +1,12 @@
 import json
 import logging
 import uuid
+from typing import List, Optional, Dict
 
 from fhir.resources import construct_fhir_element
 from pydantic_core import ValidationError
 
+from personal_graph import Node
 from personal_graph.graph import GraphDB
 
 
@@ -92,3 +94,48 @@ class FhirOntoGraph(GraphDB):
                     )
         else:
             raise ValueError("Invalid FHIR resource data.")
+
+    def add_nodes(
+        self,
+        nodes: List[Node],
+        *,
+        node_types: Optional[List[str]] = None,
+        delete_if_properties_not_match: Optional[List[bool]] = None,
+    ) -> None:
+        if len(nodes) != len(node_types):
+            raise ValueError("The lengths of the input lists must be equal.")
+
+        if delete_if_properties_not_match is None:
+            delete_if_properties_not_match = [False] * len(nodes)
+
+        elif len(delete_if_properties_not_match) != len(nodes):
+            raise ValueError(
+                "The length of delete_if_properties_not_match must match the length of nodes if provided."
+            )
+
+        for node, node_type, delete_flag in zip(
+            nodes, node_types, delete_if_properties_not_match
+        ):
+            self.add_node(
+                node, node_type=node_type, delete_if_properties_not_match=delete_flag
+            )
+
+    def insert(
+        self,
+        text: str,
+        attributes: Dict,
+        *,
+        node_type: Optional[str] = None,
+        delete_if_properties_not_match: Optional[bool] = False,
+    ) -> None:
+        node = Node(
+            id=str(uuid.uuid4()),
+            label=text,
+            attributes=json.dumps(attributes),
+        )
+
+        self.add_node(
+            node,
+            node_type=node_type,
+            delete_if_properties_not_match=delete_if_properties_not_match,
+        )
