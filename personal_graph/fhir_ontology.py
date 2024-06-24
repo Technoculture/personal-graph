@@ -3,10 +3,10 @@ import logging
 from fhir.resources import construct_fhir_element
 from pydantic_core import ValidationError
 
-from personal_graph.onto_graph import OntoGraph
+from personal_graph.graph import GraphDB
 
 
-class FhirOntoGraph(OntoGraph):
+class FhirOntoGraph(GraphDB):
     """
     This is a derived class that incorporates FHIR ontology.
     This class will override certain methods of OntoGraph Class to utilize FHIR resources.
