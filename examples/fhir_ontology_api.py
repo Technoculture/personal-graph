@@ -1,21 +1,25 @@
+from fhir.resources import fhirtypes
 from personal_graph.models import Node
 from personal_graph.fhir_ontology import FhirOntoGraph
 
 
-with FhirOntoGraph(ontologies=None) as db:
+with FhirOntoGraph() as db:
     try:
-        node1 = Node(
-            id="1",
-            label="Pabelo",
+        node2 = Node(
+            id="2",
+            label="xyz",
             attributes={
-                "resourceType": "Organization",
-                "active": "False",
-                "name": "John Doe",
-                "id": "xyz",
+                "category": [fhirtypes.CodeableConceptType(text="asthma")],
+                "identifier": [
+                    fhirtypes.IdentifierType(value="1")
+                ],
+                "intent": "proposal",
+                "status": "active",
+                "subject": fhirtypes.ReferenceType(reference="Patient/123")
             },
         )
         db.add_node(
-            node1, node_type="Organization", delete_if_properties_not_match=True
+            node2, node_type="CarePlan", delete_if_properties_not_match=True
         )
     except ValueError as e:
         print(f"Error adding node: {e}")
