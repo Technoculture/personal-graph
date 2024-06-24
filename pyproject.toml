@@ -30,6 +30,7 @@ dspy-ai = "2.3.0"
 instructor = "^1.2.2"
 vlite = "^0.2.7"
 ollama = "^0.2.0"
+fhir-resources = {extras = ["r4"], version = "^7.1.0"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.1.1"
@@ -42,12 +43,6 @@ ipykernel = "^6.29.3"
 [tool.poetry.extras]
 scrollable-textbox = ["streamlit-scrollable-textbox"]
 turso = ["libsql-experimental"]
-fhir = ["fhir-resources"]
-
-[tool.poetry.dependencies.fhir-resources]
-version = "^7.1.0"
-extras = ["r4"]
-optional = true
 
 [build-system]
 requires = [

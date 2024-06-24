@@ -721,7 +721,7 @@ files = [
 name = "dnspython"
 version = "2.6.1"
 description = "DNS toolkit"
-optional = true
+optional = false
 python-versions = ">=3.8"
 files = [
     {file = "dnspython-2.6.1-py3-none-any.whl", hash = "sha256:5ef3b9680161f6fa89daf8ad451b5f1a33b18ae8a1c6778cdf4b43f08c0a6e50"},
@@ -794,7 +794,7 @@ weaviate = ["weaviate-client (>=3.26.1,<3.27.0)"]
 name = "email-validator"
 version = "2.2.0"
 description = "A robust email address syntax and deliverability validation library."
-optional = true
+optional = false
 python-versions = ">=3.8"
 files = [
     {file = "email_validator-2.2.0-py3-none-any.whl", hash = "sha256:561977c2d73ce3611850a06fa56b414621e0c8faa9d66f2611407d87465da631"},
@@ -842,7 +842,7 @@ all = ["email-validator (>=2.0.0)", "httpx (>=0.23.0)", "itsdangerous (>=1.1.0)"
 name = "fhir-resources"
 version = "7.1.0"
 description = "FHIR Resources as Model Class"
-optional = true
+optional = false
 python-versions = ">=3.7"
 files = [
     {file = "fhir.resources-7.1.0-py2.py3-none-any.whl", hash = "sha256:4d37c3aadb3afbabad28ca7701b87323680468a13f6a6426bb6c282d4efd5c62"},
@@ -4886,11 +4886,10 @@ docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.link
 testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-ignore-flaky", "pytest-mypy", "pytest-ruff (>=0.2.1)"]
 
 [extras]
-fhir = ["fhir-resources"]
 scrollable-textbox = []
 turso = []
 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "1bd0a4346e6fa37372c71265a5aa902d7b47fdc441d66f77002d5d9383036b11"
+content-hash = "5c175426e4ab94893d1ac23a9dc96faf0a5fac39ff9cba0baef9b6cbf17255fc"
