@@ -1,5 +1,7 @@
 import json
 import logging
+import uuid
+
 from fhir.resources import construct_fhir_element
 from pydantic_core import ValidationError
 
@@ -12,12 +14,9 @@ class FhirOntoGraph(GraphDB):
     This class will override certain methods of OntoGraph Class to utilize FHIR resources.
     """
 
-    def validate_fhir_resource(self, resource_data):
+    def validate_fhir_resource(self, resource_type, resource_data):
         """Validate if the provided data conforms to a FHIR resource schema."""
         try:
-            # Dynamically create a FHIR resource instance to validate data
-            resource_type = resource_data.get("resourceType")
-
             if resource_type:
                 # Resource data must be a json_dict
                 construct_fhir_element(resource_type, resource_data)
@@ -39,8 +38,57 @@ class FhirOntoGraph(GraphDB):
         else:
             attributes = node.attributes
 
-        if node_type and self.validate_fhir_resource(attributes):
-            # TODO: add node and create relation between node and node type(resourceType) of "instance_of"
-            logging.info("Validated!!")
+        if node_type and self.validate_fhir_resource(node_type, attributes):
+            if self.db.search_node(node_id=node.id) is None:
+                self.db.add_node(
+                    node.label,
+                    json.loads(node.attributes)
+                    if isinstance(node.attributes, str)
+                    else node.attributes,
+                    node.id,
+                )
+
+                self.vector_store.add_node_embedding(
+                    node.id,
+                    node.label,
+                    json.loads(node.attributes)
+                    if isinstance(node.attributes, str)
+                    else node.attributes,
+                )
+
+                # Fetch ontology properties of the particular node type
+                node_id = str(uuid.uuid4())
+
+                # Check if node type not exists, then add a node_type
+                if not self.db.search_node_type(node_type):
+                    self.db.add_node(node_type, {}, node_id)  # type: ignore
+                    self.vector_store.add_node_embedding(node_id, node_type, {})  # type: ignore
+
+                # Establish an instance_of relation between node and node_type
+                self.db.add_edge(
+                    source=node.id,
+                    target=node_id,
+                    label="instance_of",
+                    attributes=node.attributes
+                    if isinstance(node.attributes, dict)
+                    else json.loads(node.attributes),
+                )
+
+                self.vector_store.add_edge_embedding(
+                    source=node.id,
+                    target=node_id,
+                    label="instance_of",
+                    attributes=node.attributes
+                    if isinstance(node.attributes, dict)
+                    else json.loads(node.attributes),
+                )
+            else:
+                # Delete the node if node attributes do not match with node_type properties
+                if delete_if_properties_not_match:
+                    self.db.remove_node(node.id)
+                else:
+                    raise ValueError(
+                        "Properties do not match with the node attributes."
+                    )
         else:
             raise ValueError("Invalid FHIR resource data.")
