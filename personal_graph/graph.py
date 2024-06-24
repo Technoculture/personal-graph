@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import uuid
 from typing import Any, List, Optional, Union, Dict, Tuple
 
@@ -8,7 +9,7 @@ from contextlib import AbstractContextManager
 
 from graphviz import Digraph  # type: ignore
 from dotenv import load_dotenv
-from owlready2 import Ontology
+from owlready2 import Ontology  # type: ignore
 
 from personal_graph import OpenAIClient
 from personal_graph.database import TursoDB, SQLite
@@ -16,9 +17,14 @@ from personal_graph.graph_generator import (
     OpenAITextToGraphParser,
     OllamaTextToGraphParser,
 )
+from personal_graph.helper import validate_fhir_resource
 from personal_graph.models import Node, EdgeInput, KnowledgeGraph, Edge
 from personal_graph.vector_store import SQLiteVSS, VliteVSS
 
+try:
+    import fhir.resources as fhir
+except ImportError:
+    logging.info("fhir module is not available.")
 
 load_dotenv()
 
@@ -32,11 +38,12 @@ class GraphDB(AbstractContextManager):
         graph_generator: Union[
             OpenAITextToGraphParser, OllamaTextToGraphParser
         ] = OpenAITextToGraphParser(llm_client=OpenAIClient()),
-        ontologies: Optional[List[Ontology]] = None,
+        ontologies: Optional[List[Union[Ontology, Any]]] = None,
     ):
         self.vector_store = vector_store
         self.db = database
         self.graph_generator = graph_generator
+        self.ontologies = ontologies
         self.db.initialize()
         self.vector_store.initialize()
 
@@ -193,34 +200,102 @@ class GraphDB(AbstractContextManager):
 
         return similar_edges
 
-    # High level apis
-    def add_node(self, node: Node) -> None:
-        if self.db.search_node(node_id=node.id) is None:
-            self.db.add_node(
-                node.label,
-                json.loads(node.attributes)
-                if isinstance(node.attributes, str)
-                else node.attributes,
-                node.id,
-            )
+    def insert_node(self, node: Node):
+        self.db.add_node(
+            node.label,
+            json.loads(node.attributes)
+            if isinstance(node.attributes, str)
+            else node.attributes,
+            node.id,
+        )
 
-            self.vector_store.add_node_embedding(
-                node.id,
-                node.label,
-                json.loads(node.attributes)
-                if isinstance(node.attributes, str)
-                else node.attributes,
-            )
+        self.vector_store.add_node_embedding(
+            node.id,
+            node.label,
+            json.loads(node.attributes)
+            if isinstance(node.attributes, str)
+            else node.attributes,
+        )
+
+    # High level apis
+    def add_node(
+        self,
+        node: Node,
+        *,
+        node_type: Optional[str] = None,
+        delete_if_properties_not_match: Optional[bool] = False,
+    ) -> None:
+        if isinstance(node.attributes, str):
+            attributes = json.loads(node.attributes)
+        else:
+            attributes = node.attributes
+
+        if self.ontologies is not None:
+            if fhir in self.ontologies:
+                if node_type and validate_fhir_resource(node_type, attributes):
+                    self.insert_node(node)
+
+                    # Create relation between node and node_type in an ontology
+                    node_id = str(uuid.uuid4())
+
+                    # Check if node type not exists, then add a node_type
+                    if not self.db.search_node_type(node_type):
+                        self.db.add_node(node_type, {}, node_id)  # type: ignore
+                        self.vector_store.add_node_embedding(node_id, node_type, {})  # type: ignore
+
+                    # Establish an instance_of relation between node and node_type
+                    target_node = Node(id=node_id, label=node_type, attributes={})
+                    edge = EdgeInput(
+                        source=node,
+                        target=target_node,
+                        label="instance_of",
+                        attributes=node.attributes,
+                    )
+                    self.add_edge(edge)
+
+                else:
+                    # Delete the node if node attributes do not match with node_type properties
+                    if delete_if_properties_not_match:
+                        self.db.remove_node(node.id)
+                    else:
+                        raise ValueError("Invalid FHIR resource data.")
+        else:
+            if self.db.search_node(node_id=node.id) is None:
+                self.insert_node(node)
 
     def add_nodes(
         self,
         nodes: List[Node],
         *,
-        node_types: List[str],
-        delete_if_properties_not_match: List[bool],
+        node_types: Optional[List[str]] = None,
+        delete_if_properties_not_match: Optional[List[bool]] = None,
     ) -> None:
-        for node in nodes:
-            self.add_node(node)
+        if self.ontologies is not None:
+            if node_types is None:
+                raise ValueError("No node types given for the ontology.")
+
+            if len(nodes) != len(node_types):
+                raise ValueError("The lengths of the input lists must be equal.")
+
+            if delete_if_properties_not_match is None:
+                delete_if_properties_not_match = [False] * len(nodes)
+
+            elif len(delete_if_properties_not_match) != len(nodes):
+                raise ValueError(
+                    "The length of delete_if_properties_not_match must match the length of nodes if provided."
+                )
+
+            for node, node_type, delete_flag in zip(
+                nodes, node_types, delete_if_properties_not_match
+            ):
+                self.add_node(
+                    node,
+                    node_type=node_type,
+                    delete_if_properties_not_match=delete_flag,
+                )
+        else:
+            for node in nodes:
+                self.add_node(node)
 
     def add_edge(self, edge: EdgeInput) -> None:
         attributes = (
@@ -553,13 +628,24 @@ class GraphDB(AbstractContextManager):
         self,
         text: str,
         attributes: Dict,
+        *,
+        node_type: Optional[str] = None,
+        delete_if_properties_not_match: Optional[bool] = False,
     ) -> None:
         node = Node(
             id=str(uuid.uuid4()),
             label=text,
             attributes=json.dumps(attributes),
         )
-        self.add_node(node)
+
+        if self.ontologies is not None:
+            self.add_node(
+                node,
+                node_type=node_type,
+                delete_if_properties_not_match=delete_if_properties_not_match,
+            )
+        else:
+            self.add_node(node)
 
     def search(
         self,
