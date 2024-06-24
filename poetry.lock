@@ -2362,6 +2362,19 @@ optional = ["boto3", "cmaes (>=0.10.0)", "google-cloud-storage", "matplotlib (!=
 test = ["coverage", "fakeredis[lua]", "kaleido", "moto", "pytest", "scipy (>=1.9.2)", "torch"]
 
 [[package]]
+name = "owlready2"
+version = "0.46"
+description = "A package for ontology-oriented programming in Python: load OWL 2.0 ontologies as Python objects, modify them, save them, and perform reasoning via HermiT. Includes an optimized RDF quadstore."
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "owlready2-0.46.tar.gz", hash = "sha256:3c1b06dbe85df77dfa2de5a13ba1d11b4b8543c1c0ccdc5be252a81e3c0de55a"},
+]
+
+[package.extras]
+test = ["flask", "gevent", "rdflib"]
+
+[[package]]
 name = "packaging"
 version = "24.0"
 description = "Core utilities for Python packages"
@@ -4892,4 +4905,4 @@ turso = []
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "5c175426e4ab94893d1ac23a9dc96faf0a5fac39ff9cba0baef9b6cbf17255fc"
+content-hash = "ebafb3a6865d45525600c883102132ed74212c96a36073e4414e3f77b8089d40"
