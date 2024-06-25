@@ -22,7 +22,7 @@ from personal_graph.models import Node, EdgeInput, KnowledgeGraph, Edge
 from personal_graph.vector_store import SQLiteVSS, VliteVSS
 
 try:
-    import fhir.resources as fhir
+    import fhir.resources as fhir  # type: ignore
 except ImportError:
     logging.info("fhir module is not available.")
 

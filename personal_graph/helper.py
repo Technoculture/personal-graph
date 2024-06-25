@@ -2,7 +2,7 @@ import logging
 from pydantic_core import ValidationError
 
 try:
-    from fhir.resources import construct_fhir_element
+    from fhir.resources import construct_fhir_element  # type: ignore
 except ImportError:
     logging.info("fhir.resources module is not available.")
 

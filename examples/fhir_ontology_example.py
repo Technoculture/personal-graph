@@ -1,5 +1,5 @@
-import fhir.resources as fhir
-from fhir.resources import fhirtypes
+import fhir.resources as fhir  # type: ignore
+from fhir.resources import fhirtypes  # type: ignore
 from personal_graph import GraphDB, Node
 
 
