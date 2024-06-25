@@ -43,7 +43,7 @@ ipykernel = "^6.29.3"
 [tool.poetry.extras]
 scrollable-textbox = ["streamlit-scrollable-textbox"]
 turso = ["libsql-experimental"]
-fhir = ["fhir-resources"]
+fhir = ["fhir.resources"]
 
 [build-system]
 requires = [
