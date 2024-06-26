@@ -4,7 +4,7 @@ Unit test for high level apis
 
 import networkx as nx  # type: ignore
 import pytest
-from fhir.resources import fhirtypes
+from fhir.resources import fhirtypes  # type: ignore
 
 from personal_graph import GraphDB, Node, EdgeInput, KnowledgeGraph
 from personal_graph.ml import networkx_to_pg, pg_to_networkx
