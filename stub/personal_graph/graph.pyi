@@ -2,6 +2,8 @@ import types
 from _typeshed import Incomplete
 from contextlib import AbstractContextManager
 from graphviz import Digraph  # type: ignore
+from owlready2 import Ontology  # type: ignore
+
 from personal_graph.graph_generator import (
     OpenAITextToGraphParser as OpenAITextToGraphParser,
 )
@@ -19,18 +21,20 @@ from personal_graph.vector_store import (
     SQLiteVSS as SQLiteVSS,
     VliteVSS as VliteVSS,
 )
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Optional, Union
 
 class GraphDB(AbstractContextManager):
     vector_store: Incomplete
     db: Incomplete
     graph_generator: Incomplete
+    ontologies: Incomplete
     def __init__(
         self,
         *,
         vector_store: SQLiteVSS | VliteVSS = ...,
         database: TursoDB | SQLite = ...,
         graph_generator: OpenAITextToGraphParser = ...,
+        ontologies: Optional[List[Union[Ontology, Any]]],
     ) -> None: ...
     def __eq__(self, other): ...
     def __enter__(self) -> GraphDB: ...
