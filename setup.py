@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="personal-graph",
-    version="0.1.9",
+    version="2.2",
     description="Graph database in LibSQL",
     author="Anubhuti Bhardwaj",
     author_email="anubhutibhardwaj11@gmail.com",
@@ -27,15 +27,19 @@ setup(
         "dspy-ai>=2.3.0",
         "instructor>=1.2.2",
         "vlite>=0.2.7",
+        "ollama>=0.2.0",
+        "owlready2>=0.46",
     ],
     extras_require={
         "dev": [
             "pytest>=8.1.1",
             "ruff>=0.3.2",
             "mypy>=1.9.0",
+            "fhir-resources>=7.1.0",
         ],
         "scrollable-textbox": ["streamlit-scrollable-textbox"],
         "turso": ["libsql-experimental"],
+        "fhir": ["fhir-resources", "r4"],
     },
     python_requires=">=3.11",
 )

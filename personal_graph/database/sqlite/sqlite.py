@@ -87,7 +87,6 @@ class SQLite(DB):
 
         try:
             cursor = self._connection.cursor()
-            cursor.execute("PRAGMA foreign_keys = TRUE;")
             results = cursor_exec_fn(cursor, self._connection)
             self._connection.commit()
         finally:
@@ -515,6 +514,16 @@ class SQLite(DB):
             return node_label
 
         return self.atomic(_search_label)
+
+    def search_node_type(self, label: str):
+        def _search_node_type(cursor, connection):
+            node_type = cursor.execute(
+                "SELECT label from nodes where label=?", (label,)
+            ).fetchone()
+
+            return node_type
+
+        return self.atomic(_search_node_type)
 
     def traverse(
         self, source: Any, target: Optional[Any] = None, with_bodies: bool = False

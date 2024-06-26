@@ -3,6 +3,8 @@ Unit test for high level apis
 """
 
 import networkx as nx  # type: ignore
+import pytest
+from fhir.resources import fhirtypes  # type: ignore
 
 from personal_graph import GraphDB, Node, EdgeInput, KnowledgeGraph
 from personal_graph.ml import networkx_to_pg, pg_to_networkx
@@ -209,4 +211,107 @@ def test_graphviz_visualize(
     graph.visualize(
         file="mock_dot_file.dot",
         id=[1, 2, 3],
+    )
+
+
+def test_add_node_with_ontology(
+    graph_with_fhir_ontology, mock_db_connection_and_cursor
+):
+    """
+    Test adding a single node with specific attributes to the ontology graph.
+
+    @param graph_with_fhir_ontology: A fixture providing an instance of the graph with the FHIR ontology.
+    @param mock_db_connection_and_cursor: A fixture providing a mock database connection and cursor.
+    @return: None
+    """
+    node = Node(
+        id="1",
+        label="Person",
+        attributes={
+            "active": "False",
+            "name": "John Doe",
+            "id": "xyz",
+        },
+    )
+    assert graph_with_fhir_ontology.add_node(node, node_type="Organization") is None
+
+
+def test_invalid_fhir_resource_type(
+    graph_with_fhir_ontology, mock_db_connection_and_cursor
+):
+    """
+    Test adding a node with an invalid FHIR resource type.
+
+    @param graph_with_fhir_ontology: A fixture providing an instance of the graph with the FHIR ontology.
+    @param mock_db_connection_and_cursor: A fixture providing a mock database connection and cursor.
+    @return: None
+    """
+    node = Node(
+        id="1",
+        label="Person",
+        attributes={
+            "name": "John Doe",
+            "id": "xyz",
+        },
+    )
+    with pytest.raises(ValueError) as excinfo:
+        graph_with_fhir_ontology.add_node(node, node_type="CareTaker")
+    assert str(excinfo.value) == "Invalid FHIR resource data."
+
+
+def test_add_nodes_with_ontology(
+    graph_with_fhir_ontology, mock_db_connection_and_cursor
+):
+    """
+    Test adding multiple nodes with specific attributes to the ontology graph.
+
+    @param graph_with_fhir_ontology: A fixture providing an instance of the graph with the FHIR ontology.
+    @param mock_db_connection_and_cursor: A fixture providing a mock database connection and cursor.
+    @return: None
+    """
+    nodes = [
+        Node(
+            id=1,
+            attributes={
+                "active": "True",
+                "name": "Messi",
+                "id": "29",
+            },
+            label="Player",
+        ),
+        Node(
+            id=2,
+            attributes={"name": "Alzheimer", "active": "False", "id": "xyz"},
+            label="Disease",
+        ),
+    ]
+
+    assert (
+        graph_with_fhir_ontology.add_nodes(
+            nodes,
+            node_types=["Organization", "Organization"],
+            delete_if_properties_not_match=[True, False],
+        )
+        is None
+    )
+
+
+def test_insert_with_ontology(graph_with_fhir_ontology, mock_db_connection_and_cursor):
+    """
+    Test inserting a node with FHIR attributes into the ontology graph.
+
+    @param graph_with_fhir_ontology: A fixture providing an instance of the graph with the FHIR ontology.
+    @param mock_db_connection_and_cursor: A fixture providing a mock database connection and cursor.
+    @return: None
+    """
+    text = "User is claustrophobic."
+    attributes = {
+        "category": [fhirtypes.CodeableConceptType(text="asthma")],
+        "identifier": [fhirtypes.IdentifierType(value="1")],
+        "intent": "proposal",
+        "status": "active",
+        "subject": fhirtypes.ReferenceType(reference="Patient/123"),
+    }
+    assert (
+        graph_with_fhir_ontology.insert(text, attributes, node_type="CarePlan") is None
     )
