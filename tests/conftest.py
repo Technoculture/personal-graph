@@ -1,6 +1,7 @@
 import json
 import pytest
 from unittest.mock import patch, Mock
+import fhir.resources as fhir  # type: ignore
 
 from personal_graph import (
     GraphDB,
@@ -122,3 +123,14 @@ def mock_personal_graph(mock_openai_client, mock_db_connection_and_cursor):
     )
     graph.add_edge(edge1)
     yield graph
+
+
+@pytest.fixture
+def graph_with_fhir_ontology(mock_openai_client, mock_embeddings_model):
+    with patch("openai.OpenAI", return_value=mock_openai_client):
+        with patch(
+            "personal_graph.embeddings.OpenAIEmbeddingsModel",
+            return_value=mock_embeddings_model,
+        ):
+            graph = GraphDB(ontologies=[fhir])
+            yield graph
