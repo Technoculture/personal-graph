@@ -30,7 +30,6 @@ dspy-ai = "2.3.0"
 instructor = "^1.2.2"
 vlite = "^0.2.7"
 ollama = "^0.2.0"
-libsql-experimental = "^0.0.34"
 owlready2 = "^0.46"
 fhir-resources = {version = "^7.1.0", optional=true}
 
