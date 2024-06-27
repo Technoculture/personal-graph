@@ -327,7 +327,7 @@ class GraphDB(AbstractContextManager):
         self,
         nodes: List[Node],
         *,
-        node_types: List[str],
+        node_types: Optional[List[str]] = None,
         delete_if_properties_not_match: Optional[List[bool]] = None,
     ) -> None:
         if self.ontologies is not None:
