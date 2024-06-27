@@ -1,12 +1,12 @@
 from personal_graph.models import Node
-from personal_graph.onto_graph import OntoGraph
+from personal_graph.graph import GraphDB
 from personal_graph.ontology import from_rdf
 
 ontologies1 = from_rdf("/path/to/ontology1")
 ontologies2 = from_rdf("/path/to/ontology2")
 
 
-with OntoGraph(ontologies=[ontologies1, ontologies2]) as db:
+with GraphDB(ontologies=[ontologies1, ontologies2]) as db:
     try:
         node1 = Node(
             id="1",
