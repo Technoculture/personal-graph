@@ -20,7 +20,6 @@ from personal_graph.graph_generator import (
 from personal_graph.helper import validate_fhir_resource
 from personal_graph.models import Node, EdgeInput, KnowledgeGraph, Edge
 from personal_graph.vector_store import SQLiteVSS, VliteVSS
-from owlready2 import Ontology  # type: ignore
 
 try:
     import fhir.resources as fhir  # type: ignore
@@ -32,14 +31,14 @@ load_dotenv()
 
 class GraphDB(AbstractContextManager):
     def __init__(
-            self,
-            *,
-            vector_store: Union[SQLiteVSS, VliteVSS] = VliteVSS(collection="./vectors"),
-            database: Union[TursoDB, SQLite] = SQLite(use_in_memory=True),
-            graph_generator: Union[
-                OpenAITextToGraphParser, OllamaTextToGraphParser
-            ] = OpenAITextToGraphParser(llm_client=OpenAIClient()),
-            ontologies: Optional[List[Union[Ontology, Any]]] = None,
+        self,
+        *,
+        vector_store: Union[SQLiteVSS, VliteVSS] = VliteVSS(collection="./vectors"),
+        database: Union[TursoDB, SQLite] = SQLite(use_in_memory=True),
+        graph_generator: Union[
+            OpenAITextToGraphParser, OllamaTextToGraphParser
+        ] = OpenAITextToGraphParser(llm_client=OpenAIClient()),
+        ontologies: Optional[List[Union[Ontology, Any]]] = None,
     ):
         self.vector_store = vector_store
         self.db = database
@@ -76,13 +75,13 @@ class GraphDB(AbstractContextManager):
         )
 
     def _similarity_search_node(
-            self,
-            text,
-            *,
-            threshold: float = 0.9,
-            descending: bool = False,
-            limit: int = 1,
-            sort_by: str = "",
+        self,
+        text,
+        *,
+        threshold: float = 0.9,
+        descending: bool = False,
+        limit: int = 1,
+        sort_by: str = "",
     ):
         use_direct_search = False
 
@@ -91,19 +90,19 @@ class GraphDB(AbstractContextManager):
 
         elif isinstance(self.vector_store.db, TursoDB) and isinstance(self.db, TursoDB):
             if (
-                    self.vector_store.db.db_url == self.db.db_url
-                    and self.vector_store.db.db_auth_token == self.db.db_auth_token
+                self.vector_store.db.db_url == self.db.db_url
+                and self.vector_store.db.db_auth_token == self.db.db_auth_token
             ):
                 use_direct_search = True
 
         elif isinstance(self.vector_store.db, SQLite) and isinstance(self.db, SQLite):
             if not isinstance(self.vector_store.db, TursoDB) and not isinstance(
-                    self.db, TursoDB
+                self.db, TursoDB
             ):
                 if (
-                        self.vector_store.db.local_path == self.db.local_path
-                        and self.vector_store.db.local_path is not None
-                        and self.db.local_path is not None
+                    self.vector_store.db.local_path == self.db.local_path
+                    and self.vector_store.db.local_path is not None
+                    and self.db.local_path is not None
                 ):
                     use_direct_search = True
 
@@ -139,13 +138,13 @@ class GraphDB(AbstractContextManager):
         return similar_nodes
 
     def _similarity_search_edge(
-            self,
-            text,
-            *,
-            threshold: float = 0.9,
-            descending: bool = False,
-            limit: int = 1,
-            sort_by: str = "",
+        self,
+        text,
+        *,
+        threshold: float = 0.9,
+        descending: bool = False,
+        limit: int = 1,
+        sort_by: str = "",
     ):
         use_direct_search = False
 
@@ -154,19 +153,19 @@ class GraphDB(AbstractContextManager):
 
         elif isinstance(self.vector_store.db, TursoDB) and isinstance(self.db, TursoDB):
             if (
-                    self.vector_store.db.db_url == self.db.db_url
-                    and self.vector_store.db.db_auth_token == self.db.db_auth_token
+                self.vector_store.db.db_url == self.db.db_url
+                and self.vector_store.db.db_auth_token == self.db.db_auth_token
             ):
                 use_direct_search = True
 
         elif isinstance(self.vector_store.db, SQLite) and isinstance(self.db, SQLite):
             if not isinstance(self.vector_store.db, TursoDB) and not isinstance(
-                    self.db, TursoDB
+                self.db, TursoDB
             ):
                 if (
-                        self.vector_store.db.local_path == self.db.local_path
-                        and self.vector_store.db.local_path is not None
-                        and self.db.local_path is not None
+                    self.vector_store.db.local_path == self.db.local_path
+                    and self.vector_store.db.local_path is not None
+                    and self.db.local_path is not None
                 ):
                     use_direct_search = True
 
@@ -218,139 +217,119 @@ class GraphDB(AbstractContextManager):
             else node.attributes,
         )
 
+    def _add_fhir_node(self, node: Node, node_type: str):
+        if not self.db.search_node(node.id):
+            self.insert_node(node)
+        node_id = str(uuid.uuid4())
+
+        if not self.db.search_node_type(node_type):
+            self.db.add_node(node_type, {}, node_id)
+            self.vector_store.add_node_embedding(node_id, node_type, {})
+
+        target_node = Node(id=node_id, label=node_type, attributes={})
+        edge = EdgeInput(
+            source=node,
+            target=target_node,
+            label="instance_of",
+            attributes=node.attributes,
+        )
+        self.add_edge(edge)
+
+    def _validate_and_add_ontology_node(
+        self, node: Node, node_type: Optional[str], ontology: Ontology
+    ) -> bool:
+        if node_type is None:
+            return False
+
+        concept = ontology.search_one(label=node_type)
+        print("concept", concept)
+        if concept is None:
+            return False
+
+        if isinstance(node.attributes, dict):
+            node_properties = list(node.attributes.keys())
+        else:
+            node_properties = [node.attributes]
+
+        node_type_properties = self._fetch_ontology_properties(ontology, node_type)
+
+        if sorted(node_type_properties) != sorted(node_properties):
+            return False
+
+        if self.db.search_node(node_id=node.id) is None:
+            self.insert_node(node)
+
+        node_id = str(uuid.uuid4())
+        if not self.db.search_node_type(node_type):
+            self.db.add_node(node_type, {}, node_id)
+            self.vector_store.add_node_embedding(node_id, node_type, {})
+
+        target_node = Node(id=node_id, label=node_type, attributes={})
+        edge = EdgeInput(
+            source=node,
+            target=target_node,
+            label="instance_of",
+            attributes=node.attributes,
+        )
+        self.add_edge(edge)
+
+        return True
+
+    def _fetch_ontology_properties(
+        self, ontology: Ontology, node_type: str
+    ) -> List[str]:
+        node_type_properties = []
+        for cls in ontology.classes():
+            if node_type in cls.name and node_type != cls.name:
+                node_type_properties.append(cls.label[0])
+
+        print(node_type_properties)
+        return node_type_properties
+
     # High level apis
     def add_node(
-            self,
-            node: Node,
-            *,
-            node_type: Optional[str] = None,
-            delete_if_properties_not_match: Optional[bool] = False,
+        self,
+        node: Node,
+        *,
+        node_type: Optional[str] = None,
+        delete_if_properties_not_match: Optional[bool] = False,
     ) -> None:
-        # if self.ontologies is not None:
-        #     if node_type is not None:
-        #         # Check if the node type matches a concept in the ontology
-        #         concept = None
-        #         for ontology in self.ontologies:
-        #             concept = ontology.search_one(label=node_type)
-        #             if concept is not None:
-        #                 break
-        #
-        #         if concept is None:
-        #             raise ValueError(
-        #                 f"Node concept '{node_type}' is not a valid concept in the ontology."
-        #             )
-        #     else:
-        #         raise ValueError("Node type not provided.")
-        #
-        # node_properties = (
-        #     list(node.attributes.keys())
-        #     if isinstance(node.attributes, dict)
-        #     else list(json.loads(node.attributes).keys())
-        # )
-        #
-        # if self.db.search_node(node_id=node.id) is None:
-        #     self.db.add_node(
-        #         node.label,
-        #         json.loads(node.attributes)
-        #         if isinstance(node.attributes, str)
-        #         else node.attributes,
-        #         node.id,
-        #     )
-        # if isinstance(node.attributes, str):
-        #     attributes = json.loads(node.attributes)
-        # else:
-        #     attributes = node.attributes
+        if self.ontologies is None:
+            if self.db.search_node(node_id=node.id) is None:
+                self.insert_node(node)
+            return
 
-        if self.ontologies is not None:
-            if fhir in self.ontologies:
-                if node_type and validate_fhir_resource(node_type, node.attributes):
-                    self.insert_node(node)
+        valid_ontology_found = False
 
-                    # Create relation between node and node_type in an ontology
-                    node_id = str(uuid.uuid4())
+        for ontology in self.ontologies:
+            try:
+                if isinstance(ontology, type(fhir)):
+                    if node_type and validate_fhir_resource(node_type, node.attributes):
+                        self._add_fhir_node(node, node_type)
+                        valid_ontology_found = True
+                        break
+                elif isinstance(ontology, Ontology):
+                    if self._validate_and_add_ontology_node(node, node_type, ontology):
+                        valid_ontology_found = True
+                        break
+            except ValueError:
+                continue
 
-                    # Check if node type not exists, then add a node_type
-                    if not self.db.search_node_type(node_type):
-                        self.db.add_node(node_type, {}, node_id)  # type: ignore
-                        self.vector_store.add_node_embedding(node_id, node_type, {})  # type: ignore
-
-                    # Establish an instance_of relation between node and node_type
-                    target_node = Node(id=node_id, label=node_type, attributes={})
-                    edge = EdgeInput(
-                        source=node,
-                        target=target_node,
-                        label="instance_of",
-                        attributes=node.attributes,
-                    )
-                    self.add_edge(edge)
-                else:
-                    # Delete the node if node attributes do not match with node_type properties
-                    if delete_if_properties_not_match:
-                        self.db.remove_node(node.id)
-                    else:
-                        raise ValueError("Invalid FHIR resource data.")
-        # else:
-        #     if self.db.search_node(node_id=node.id) is None:
-        #         self.insert_node(node)
-        #
-        #     if self.ontologies is not None:
-        #         # Fetch ontology properties of the particular node type
-        #         node_type_properties = []
-        #         fetch_properties = False
-        #         for ontology in self.ontologies:
-        #             if not fetch_properties:
-        #                 for cls in ontology.classes():
-        #                     if node_type in cls.name and node_type != cls.name:
-        #                         node_type_properties.append(cls.label[0])
-        #                         fetch_properties = True
-        #
-        #             if sorted(node_type_properties) == sorted(node_properties):
-        #                 # Create instance_of edge if properties matches with the attribute
-        #                 node_id = str(uuid.uuid4())
-        #
-        #                 # Check if node type not exists, then add a node_type
-        #                 if not self.db.search_node(node_id):
-        #                     self.db.add_node(node_type, {}, node_id)  # type: ignore
-        #                     self.vector_store.add_node_embedding(node_id, node_type, {})  # type: ignore
-        #
-        #                 # Establish an instance_of relation between node and node_type
-        #                 self.db.add_edge(
-        #                     source=node.id,
-        #                     target=node_id,
-        #                     label="instance_of",
-        #                     attributes=node.attributes
-        #                     if isinstance(node.attributes, dict)
-        #                     else json.loads(node.attributes),
-        #                 )
-        #
-        #                 self.vector_store.add_edge_embedding(
-        #                     source=node.id,
-        #                     target=node_id,
-        #                     label="instance_of",
-        #                     attributes=node.attributes
-        #                     if isinstance(node.attributes, dict)
-        #                     else json.loads(node.attributes),
-        #                 )
-        #             else:
-        #                 # Delete the node if node attributes do not match with node_type properties
-        #                 if delete_if_properties_not_match:
-        #                     self.db.remove_node(node.id)
-        #                 else:
-        #                     raise ValueError(
-        #                         "Properties do not match with the node attributes."
-        #                     )
+        if not valid_ontology_found:
+            if delete_if_properties_not_match:
+                self.db.remove_node(node.id)
+            else:
+                raise ValueError(
+                    "Node type or attributes does not match any of the provided ontologies."
+                )
 
     def add_nodes(
-            self,
-            nodes: List[Node],
-            *,
-            node_types: List[str],
-            delete_if_properties_not_match: List[bool],
+        self,
+        nodes: List[Node],
+        *,
+        node_types: List[str],
+        delete_if_properties_not_match: Optional[List[bool]] = None,
     ) -> None:
-        if self.ontologies is not None:
-            if len(nodes) != len(node_types) != len(delete_if_properties_not_match):
-                raise ValueError("The lengths of the input lists must be equal.")
-
         if self.ontologies is not None:
             if node_types is None:
                 raise ValueError("No node types given for the ontology.")
@@ -367,7 +346,7 @@ class GraphDB(AbstractContextManager):
                 )
 
             for node, node_type, delete_flag in zip(
-                    nodes, node_types, delete_if_properties_not_match
+                nodes, node_types, delete_if_properties_not_match
             ):
                 self.add_node(
                     node,
@@ -385,9 +364,9 @@ class GraphDB(AbstractContextManager):
             else edge.attributes
         )
         if (
-                self.db.search_edge(edge.source.id, edge.target.id, attributes) is None
-                and (self.db.search_node(edge.source.id) is not None)
-                and (self.db.search_node(edge.target.id) is not None)
+            self.db.search_edge(edge.source.id, edge.target.id, attributes) is None
+            and (self.db.search_node(edge.source.id) is not None)
+            and (self.db.search_node(edge.target.id) is not None)
         ):
             self.db.add_edge(
                 edge.source.id,
@@ -452,7 +431,7 @@ class GraphDB(AbstractContextManager):
         return self.db.search_node_label(node_id)
 
     def traverse(
-            self, source: str, target: Optional[str] = None, with_bodies: bool = False
+        self, source: str, target: Optional[str] = None, with_bodies: bool = False
     ) -> List:
         return self.db.traverse(source, target, with_bodies)
 
@@ -490,13 +469,13 @@ class GraphDB(AbstractContextManager):
         return kg
 
     def search_from_graph(
-            self,
-            text: str,
-            *,
-            threshold: float = 0.9,
-            limit: int = 1,
-            descending: bool = False,
-            sort_by: str = "",
+        self,
+        text: str,
+        *,
+        threshold: float = 0.9,
+        limit: int = 1,
+        descending: bool = False,
+        sort_by: str = "",
     ) -> KnowledgeGraph:
         try:
             similar_nodes = self._similarity_search_node(
@@ -706,12 +685,12 @@ class GraphDB(AbstractContextManager):
         return False
 
     def insert(
-            self,
-            text: str,
-            attributes: Dict,
-            *,
-            node_type: Optional[str] = None,
-            delete_if_properties_not_match: Optional[bool] = False,
+        self,
+        text: str,
+        attributes: Dict,
+        *,
+        node_type: Optional[str] = None,
+        delete_if_properties_not_match: Optional[bool] = False,
     ) -> None:
         node = Node(
             id=str(uuid.uuid4()),
@@ -728,13 +707,13 @@ class GraphDB(AbstractContextManager):
             self.add_node(node)
 
     def search(
-            self,
-            text: str,
-            *,
-            threshold: float = 0.9,
-            descending: bool = False,
-            limit: int = 1,
-            sort_by: str = "",
+        self,
+        text: str,
+        *,
+        threshold: float = 0.9,
+        descending: bool = False,
+        limit: int = 1,
+        sort_by: str = "",
     ) -> None | List[Tuple[Any, str, dict, Any]]:
         similar_nodes = self._similarity_search_node(
             text,
