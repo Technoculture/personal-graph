@@ -14,7 +14,7 @@ def from_rdf(file_path: str) -> owlready2.namespace.Ontology:
     @raise: OwlReadyOntologyParsingError: Unable to parse the specified file
     """
     try:
-        onto = owlready2.get_ontology(file_path).load(format="turtle")  # Loading the rdf file
+        onto = owlready2.get_ontology(file_path).load()  # Loading the rdf file
         logging.info(onto)
         return onto
 
