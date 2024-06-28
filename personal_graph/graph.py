@@ -242,7 +242,6 @@ class GraphDB(AbstractContextManager):
             return False
 
         concept = ontology.search_one(label=node_type)
-        print("concept", concept)
         if concept is None:
             return False
 
@@ -253,7 +252,9 @@ class GraphDB(AbstractContextManager):
 
         node_type_properties = self._fetch_ontology_properties(ontology, node_type)
 
-        if sorted(node_type_properties) != sorted(node_properties):
+        if node_type_properties != [] and sorted(node_type_properties) != sorted(
+            node_properties
+        ):
             return False
 
         if self.db.search_node(node_id=node.id) is None:
@@ -279,11 +280,17 @@ class GraphDB(AbstractContextManager):
         self, ontology: Ontology, node_type: str
     ) -> List[str]:
         node_type_properties = []
-        for cls in ontology.classes():
-            if node_type in cls.name and node_type != cls.name:
-                node_type_properties.append(cls.label[0])
+        print(list(ontology.properties()))
+        # for cls in ontology.classes():
+        #     print(cls.name, cls.label, cls.domain, cls.range)
+        #     if node_type == cls.name and node_type != cls.name:
+        #         node_type_properties.append(cls.label[0])
+        for prop in ontology.properties():
+            if prop.domain != []:
+                if prop.domain[0] is not None:
+                    if prop.domain[0].name == node_type:
+                        node_type_properties.append(prop.name)
 
-        print(node_type_properties)
         return node_type_properties
 
     # High level apis
