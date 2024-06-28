@@ -5,8 +5,10 @@ from personal_graph import GraphDB, Node
 from personal_graph.ontology import from_rdf
 
 
-w5_ontology = from_rdf("/path/to/rdf/file")
-with GraphDB(ontologies=[fhir, w5_ontology]) as graph:
+w5_ontology = from_rdf(
+    "./biography_schema.rdf"
+)
+with GraphDB(ontologies=[w5_ontology]) as graph:
     node1 = Node(
         id="1",
         label="Pabelo",
@@ -41,9 +43,17 @@ with GraphDB(ontologies=[fhir, w5_ontology]) as graph:
             "subject": fhirtypes.ReferenceType(reference="Patient/123"),
         },
     )
+    node5 = Node(
+        id="2",
+        label="pop",
+        attributes={
+            "participant": "True",
+            "interval": "John Doe",
+        },
+    )
 
     # Test w5_ontology which is loaded from rdf file
-    graph.add_node(node1, node_type="administrative")
+    graph.add_node(node5, node_type="Relationship")
 
     # Test fhir ontology
     graph.add_node(node2, node_type="Organization")
