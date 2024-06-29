@@ -280,13 +280,9 @@ class GraphDB(AbstractContextManager):
         self, ontology: Ontology, node_type: str
     ) -> List[str]:
         node_type_properties = []
-        print(list(ontology.properties()))
-        # for cls in ontology.classes():
-        #     print(cls.name, cls.label, cls.domain, cls.range)
-        #     if node_type == cls.name and node_type != cls.name:
-        #         node_type_properties.append(cls.label[0])
+
         for prop in ontology.properties():
-            if prop.domain != []:
+            if prop.domain:
                 if prop.domain[0] is not None:
                     if prop.domain[0].name == node_type:
                         node_type_properties.append(prop.name)

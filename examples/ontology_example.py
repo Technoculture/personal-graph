@@ -5,10 +5,8 @@ from personal_graph import GraphDB, Node
 from personal_graph.ontology import from_rdf
 
 
-w5_ontology = from_rdf(
-    "./biography_schema.rdf"
-)
-with GraphDB(ontologies=[w5_ontology]) as graph:
+w5_ontology = from_rdf("./biography_schema.rdf")
+with GraphDB(ontologies=[fhir, w5_ontology]) as graph:
     node1 = Node(
         id="1",
         label="Pabelo",
