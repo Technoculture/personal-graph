@@ -69,12 +69,11 @@ with GraphDB(database=db, vector_store=vs, ontologies=[fhir]) as graph:
             type_name = get_type_name(prop_type)
             if type_name in node_types_info.keys():
                 # This property is a FHIR resource type, create an edge of 'instance_of'
+                target_id = graph.find_node_type_id(type_name)
+
+                # Create an edge between node type and it's related node_type
                 source = Node(id=node_uuids[node_type], label=node_type, attributes={})
-                target = Node(id=str(uuid.uuid4()), label=type_name, attributes={})
-
-                # TODO: Not needed because all the nodes have already been added
-                graph.add_node_type(node_id=target.id, node_type=type_name)
-
+                target = Node(id=target_id, label=type_name, attributes={})
                 edge = EdgeInput(
                     source=source, target=target, label="instance_of", attributes={}
                 )

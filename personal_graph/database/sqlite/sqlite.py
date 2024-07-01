@@ -525,6 +525,15 @@ class SQLite(DB):
 
         return self.atomic(_search_node_type)
 
+    def search_id_by_node_type(self, node_type):
+        def _find_node_type_id(cursor, connection):
+            node_id = cursor.execute(
+                "SELECT id from nodes where label=?", (node_type,)
+            ).fetchone()
+            return node_id
+
+        return self.atomic(_find_node_type_id)
+
     def traverse(
         self, source: Any, target: Optional[Any] = None, with_bodies: bool = False
     ) -> List:

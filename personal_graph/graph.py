@@ -297,6 +297,10 @@ class GraphDB(AbstractContextManager):
             self.db.add_node(node_type, {}, node_id)
             self.vector_store.add_node_embedding(node_id, node_type, {})
 
+    def find_node_type_id(self, node_type) -> str:
+        id = self.db.search_id_by_node_type(node_type)
+        return id[0]
+
     def add_node(
         self,
         node: Node,
