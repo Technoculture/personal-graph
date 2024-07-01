@@ -265,6 +265,8 @@ class GraphDB(AbstractContextManager):
             self.db.add_node(node_type, {}, node_id)
             self.vector_store.add_node_embedding(node_id, node_type, {})
 
+        self.add_node_type(node_id, node_type)
+
         target_node = Node(id=node_id, label=node_type, attributes={})
         edge = EdgeInput(
             source=node,
@@ -290,6 +292,11 @@ class GraphDB(AbstractContextManager):
         return node_type_properties
 
     # High level apis
+    def add_node_type(self, node_id, node_type) -> None:
+        if not self.db.search_node_type(node_type):
+            self.db.add_node(node_type, {}, node_id)
+            self.vector_store.add_node_embedding(node_id, node_type, {})
+
     def add_node(
         self,
         node: Node,
