@@ -1,8 +1,15 @@
 import os
 import pkgutil
+import uuid
+from typing import get_origin, get_args
+
 import fhir.resources
 import inspect
 from importlib import import_module
+from personal_graph import GraphDB, EdgeInput, Node
+from personal_graph.database import TursoDB
+from personal_graph.ml import pg_to_networkx
+from personal_graph.vector_store import SQLiteVSS
 
 
 def extract_classes_properties():
@@ -34,4 +41,44 @@ def extract_classes_properties():
     return class_info
 
 
-print(extract_classes_properties())
+def get_type_name(prop_type):
+    """
+    Helper function to get the name of the type, handling List types
+    """
+    if get_origin(prop_type) is list:
+        return get_args(prop_type)[0].__name__
+    return prop_type.__name__
+
+
+db = TursoDB(url=os.getenv("LIBSQL_URL"), auth_token=os.getenv("LIBSQL_AUTH_TOKEN"))
+vs = SQLiteVSS(db=db, index_dimension=384)
+
+with GraphDB(database=db, vector_store=vs, ontologies=[fhir]) as graph:
+    node_types_info = extract_classes_properties()
+    node_uuids = {}  # To store UUIDs for each node type
+
+    # Add all node_types
+    for node_type in node_types_info.keys():
+        node_uuid = str(uuid.uuid4())
+        graph.add_node_type(node_uuid, node_type=node_type)
+        node_uuids[node_type] = node_uuid
+
+    # Create edges between node_types with other related node_types
+    for node_type, properties in node_types_info.items():
+        for prop, prop_type in properties.items():
+            type_name = get_type_name(prop_type)
+            if type_name in node_types_info.keys():
+                # This property is a FHIR resource type, create an edge of 'instance_of'
+                source = Node(id=node_uuids[node_type], label=node_type, attributes={})
+                target = Node(id=str(uuid.uuid4()), label=type_name, attributes={})
+
+                # TODO: Not needed because all the nodes have already been added
+                graph.add_node_type(node_id=target.id, node_type=type_name)
+
+                edge = EdgeInput(
+                    source=source, target=target, label="instance_of", attributes={}
+                )
+                graph.add_edge(edge)
+
+    # Visualize the personal graph
+    nx_graph = pg_to_networkx(graph, post_visualize=True)
