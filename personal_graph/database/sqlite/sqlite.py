@@ -530,7 +530,10 @@ class SQLite(DB):
             node_id = cursor.execute(
                 "SELECT id from nodes where label=?", (node_type,)
             ).fetchone()
-            return node_id
+            if node_id is not None:
+                return node_id[0]
+            else:
+                return None
 
         return self.atomic(_find_node_type_id)
 

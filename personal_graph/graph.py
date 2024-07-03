@@ -299,7 +299,7 @@ class GraphDB(AbstractContextManager):
 
     def find_node_type_id(self, node_type) -> str:
         id = self.db.search_id_by_node_type(node_type)
-        return id[0]
+        return id
 
     def add_node(
         self,
