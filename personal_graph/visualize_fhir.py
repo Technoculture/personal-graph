@@ -1,15 +1,13 @@
 import os
 import pkgutil
 import uuid
-from typing import get_origin, get_args
+from typing import get_origin, get_args, List
 
 import fhir.resources
 import inspect
 from importlib import import_module
 from personal_graph import GraphDB, EdgeInput, Node
-from personal_graph.database import TursoDB
 from personal_graph.ml import pg_to_networkx
-from personal_graph.vector_store import SQLiteVSS
 
 
 def extract_classes_properties():
@@ -50,34 +48,34 @@ def get_type_name(prop_type):
     return prop_type.__name__
 
 
-db = TursoDB(url=os.getenv("LIBSQL_URL"), auth_token=os.getenv("LIBSQL_AUTH_TOKEN"))
-vs = SQLiteVSS(db=db, index_dimension=384)
+def visualize_fhir(ontologies: List):
+    with GraphDB(ontologies=ontologies) as graph:
+        node_types_info = extract_classes_properties()
+        node_uuids = {}  # To store UUIDs for each node type
 
-with GraphDB(database=db, vector_store=vs, ontologies=[fhir]) as graph:
-    node_types_info = extract_classes_properties()
-    node_uuids = {}  # To store UUIDs for each node type
+        # Add all node_types
+        for node_type in node_types_info.keys():
+            node_uuid = str(uuid.uuid4())
+            graph.add_node_type(node_uuid, node_type=node_type)
+            node_uuids[node_type] = node_uuid
 
-    # Add all node_types
-    for node_type in node_types_info.keys():
-        node_uuid = str(uuid.uuid4())
-        graph.add_node_type(node_uuid, node_type=node_type)
-        node_uuids[node_type] = node_uuid
+        # Create edges between node_types with other related node_types
+        for node_type, properties in node_types_info.items():
+            for prop, prop_type in properties.items():
+                type_name = get_type_name(prop_type)
+                if type_name in node_types_info.keys():
+                    # This property is a FHIR resource type, create an edge of 'instance_of'
+                    target_id = graph.find_node_type_id(type_name)
 
-    # Create edges between node_types with other related node_types
-    for node_type, properties in node_types_info.items():
-        for prop, prop_type in properties.items():
-            type_name = get_type_name(prop_type)
-            if type_name in node_types_info.keys():
-                # This property is a FHIR resource type, create an edge of 'instance_of'
-                target_id = graph.find_node_type_id(type_name)
+                    # Create an edge between node type and it's related node_type
+                    source = Node(
+                        id=node_uuids[node_type], label=node_type, attributes={}
+                    )
+                    target = Node(id=target_id, label=type_name, attributes={})
+                    edge = EdgeInput(
+                        source=source, target=target, label="instance_of", attributes={}
+                    )
+                    graph.add_edge(edge)
 
-                # Create an edge between node type and it's related node_type
-                source = Node(id=node_uuids[node_type], label=node_type, attributes={})
-                target = Node(id=target_id, label=type_name, attributes={})
-                edge = EdgeInput(
-                    source=source, target=target, label="instance_of", attributes={}
-                )
-                graph.add_edge(edge)
-
-    # Visualize the personal graph
-    nx_graph = pg_to_networkx(graph, post_visualize=True)
+        # Visualize the personal graph
+        pg_to_networkx(graph, post_visualize=True)
