@@ -292,10 +292,14 @@ class GraphDB(AbstractContextManager):
         return node_type_properties
 
     # High level apis
-    def add_node_type(self, node_id, node_type) -> None:
+    def add_node_type(self, node_id, node_type, *, attributes=None) -> None:
         if not self.db.search_node_type(node_type):
-            self.db.add_node(node_type, {}, node_id)
-            self.vector_store.add_node_embedding(node_id, node_type, {})
+            if attributes is not None:
+                self.db.add_node(node_type, attributes, node_id)
+                self.vector_store.add_node_embedding(node_id, node_type, attributes)
+            else:
+                self.db.add_node(node_type, {}, node_id)
+                self.vector_store.add_node_embedding(node_id, node_type, {})
 
     def find_node_type_id(self, node_type) -> str:
         id = self.db.search_id_by_node_type(node_type)
