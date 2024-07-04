@@ -6,7 +6,7 @@ from graphviz import Digraph  # type: ignore
 from matplotlib import pyplot as plt
 
 from personal_graph import GraphDB
-from personal_graph import KnowledgeGraph, Node, Edge, EdgeInput
+from personal_graph.models import KnowledgeGraph, Node, Edge, EdgeInput
 
 
 def pg_to_networkx(graph: GraphDB, *, post_visualize: bool = False):
