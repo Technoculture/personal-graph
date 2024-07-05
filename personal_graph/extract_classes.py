@@ -1,6 +1,7 @@
 """
 This script creates a .pkl file of all the classes along with their properties that fhir ontology has.
 """
+
 import logging
 import pickle
 from personal_graph.helper import extract_classes_properties
