@@ -20,7 +20,6 @@ from personal_graph.graph_generator import (
 )
 from personal_graph.helper import (
     validate_fhir_resource,
-    extract_classes_properties,
     get_type_name,
 )
 from personal_graph.models import Node, EdgeInput, KnowledgeGraph, Edge
