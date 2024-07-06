@@ -751,36 +751,6 @@ class GraphDB(AbstractContextManager):
 
         return similar_nodes
 
-    def visualize_fhir(self):
-        node_types_info = extract_classes_properties()
-        node_uuids = {}  # To store UUIDs for each node type
-
-        # Add all node_types
-        for node_type in node_types_info.keys():
-            node_uuid = str(uuid.uuid4())
-            self.add_node_type(node_uuid, node_type=node_type)
-            node_uuids[node_type] = node_uuid
-
-        # Create edges between node_types with other related node_types
-        for node_type, properties in node_types_info.items():
-            for prop, prop_type in properties.items():
-                type_name = get_type_name(prop_type)
-                if type_name in node_types_info.keys():
-                    # This property is a FHIR resource type, create an edge of 'instance_of'
-                    target_id = self.find_node_type_id(type_name)
-
-                    # Create an edge between node type and it's related node_type
-                    source = Node(
-                        id=node_uuids[node_type], label=node_type, attributes={}
-                    )
-                    target = Node(id=target_id, label=type_name, attributes={})
-                    edge = EdgeInput(
-                        source=source, target=target, label="instance_of", attributes={}
-                    )
-                    self.add_edge(edge)
-
-        return self
-
     def insert_from_fhir_json_bundle(
         self, bundle_file: Path, nodes_type_info: Dict
     ) -> GraphDB:
