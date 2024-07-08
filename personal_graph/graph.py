@@ -790,9 +790,13 @@ class GraphDB(AbstractContextManager):
                 resource_type = resource.get("resourceType")
                 if resource_type and resource_type in nodes_type_info.keys():
                     # Add the node to the graph
-                    self.add_node_type(
-                        resource["id"], node_type=resource_type, attributes=resource
-                    )
+                    if self.db.search_node_type(resource_type) is not None:
+                        resource_id = self.db.search_id_by_node_type(resource_type)
+                    else:
+                        resource_id = str(uuid.uuid4())
+                        self.add_node_type(
+                            resource_id, node_type=resource_type, attributes=resource
+                        )
 
                     # Create edges
                     for prop in resource.keys():
@@ -805,12 +809,17 @@ class GraphDB(AbstractContextManager):
 
                         if type_name in nodes_type_info.keys():
                             # This property is a FHIR resource type, create an edge of 'instance_of'
-                            target_id = str(uuid.uuid4())
-                            self.add_node_type(target_id, node_type=type_name)
+                            if self.db.search_node_type(type_name) is not None:
+                                target_id = self.db.search_id_by_node_type(
+                                    node_type=type_name
+                                )
+                            else:
+                                target_id = str(uuid.uuid4())
+                                self.add_node_type(target_id, node_type=type_name)
 
                             # Create an edge between node type and it's related node_type
                             source = Node(
-                                id=resource["id"], label=resource_type, attributes={}
+                                id=resource_id, label=resource_type, attributes={}
                             )
                             target = Node(id=target_id, label=type_name, attributes={})
                             edge = EdgeInput(
