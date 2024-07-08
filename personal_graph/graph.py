@@ -750,6 +750,29 @@ class GraphDB(AbstractContextManager):
 
         return similar_nodes
 
+    def _connect_fhir_nodes(
+        self, nodes_type_info, resource_node, resource_type, property
+    ) -> None:
+        try:
+            type_name = get_type_name(nodes_type_info[resource_type][property])
+            if type_name in nodes_type_info.keys():
+                if self.db.search_node_type(type_name) is not None:
+                    target_id = self.db.search_id_by_node_type(node_type=type_name)
+                else:
+                    target_id = str(uuid.uuid4())
+                    self.add_node_type(target_id, node_type=type_name)
+
+                target = Node(id=target_id, label=type_name, attributes={})
+                edge = EdgeInput(
+                    source=resource_node,
+                    target=target,
+                    label=property,
+                    attributes={},
+                )
+                self.add_edge(edge)
+        except KeyError:
+            return
+
     def insert_from_fhir_json_bundle(
         self, bundle_file: Path, nodes_type_info: Dict
     ) -> GraphDB:
@@ -758,86 +781,90 @@ class GraphDB(AbstractContextManager):
 
         if bundle.get("resourceType") != "Bundle":
             raise ValueError("The provided JSON file is not a FHIR Bundle")
-
-        # Add Bundle node
         bundle_resourceType = bundle.get("resourceType")
-        bundle_id = str(uuid.uuid4())
-        self.add_node_type(bundle_id, bundle_resourceType)
 
-        for bundle_prop in bundle.keys():
-            try:
-                bundle_type = get_type_name(
-                    nodes_type_info[bundle_resourceType][bundle_prop]
+        if self.db.search_node_type(bundle_resourceType) is not None:
+            bundle_id = self.db.search_id_by_node_type(bundle_resourceType)
+        else:
+            bundle_id = str(uuid.uuid4())
+        self.add_node_type(bundle_id, bundle_resourceType, attributes={})
+
+        def process_resource(resource, parent_id, parent_type, edge_label):
+            resource_type = resource.get("resourceType")
+            if not resource_type:
+                return
+
+            if self.db.search_node_type(resource_type) is not None:
+                resource_id = self.db.search_id_by_node_type(resource_type)
+            else:
+                resource_id = str(uuid.uuid4())
+                self.add_node_type(
+                    resource_id, node_type=resource_type, attributes=resource
                 )
-            except KeyError:
-                continue
 
-            if bundle_type in nodes_type_info.keys():
-                target_id = str(uuid.uuid4())
-                self.add_node_type(target_id, bundle_type)
-
-                # Create an edge between node type and it's related node_type
-                source = Node(id=bundle_id, label=bundle_resourceType, attributes={})
-                target = Node(id=target_id, label=bundle_type, attributes={})
-                edge = EdgeInput(
-                    source=source, target=target, label=bundle_prop, attributes={}
+            # Create edge between parent and this resource
+            parent_node = Node(id=parent_id, label=parent_type, attributes={})
+            resource_node = Node(id=resource_id, label=resource_type, attributes={})
+            self.add_edge(
+                EdgeInput(
+                    source=parent_node,
+                    target=resource_node,
+                    label=edge_label,
+                    attributes={},
                 )
-                self.add_edge(edge)
+            )
 
+            # Process properties
+            for prop, value in resource.items():
+                if isinstance(value, dict) and "resourceType" in value:
+                    process_resource(value, resource_id, resource_type, prop)
+                elif isinstance(value, list):
+                    for item in value:
+                        if isinstance(item, dict) and "resourceType" in item:
+                            process_resource(item, resource_id, resource_type, prop)
+                        else:
+                            self._connect_fhir_nodes(
+                                nodes_type_info, resource_node, resource_type, prop
+                            )
+                else:
+                    self._connect_fhir_nodes(
+                        nodes_type_info, resource_node, resource_type, prop
+                    )
+
+        # Process bundle properties
+        for bundle_prop, value in bundle.items():
+            if bundle_prop != "entry":
+                try:
+                    bundle_type = get_type_name(
+                        nodes_type_info[bundle_resourceType][bundle_prop]
+                    )
+                    if bundle_type in nodes_type_info.keys():
+                        if self.db.search_node_type(bundle_type) is not None:
+                            target_id = self.db.search_id_by_node_type(bundle_type)
+                        else:
+                            target_id = str(uuid.uuid4())
+
+                        self.add_node_type(target_id, bundle_type)
+                        source = Node(
+                            id=bundle_id, label=bundle_resourceType, attributes={}
+                        )
+                        target = Node(id=target_id, label=bundle_type, attributes={})
+                        edge = EdgeInput(
+                            source=source,
+                            target=target,
+                            label=bundle_prop,
+                            attributes={},
+                        )
+                        self.add_edge(edge)
+                except KeyError:
+                    continue
+
+        # Process entries
         for entry in bundle.get("entry", []):
             resource = entry.get("resource")
             if resource:
-                resource_type = resource.get("resourceType")
-                if resource_type and resource_type in nodes_type_info.keys():
-                    # Add the node to the graph
-                    if self.db.search_node_type(resource_type) is not None:
-                        resource_id = self.db.search_id_by_node_type(resource_type)
-                    else:
-                        resource_id = str(uuid.uuid4())
-                        self.add_node_type(
-                            resource_id, node_type=resource_type, attributes=resource
-                        )
-
-                    # Create edges
-                    for prop in resource.keys():
-                        try:
-                            type_name = get_type_name(
-                                nodes_type_info[resource_type][prop]
-                            )
-                        except KeyError:
-                            continue
-
-                        if type_name in nodes_type_info.keys():
-                            # This property is a FHIR resource type, create an edge of 'instance_of'
-                            if self.db.search_node_type(type_name) is not None:
-                                target_id = self.db.search_id_by_node_type(
-                                    node_type=type_name
-                                )
-                            else:
-                                target_id = str(uuid.uuid4())
-                                self.add_node_type(target_id, node_type=type_name)
-
-                            # Create an edge between node type and it's related node_type
-                            source = Node(
-                                id=resource_id, label=resource_type, attributes={}
-                            )
-                            target = Node(id=target_id, label=type_name, attributes={})
-                            edge = EdgeInput(
-                                source=source, target=target, label=prop, attributes={}
-                            )
-                            self.add_edge(edge)
-
-                            # Create an edge between bundle property and entry type
-                            bundle_node = Node(
-                                id=bundle_id, label=bundle_resourceType, attributes={}
-                            )
-
-                            edge = EdgeInput(
-                                source=bundle_node,
-                                target=source,
-                                label="instance_of",
-                                attributes={},
-                            )
-                            self.add_edge(edge)
+                process_resource(
+                    resource, bundle_id, bundle_resourceType, "instance_of"
+                )
 
         return self
