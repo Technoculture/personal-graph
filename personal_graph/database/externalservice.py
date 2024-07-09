@@ -20,7 +20,11 @@ class ExternalService(ABC):
 
     @abstractmethod
     def execute_request(
-        self, method: str, endpoint: str, data: Optional[Dict] = None
+        self,
+        method: str,
+        endpoint: str,
+        data: Optional[Dict] = None,
+        params: Optional[Dict] = None,
     ) -> Any:
         """Execute a REST API request to the external service"""
         pass
