@@ -14,6 +14,7 @@ from owlready2 import Ontology  # type: ignore
 
 from personal_graph import OpenAIClient
 from personal_graph.database import TursoDB, SQLite
+from personal_graph.database.externalservice import ExternalService
 from personal_graph.graph_generator import (
     OpenAITextToGraphParser,
     OllamaTextToGraphParser,
@@ -42,6 +43,7 @@ class GraphDB(AbstractContextManager):
         graph_generator: Union[
             OpenAITextToGraphParser, OllamaTextToGraphParser
         ] = OpenAITextToGraphParser(llm_client=OpenAIClient()),
+        service: Optional[ExternalService] = None,
         ontologies: Optional[List[Union[Ontology, Any]]] = None,
     ):
         self.vector_store = vector_store
@@ -50,6 +52,7 @@ class GraphDB(AbstractContextManager):
         self.db.initialize()
         self.vector_store.initialize()
         self.ontologies = ontologies
+        self.service = service
 
     def __eq__(self, other):
         if not isinstance(other, GraphDB):
