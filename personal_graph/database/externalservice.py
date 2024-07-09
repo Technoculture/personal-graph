@@ -1,10 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Optional, Any
 
-from personal_graph.database.db import DB
 
-
-class ExternalService(DB, ABC):
+class ExternalService(ABC):
     """
     Abstract Base Class for implementing external service connections.
     This class inherits from DB and adds methods specific to external service connections.
