@@ -4515,6 +4515,20 @@ types-docutils = "*"
 types-setuptools = "*"
 
 [[package]]
+name = "types-requests"
+version = "2.32.0.20240622"
+description = "Typing stubs for requests"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types-requests-2.32.0.20240622.tar.gz", hash = "sha256:ed5e8a412fcc39159d6319385c009d642845f250c63902718f605cd90faade31"},
+    {file = "types_requests-2.32.0.20240622-py3-none-any.whl", hash = "sha256:97bac6b54b5bd4cf91d407e62f0932a74821bc2211f22116d9ee1dd643826caf"},
+]
+
+[package.dependencies]
+urllib3 = ">=2"
+
+[[package]]
 name = "types-setuptools"
 version = "69.2.0.20240317"
 description = "Typing stubs for setuptools"
@@ -4973,9 +4987,9 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [extras]
 fhir = ["fhir-resources"]
 scrollable-textbox = []
-turso = ["libsql-experimental"]
+turso = []
 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "c6b72f5302c32bb79447c013aa580fda80ffe93b8aa7616960e4305f0e04d946"
+content-hash = "79cbb5a291192b041fd89c884fd3fb49c0c285f831f431b18ba179170d2a2b89"
