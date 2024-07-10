@@ -2,7 +2,6 @@ import requests
 from fastapi import HTTPException
 from typing import List, Any, Dict, Optional
 
-from personal_graph import Node
 from personal_graph.database.externalservice import ExternalService
 
 
@@ -71,3 +70,19 @@ class FhirService(ExternalService):
         return self.execute_request(
             method="DELETE", endpoint=f"{resource_type}/{id}", params=params
         )
+
+    def search_node(self, db_url: str, node_id: str, resource_type: str):
+        # Search for a resource by its ID across all resource types
+        try:
+            params = {
+                "db_url": db_url,
+                "resource_type": resource_type,
+                "resource_id": node_id,
+            }
+            response = self.execute_request(
+                "GET", f"{resource_type}/{node_id}", params=params
+            )
+            return response
+
+        except requests.HTTPError:
+            raise
