@@ -2,6 +2,7 @@ import requests
 from fastapi import HTTPException
 from typing import List, Any, Dict, Optional
 
+from personal_graph import Node
 from personal_graph.database.externalservice import ExternalService
 
 
@@ -60,3 +61,13 @@ class FhirService(ExternalService):
                 )
             else:
                 raise
+
+    def remove_node(self, db_url: str, id: str, resource_type: str):
+        params = {
+            "db_url": db_url,
+            "resource_type": resource_type,
+            "resource_id": id,
+        }
+        return self.execute_request(
+            method="DELETE", endpoint=f"{resource_type}/{id}", params=params
+        )
