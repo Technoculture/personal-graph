@@ -1,7 +1,9 @@
+import json
 import requests
 from fastapi import HTTPException
 from typing import List, Any, Dict, Optional
 
+from personal_graph import Node
 from personal_graph.database.externalservice import ExternalService
 
 
@@ -86,3 +88,20 @@ class FhirService(ExternalService):
 
         except requests.HTTPError:
             raise
+
+    def update_node(self, db_url: str, node: Node):
+        resource_type = node.label
+        params = {
+            "db_url": db_url,
+            "resource_type": resource_type,
+            "resource_id": node.id,
+        }
+
+        if isinstance(node.attributes, str):
+            attributes = json.loads(node.attributes)
+        else:
+            attributes = node.attributes
+
+        return self.execute_request(
+            "PUT", f"{resource_type}/{node.id}", data=attributes, params=params
+        )
