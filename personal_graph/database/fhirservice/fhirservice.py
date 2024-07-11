@@ -1,23 +1,24 @@
 import json
 import requests
 from fastapi import HTTPException
-from typing import List, Any, Dict, Optional
+from typing import List, Any, Dict, Optional, Union
 
 from personal_graph import Node
 from personal_graph.database.externalservice import ExternalService
 
 
 class FhirService(ExternalService):
-    def __init__(self, ontologies: Optional[List[Any]] = None):
-        if not ontologies:
-            raise ValueError("Ontology not provided")
-
-        self.ontologies = ontologies
-        self.base_url = ""
+    def __init__(self, url: str):
+        self.base_url = url
         self.session = requests.Session()
 
-    def connect(self, url: str):
-        self.base_url = url
+    def __repr__(self) -> str:
+        return f"  FhirService(\n" f"  url={self.base_url},\n" f"  )"
+
+    def set_ontologies(self, ontologies: Optional[List[Any]] = None):
+        if not ontologies:
+            raise ValueError("Ontology not provided")
+        self.ontologies = ontologies
 
     def disconnect(self):
         self.session.close()
@@ -43,7 +44,7 @@ class FhirService(ExternalService):
             else:
                 raise
 
-    def add_node(self, db_url: str, label: str, attribute: Dict):
+    def add_node(self, label: str, attribute: Dict, db_url: str):
         try:
             params = {
                 "db_url": db_url,
@@ -63,7 +64,7 @@ class FhirService(ExternalService):
             else:
                 raise
 
-    def remove_node(self, db_url: str, id: str, resource_type: str):
+    def remove_node(self, id: Union[str, int], db_url: str, resource_type: str):
         params = {
             "db_url": db_url,
             "resource_type": resource_type,
@@ -73,7 +74,7 @@ class FhirService(ExternalService):
             method="DELETE", endpoint=f"{resource_type}/{id}", params=params
         )
 
-    def search_node(self, db_url: str, node_id: str, resource_type: str):
+    def search_node(self, node_id: Union[str, int], db_url: str, resource_type: str):
         # Search for a resource by its ID across all resource types
         try:
             params = {
@@ -89,7 +90,7 @@ class FhirService(ExternalService):
         except requests.HTTPError:
             raise
 
-    def update_node(self, db_url: str, node: Node):
+    def update_node(self, node: Node, db_url: str):
         resource_type = node.label
         params = {
             "db_url": db_url,
