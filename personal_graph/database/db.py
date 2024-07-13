@@ -74,12 +74,12 @@ class DB(ABC):
         pass
 
     @abstractmethod
-    def remove_node(self, id: Any) -> None:
+    def remove_node(self, id: Any, *, resource_type: str) -> None:
         """Remove a node from the database"""
         pass
 
     @abstractmethod
-    def search_node(self, node_id: Any) -> Any:
+    def search_node(self, node_id: Any, *, resource_type: str) -> Any:
         """Search for a node by its ID"""
         pass
 
