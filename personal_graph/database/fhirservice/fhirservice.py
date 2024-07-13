@@ -71,6 +71,7 @@ class FhirService:
     def add_node(self, label: str, attribute: Dict, id: Any) -> None:
         def _add_node(cursor, connection):
             if self._validate_data(attribute):
+                print("Validated!!")
                 resource_type = label.lower()
                 cursor.execute(
                     f"""
@@ -97,6 +98,29 @@ class FhirService:
                 connection.commit()
 
         return self._atomic(_add_node)
+
+    def add_edge(self, source: Any, target: Any, label: str, attributes: Dict) -> None:
+        def _add_edge(cursor, connection):
+            print(source.id, source.label, target.id, target.label)
+            cursor.execute(
+                "INSERT INTO relations VALUES(?, ?, ?, ?, ?, json(?))",
+                (
+                    source.id,
+                    source.label,
+                    target.id,
+                    target.label,
+                    label,
+                    json.dumps(attributes),
+                ),
+            )
+
+        if not self.search_node(source.id, resource_type=source.label):
+            return
+
+        if not self.search_node(target.id, resource_type=target.label):
+            return
+
+        return self._atomic(_add_edge)
 
     def update_node(self, node: Node):
         def _update(cursor, connection):
