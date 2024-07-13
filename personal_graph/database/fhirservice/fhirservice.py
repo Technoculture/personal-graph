@@ -1,108 +1,164 @@
 import json
-import requests
-from fastapi import HTTPException
-from typing import List, Any, Dict, Optional, Union
+import os
+from functools import lru_cache
+from pathlib import Path
+
+import libsql_experimental as libsql
+from typing import List, Any, Dict, Optional, Callable
+from jsonschema import Draft7Validator, exceptions
 
 from personal_graph import Node
-from personal_graph.database.externalservice import ExternalService
+
+JSON_SCHEMA_FILE = os.path.join(os.path.dirname(__file__), "fhir_4.schema.json")
+CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
 
 
-class FhirService(ExternalService):
-    def __init__(self, url: str):
-        self.base_url = url
-        self.session = requests.Session()
+@lru_cache(maxsize=None)
+def read_sql(sql_file: Path) -> str:
+    with open(Path(__file__).parent.resolve() / "queries" / sql_file) as f:
+        return f.read()
+
+
+class FhirService:
+    def __init__(self, db_url: str):
+        self.db_url = db_url
 
     def __repr__(self) -> str:
-        return f"  FhirService(\n" f"  url={self.base_url},\n" f"  )"
+        return f"  FhirService(\n" f"  url={self.db_url},\n" f"  )"
 
     def set_ontologies(self, ontologies: Optional[List[Any]] = None):
         if not ontologies:
             raise ValueError("Ontology not provided")
         self.ontologies = ontologies
 
-    def disconnect(self):
-        self.session.close()
+    def initialize(self):
+        # TODO: create fhir tables if not exists for the user
+        pass
 
-    def execute_request(
-        self,
-        method: str,
-        endpoint: str,
-        data: Optional[Dict] = None,
-        params: Optional[Dict] = None,
-    ) -> Any:
-        url = f"{self.base_url}/{endpoint}"
-        try:
-            response = self.session.request(method, url, json=data, params=params)
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if e.response.status_code == 422:
-                raise HTTPException(
-                    status_code=422,
-                    detail="Validation error: " + str(e.response.json()),
-                )
-            else:
-                raise
+    def save(self):
+        self._connection.commit()
 
-    def add_node(self, label: str, attribute: Dict, db_url: str):
-        try:
-            params = {
-                "db_url": db_url,
-                "resource_type": label,
-            }
-
-            response = self.execute_request(
-                method="POST", endpoint=label, data=attribute, params=params
-            )
-            return response
-        except requests.HTTPError as e:
-            if e.response.status_code == 422:
-                error_detail = e.response.json()
-                raise HTTPException(
-                    status_code=422, detail="Validation error: " + str(error_detail)
-                )
-            else:
-                raise
-
-    def remove_node(self, id: Union[str, int], db_url: str, resource_type: str):
-        params = {
-            "db_url": db_url,
-            "resource_type": resource_type,
-            "resource_id": id,
-        }
-        return self.execute_request(
-            method="DELETE", endpoint=f"{resource_type}/{id}", params=params
+    def _atomic(self, cursor_exec_fn: CursorExecFunction) -> Any:
+        self._connection = libsql.connect(
+            database=self.db_url,
+            auth_token=os.getenv("TURSO_PATIENTS_GROUP_AUTH_TOKEN"),
         )
 
-    def search_node(self, node_id: Union[str, int], db_url: str, resource_type: str):
-        # Search for a resource by its ID across all resource types
+        cursor = self._connection.cursor()
+        cursor.execute("PRAGMA foreign_keys = TRUE;")
+        results = cursor_exec_fn(cursor, self._connection)
+        self._connection.commit()
+        return results
+
+    def _validate_data(self, json_data: Dict) -> bool:
+        with open(JSON_SCHEMA_FILE, "r", encoding="utf-8") as f:
+            schema = json.load(f)
         try:
-            params = {
-                "db_url": db_url,
-                "resource_type": resource_type,
-                "resource_id": node_id,
-            }
-            response = self.execute_request(
-                "GET", f"{resource_type}/{node_id}", params=params
+            Draft7Validator.check_schema(schema)
+            validator = Draft7Validator(schema)
+            errors = list(validator.iter_errors(json_data))
+            if errors:
+                return False
+            else:
+                return True
+        except exceptions.SchemaError:
+            return False
+
+    def add_node(self, label: str, attribute: Dict, id: Any) -> None:
+        def _add_node(cursor, connection):
+            if self._validate_data(attribute):
+                resource_type = label.lower()
+                cursor.execute(
+                    f"""
+                            INSERT OR IGNORE INTO {resource_type}_history (id, txid, ts, resource_type, status, resource)
+                            SELECT id, ?, current_timestamp, resource_type, 'created', resource
+                            FROM {resource_type}
+                            WHERE id = ?
+                        """,
+                    (123, id),
+                )
+
+                cursor.execute(
+                    f"""
+                        INSERT OR IGNORE INTO {resource_type} (id, txid, ts, resource_type, status, resource)
+                        VALUES (?, ?, current_timestamp, ?, 'created', ?)
+                        ON CONFLICT(id) DO UPDATE SET
+                        txid = excluded.txid,
+                        ts = excluded.ts,
+                        status = 'recreated',
+                        resource = excluded.resource
+                    """,
+                    (id, 123, resource_type, json.dumps(attribute)),
+                )
+                connection.commit()
+
+        return self._atomic(_add_node)
+
+    def update_node(self, node: Node):
+        def _update(cursor, connection):
+            resource_type = node.label.lower()
+            print(resource_type)
+
+            cursor.execute(
+                f"""
+                        INSERT OR IGNORE INTO {resource_type}_history (id, txid, ts, resource_type, status, resource)
+                        SELECT id, txid, current_timestamp, resource_type, 'updated', resource
+                        FROM {resource_type}
+                        WHERE id = ?
+                    """,
+                (node.id,),
             )
-            return response
 
-        except requests.HTTPError:
-            raise
+            cursor.execute(
+                f"""
+                    INSERT OR IGNORE INTO {resource_type} (id, txid, ts, resource_type, status, resource)
+                    VALUES (?, ?, current_timestamp, ?, 'updated', ?)
+                    ON CONFLICT(id) DO UPDATE SET
+                    txid = excluded.txid,
+                    ts = excluded.ts,
+                    status = 'updated',
+                    resource = excluded.resource
+                """,
+                (node.id, 123, resource_type, json.dumps(node.attributes)),
+            )
+            connection.commit()
 
-    def update_node(self, node: Node, db_url: str):
-        resource_type = node.label
-        params = {
-            "db_url": db_url,
-            "resource_type": resource_type,
-            "resource_id": node.id,
-        }
+        return self._atomic(_update)
 
-        if isinstance(node.attributes, str):
-            attributes = json.loads(node.attributes)
-        else:
-            attributes = node.attributes
+    def remove_node(self, id: Any, *, resource_type: str) -> None:
+        def _remove(cursor, connection):
+            if not resource_type:
+                raise ValueError("Resource type not provided")
 
-        return self.execute_request(
-            "PUT", f"{resource_type}/{node.id}", data=attributes, params=params
-        )
+            cursor.execute(
+                f"""
+                INSERT OR IGNORE INTO {resource_type}_history (id, txid, ts, resource_type, status, resource)
+                SELECT id, txid, current_timestamp, resource_type, 'deleted', resource
+                FROM {resource_type}
+                WHERE id = ?
+                """,
+                (id,),
+            )
+
+            cursor.execute(
+                f"""
+                    DELETE FROM {resource_type.lower()} WHERE id = ?
+                """,
+                (id,),
+            )
+
+        return self._atomic(_remove)
+
+    def search_node(self, node_id: Any, *, resource_type: str) -> Any:
+        def _search_node(cursor, connection):
+            if not resource_type:
+                raise ValueError("Resource type not provided.")
+
+            node = cursor.execute(
+                f"SELECT * from {resource_type.lower()} WHERE id = ?", (node_id,)
+            )
+            if node:
+                return node.fetchone()
+            return None
+
+        return self._atomic(_search_node)
