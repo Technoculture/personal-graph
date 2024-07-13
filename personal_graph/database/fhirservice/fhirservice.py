@@ -15,7 +15,7 @@ CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
 
 @lru_cache(maxsize=None)
 def read_sql(sql_file: Path) -> str:
-    with open(Path(__file__).parent.resolve() / "queries" / sql_file) as f:
+    with open(Path(__file__).parent.resolve() / "fhir-schema" / sql_file) as f:
         return f.read()
 
 
@@ -32,8 +32,12 @@ class FhirService:
         self.ontologies = ontologies
 
     def initialize(self):
-        # TODO: create fhir tables if not exists for the user
-        pass
+        def _init(cursor, connection):
+            schema_sql = read_sql(Path("fhir_4.sql"))
+            connection.executionscript(schema_sql)
+            connection.commit()
+
+        return self._atomic(_init)
 
     def save(self):
         self._connection.commit()
