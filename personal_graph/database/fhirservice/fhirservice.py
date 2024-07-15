@@ -9,7 +9,7 @@ from typing import List, Any, Dict, Optional, Callable, Union
 from graphviz import Digraph  # type: ignore
 from jsonschema import Draft7Validator, exceptions
 
-from personal_graph import Node, Edge
+from personal_graph.models import Node, Edge
 from personal_graph.database.db import DB
 
 JSON_SCHEMA_FILE = os.path.join(os.path.dirname(__file__), "fhir_4.schema.json")
@@ -339,6 +339,20 @@ class FhirService(DB):
 
         return self._atomic(_traverse)
 
+    def search_node_type(self, label: str) -> bool:
+        def _search_node_type(cursor, connection):
+
+            cursor.execute("""
+                SELECT name 
+                FROM sqlite_master 
+                WHERE type='table' AND name=?;
+            """, (label.lower(),))
+
+            result = cursor.fetchone()
+            return result is not None
+
+        return self._atomic(_search_node_type)
+
     def search_similar_nodes(
         self, embed_ids, *, desc: Optional[bool] = False, sort_by: Optional[str] = ""
     ):
@@ -376,3 +390,6 @@ class FhirService(DB):
         edge_kv: str = " ",
     ) -> Digraph:
         raise NotImplementedError("graphviz_visualize method is not yet implemented")
+
+    def search_id_by_node_type(self, node_type: str):
+        raise NotImplementedError("search_id_by_node_type method is not yet implemented")

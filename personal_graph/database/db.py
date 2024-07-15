@@ -146,3 +146,11 @@ class DB(ABC):
     def search_similar_edges(self, embed_id, *, desc: bool, sort_by: str):
         """Search for edges similar to the given embedding ID"""
         pass
+
+    @abstractmethod
+    def search_node_type(self, label: str):
+        pass
+
+    @abstractmethod
+    def search_id_by_node_type(self, node_type: str):
+        pass
