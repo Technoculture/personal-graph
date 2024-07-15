@@ -71,7 +71,6 @@ class FhirService:
     def add_node(self, label: str, attribute: Dict, id: Any) -> None:
         def _add_node(cursor, connection):
             if self._validate_data(attribute):
-                print("Validated!!")
                 resource_type = label.lower()
                 cursor.execute(
                     f"""
@@ -101,10 +100,17 @@ class FhirService:
 
     def add_edge(self, source: Any, target: Any, label: str, attributes: Dict) -> None:
         def _add_edge(cursor, connection):
-            print(source.id, source.label, target.id, target.label)
+            count = (
+                cursor.execute("SELECT COALESCE(MAX(id), 0) FROM relations").fetchone()[
+                    0
+                ]
+                + 1
+            )
+
             cursor.execute(
-                "INSERT INTO relations VALUES(?, ?, ?, ?, ?, json(?))",
+                "INSERT INTO relations VALUES(?, ?, ?, ?, ?, ?, json(?))",
                 (
+                    count,
                     source.id,
                     source.label,
                     target.id,
@@ -125,7 +131,6 @@ class FhirService:
     def update_node(self, node: Node):
         def _update(cursor, connection):
             resource_type = node.label.lower()
-            print(resource_type)
 
             cursor.execute(
                 f"""
@@ -173,6 +178,10 @@ class FhirService:
                     DELETE FROM {resource_type.lower()} WHERE id = ?
                 """,
                 (id,),
+            )
+
+            cursor.execute(
+                "DELETE FROM relations WHERE source_id = ? OR target_id = ?", (id, id)
             )
 
         return self._atomic(_remove)
