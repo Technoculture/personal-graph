@@ -4,10 +4,12 @@ from functools import lru_cache
 from pathlib import Path
 
 import libsql_experimental as libsql
-from typing import List, Any, Dict, Optional, Callable
+from typing import List, Any, Dict, Optional, Callable, Union
+
+from graphviz import Digraph
 from jsonschema import Draft7Validator, exceptions
 
-from personal_graph import Node
+from personal_graph import Node, Edge
 from personal_graph.database.db import DB
 
 JSON_SCHEMA_FILE = os.path.join(os.path.dirname(__file__), "fhir_4.schema.json")
@@ -20,9 +22,12 @@ def read_sql(sql_file: Path) -> str:
         return f.read()
 
 
-class FhirService(DB):
+class FhirService:
     def __init__(self, db_url: str):
         self.db_url = db_url
+
+    def __eq__(self, other):
+        return self.db_url == other.db_url
 
     def __repr__(self) -> str:
         return f"  FhirService(\n" f"  url={self.db_url},\n" f"  )"
@@ -101,17 +106,14 @@ class FhirService(DB):
 
     def add_edge(self, source: Any, target: Any, label: str, attributes: Dict) -> None:
         def _add_edge(cursor, connection):
-            count = (
-                cursor.execute("SELECT COALESCE(MAX(id), 0) FROM relations").fetchone()[
-                    0
-                ]
-                + 1
-            )
+            count = cursor.execute(
+                "SELECT COALESCE(MAX(id), 0) FROM relations"
+            ).fetchone()[0]
 
             cursor.execute(
                 "INSERT INTO relations VALUES(?, ?, ?, ?, ?, ?, json(?))",
                 (
-                    count,
+                    int(count) + 1,
                     source.id,
                     source.label,
                     target.id,
@@ -221,6 +223,34 @@ class FhirService(DB):
 
         return self._atomic(_search_edge)
 
+    def search_indegree_edges(self, target: Any) -> List[Any]:
+        def _indegree_edges(cursor, connection):
+            indegree = cursor.execute(
+                "SELECT source_id, source_type, resource from relations where target_id=?",
+                (target.id,),
+            )
+
+            if not indegree:
+                return []
+            else:
+                return indegree.fetchall()
+
+        return self._atomic(_indegree_edges)
+
+    def search_outdegree_edges(self, source: Any) -> List[Any]:
+        def _outdegree_edges(cursor, connection):
+            outdegree = cursor.execute(
+                "SELECT target_id, target_type, resource from relations where source_id=?",
+                (source.id,),
+            )
+
+            if not outdegree:
+                return []
+            else:
+                return outdegree.fetchall()
+
+        return self._atomic(_outdegree_edges)
+
     def search_similar_nodes(
         self, embed_ids, *, desc: Optional[bool] = False, sort_by: Optional[str] = ""
     ):
@@ -235,3 +265,11 @@ class FhirService(DB):
     def fetch_edge_embed_ids(self, id: Any):
         raise NotImplementedError("fetch_edge_embed_ids method is not yet implemented")
 
+    def find_nodes_by_label(self, label: str):
+        raise NotImplementedError("find_nodes_by_label method is not yet implemented")
+
+    def search_node_label(self, node_id: Any) -> Any:
+        raise NotImplementedError("search_node_label method is not yet implemented")
+
+    def fetch_node_id(self, id: Any):
+        raise NotImplementedError("fetch_node_id method is not yet implemented")
