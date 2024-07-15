@@ -199,3 +199,23 @@ class FhirService:
             return None
 
         return self._atomic(_search_node)
+
+    def search_edge(self, source: Any, target: Any, attributes: Dict):
+        def _search_edge(cursor, connection):
+            edge = cursor.execute(
+                "SELECT id from relations WHERE source_id=? AND source_type=? AND target_id=? AND target_type=? AND resource = json(?)",
+                (
+                    source.id,
+                    source.label,
+                    target.id,
+                    target.label,
+                    json.dumps(attributes),
+                ),
+            ).fetchone()
+
+            if edge:
+                return edge[0]
+
+            return None
+
+        return self._atomic(_search_edge)
