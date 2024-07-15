@@ -254,7 +254,7 @@ class FhirService:
     def fetch_ids_from_db(
         self, limit: Optional[int] = 10, *, resource_type: str
     ) -> List[str]:
-        def _fetch_nodes_from_db(cursor, connection):
+        def _fetch_ids_from_db(cursor, connection):
             nodes = cursor.execute(
                 f"SELECT id from {resource_type.lower()} LIMIT ?", (limit,)
             ).fetchall()
@@ -262,7 +262,36 @@ class FhirService:
 
             return ids
 
-        return self._atomic(_fetch_nodes_from_db)
+        return self._atomic(_fetch_ids_from_db)
+
+    def all_connected_nodes(self, node_or_edge: Union[Node | Edge]) -> Any:
+        def _all_connected_nodes(cursor, connection):
+            if isinstance(node_or_edge, Node):
+                node_id = node_or_edge.id
+            elif isinstance(node_or_edge, Edge):
+                node_id = node_or_edge.source.id
+            else:
+                raise ValueError("Invalid input: must be Node or Edge")
+
+            connected_nodes = set()
+            to_visit = [node_id]
+
+            while to_visit:
+                current = to_visit.pop(0)
+                if current not in connected_nodes:
+                    connected_nodes.add(current)
+                    neighbors = cursor.execute(
+                        "SELECT target_id FROM relations WHERE source_id = ? "
+                        "UNION SELECT source_id FROM relations WHERE target_id = ?",
+                        (current, current),
+                    ).fetchall()
+                    to_visit.extend(
+                        [n[0] for n in neighbors if n[0] not in connected_nodes]
+                    )
+
+            return list(connected_nodes)
+
+        return self._atomic(_all_connected_nodes)
 
     def search_similar_nodes(
         self, embed_ids, *, desc: Optional[bool] = False, sort_by: Optional[str] = ""
