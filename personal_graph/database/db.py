@@ -123,7 +123,7 @@ class DB(ABC):
         pass
 
     @abstractmethod
-    def fetch_ids_from_db(self) -> List[str]:
+    def fetch_ids_from_db(self, *, resource_type: str) -> List[str]:
         """Fetch all IDs from the database"""
         pass
 

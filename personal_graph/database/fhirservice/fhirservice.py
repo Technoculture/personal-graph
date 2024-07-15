@@ -106,9 +106,9 @@ class FhirService:
 
     def add_edge(self, source: Any, target: Any, label: str, attributes: Dict) -> None:
         def _add_edge(cursor, connection):
-            count = cursor.execute("SELECT COALESCE(MAX(id), 0) FROM relations").fetchone()[
-                    0
-                ]
+            count = cursor.execute(
+                "SELECT COALESCE(MAX(id), 0) FROM relations"
+            ).fetchone()[0]
 
             cursor.execute(
                 "INSERT INTO relations VALUES(?, ?, ?, ?, ?, ?, json(?))",
@@ -227,7 +227,7 @@ class FhirService:
         def _indegree_edges(cursor, connection):
             indegree = cursor.execute(
                 "SELECT source_id, source_type, resource from relations where target_id=?",
-                (target.id, ),
+                (target.id,),
             )
 
             if not indegree:
@@ -241,7 +241,7 @@ class FhirService:
         def _outdegree_edges(cursor, connection):
             outdegree = cursor.execute(
                 "SELECT target_id, target_type, resource from relations where source_id=?",
-                (source.id, ),
+                (source.id,),
             )
 
             if not outdegree:
@@ -292,6 +292,15 @@ class FhirService:
             return list(connected_nodes)
 
         return self._atomic(_all_connected_nodes)
+
+    def get_connections(self, identifier: Any) -> CursorExecFunction:
+        def _get_all_connections(cursor, connection):
+            return cursor.execute(
+                "SELECT * from relations WHERE source_id=? OR target_id=?",
+                (identifier, identifier),
+            ).fetchall()
+
+        return self._atomic(_get_all_connections)
 
     def search_similar_nodes(
         self, embed_ids, *, desc: Optional[bool] = False, sort_by: Optional[str] = ""
