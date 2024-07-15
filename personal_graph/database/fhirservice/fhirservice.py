@@ -8,6 +8,7 @@ from typing import List, Any, Dict, Optional, Callable
 from jsonschema import Draft7Validator, exceptions
 
 from personal_graph import Node
+from personal_graph.database.db import DB
 
 JSON_SCHEMA_FILE = os.path.join(os.path.dirname(__file__), "fhir_4.schema.json")
 CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
@@ -19,7 +20,7 @@ def read_sql(sql_file: Path) -> str:
         return f.read()
 
 
-class FhirService:
+class FhirService(DB):
     def __init__(self, db_url: str):
         self.db_url = db_url
 
@@ -219,3 +220,18 @@ class FhirService:
             return None
 
         return self._atomic(_search_edge)
+
+    def search_similar_nodes(
+        self, embed_ids, *, desc: Optional[bool] = False, sort_by: Optional[str] = ""
+    ):
+        raise NotImplementedError("search_similar_nodes method is not yet implemented")
+
+    def search_similar_edges(self, embed_ids, *, desc: bool = False, sort_by: str = ""):
+        raise NotImplementedError("search_similar_edges method is not yet implemented")
+
+    def fetch_node_embed_id(self, node_id: Any):
+        raise NotImplementedError("fetch_node_embed_ids method is not yet implemented")
+
+    def fetch_edge_embed_ids(self, id: Any):
+        raise NotImplementedError("fetch_edge_embed_ids method is not yet implemented")
+
