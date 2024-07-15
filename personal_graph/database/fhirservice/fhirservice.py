@@ -3,10 +3,10 @@ import os
 from functools import lru_cache
 from pathlib import Path
 
-import libsql_experimental as libsql
+import libsql_experimental as libsql  # type: ignore
 from typing import List, Any, Dict, Optional, Callable, Union
 
-from graphviz import Digraph
+from graphviz import Digraph  # type: ignore
 from jsonschema import Draft7Validator, exceptions
 
 from personal_graph import Node, Edge
@@ -22,7 +22,7 @@ def read_sql(sql_file: Path) -> str:
         return f.read()
 
 
-class FhirService:
+class FhirService(DB):
     def __init__(self, db_url: str):
         self.db_url = db_url
 
@@ -134,6 +134,8 @@ class FhirService:
     def update_node(self, node: Node):
         def _update(cursor, connection):
             resource_type = node.label.lower()
+            if not self._validate_data(node.attributes):
+                raise ValueError("Fhir Validation Error")
 
             cursor.execute(
                 f"""
@@ -161,7 +163,7 @@ class FhirService:
 
         return self._atomic(_update)
 
-    def remove_node(self, id: Any, *, resource_type: str) -> None:
+    def remove_node(self, id: Any, resource_type: Optional[str] = None) -> None:
         def _remove(cursor, connection):
             if not resource_type:
                 raise ValueError("Resource type not provided")
@@ -189,7 +191,7 @@ class FhirService:
 
         return self._atomic(_remove)
 
-    def search_node(self, node_id: Any, *, resource_type: str) -> Any:
+    def search_node(self, node_id: Any, resource_type: Optional[str] = None) -> Any:
         def _search_node(cursor, connection):
             if not resource_type:
                 raise ValueError("Resource type not provided.")
@@ -252,9 +254,12 @@ class FhirService:
         return self._atomic(_outdegree_edges)
 
     def fetch_ids_from_db(
-        self, limit: Optional[int] = 10, *, resource_type: str
+        self, limit: Optional[int] = 10, resource_type: Optional[str] = None
     ) -> List[str]:
         def _fetch_ids_from_db(cursor, connection):
+            if not resource_type:
+                raise ValueError("Resource type not provided.")
+
             nodes = cursor.execute(
                 f"SELECT id from {resource_type.lower()} LIMIT ?", (limit,)
             ).fetchall()
@@ -324,3 +329,18 @@ class FhirService:
 
     def fetch_node_id(self, id: Any):
         raise NotImplementedError("fetch_node_id method is not yet implemented")
+
+    def graphviz_visualize(
+        self,
+        dot_file: Optional[str] = None,
+        path: List[Any] = [],
+        connections: Any = None,
+        format: str = "png",
+        exclude_node_keys: List[str] = [],
+        hide_node_key: bool = False,
+        node_kv: str = " ",
+        exclude_edge_keys: List[str] = [],
+        hide_edge_key: bool = False,
+        edge_kv: str = " ",
+    ) -> Digraph:
+        raise NotImplementedError("graphviz_visualize method is not yet implemented")
