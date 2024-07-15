@@ -35,7 +35,6 @@ class FhirService(DB):
     def set_ontologies(self, ontologies: Optional[List[Any]] = None):
         if not ontologies:
             raise ValueError("Ontology not provided")
-        self.ontologies = ontologies
 
     def initialize(self):
         def _init(cursor, connection):
@@ -306,6 +305,39 @@ class FhirService(DB):
             ).fetchall()
 
         return self._atomic(_get_all_connections)
+
+    def traverse(
+        self, source: Any, target: Optional[Any] = None, with_bodies: bool = False
+    ) -> List:
+        def _traverse(cursor, connection):
+            visited = set()
+            path = []
+
+            def dfs(current, target):
+                visited.add(current)
+                path.append(current)
+
+                if current == target:
+                    return True
+
+                neighbors = cursor.execute(
+                    "SELECT target_id FROM relations WHERE source_id = ?", (current,)
+                ).fetchall()
+
+                for neighbor in neighbors:
+                    if neighbor[0] not in visited:
+                        if dfs(neighbor[0], target):
+                            return True
+                path.pop()
+                return False
+
+            dfs(source, target)
+
+            if with_bodies:
+                return [self.search_node(node, resource_type="") for node in path]
+            return path
+
+        return self._atomic(_traverse)
 
     def search_similar_nodes(
         self, embed_ids, *, desc: Optional[bool] = False, sort_by: Optional[str] = ""
