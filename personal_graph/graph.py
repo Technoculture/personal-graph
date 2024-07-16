@@ -447,13 +447,13 @@ class GraphDB(AbstractContextManager):
         self,
         ids: List[Any],
     ) -> None:
-        for id in zip(ids):
+        for id in ids:
             self.remove_node(id)
 
     def search_node(
         self, node_id: str | int, *, node_type: Optional[str] = None
     ) -> Any:
-        return self.db.search_node(node_id, resource_type=node_type)
+        return self.db.search_node(node_id)
 
     def search_node_label(self, node_id: str | int) -> Any:
         return self.db.search_node_label(node_id)
