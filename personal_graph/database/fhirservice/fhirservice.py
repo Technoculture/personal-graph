@@ -341,12 +341,14 @@ class FhirService(DB):
 
     def search_node_type(self, label: str) -> bool:
         def _search_node_type(cursor, connection):
-
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT name 
                 FROM sqlite_master 
                 WHERE type='table' AND name=?;
-            """, (label.lower(),))
+            """,
+                (label.lower(),),
+            )
 
             result = cursor.fetchone()
             return result is not None
@@ -392,4 +394,6 @@ class FhirService(DB):
         raise NotImplementedError("graphviz_visualize method is not yet implemented")
 
     def search_id_by_node_type(self, node_type: str):
-        raise NotImplementedError("search_id_by_node_type method is not yet implemented")
+        raise NotImplementedError(
+            "search_id_by_node_type method is not yet implemented"
+        )
