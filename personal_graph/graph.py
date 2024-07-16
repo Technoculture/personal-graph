@@ -14,7 +14,6 @@ from owlready2 import Ontology  # type: ignore
 
 from personal_graph import OpenAIClient
 from personal_graph.database import TursoDB, SQLite
-from personal_graph.database.externalservice import ExternalService
 from personal_graph.graph_generator import (
     OpenAITextToGraphParser,
     OllamaTextToGraphParser,
@@ -43,20 +42,15 @@ class GraphDB(AbstractContextManager):
         graph_generator: Union[
             OpenAITextToGraphParser, OllamaTextToGraphParser
         ] = OpenAITextToGraphParser(llm_client=OpenAIClient()),
-        service: Optional[ExternalService] = None,
         ontologies: Optional[List[Union[Ontology, Any]]] = None,
     ):
         self.vector_store = vector_store
         self.db = database
         self.graph_generator = graph_generator
-        self.service = service
         self.ontologies = ontologies
 
-        if not self.service:
-            self.db.initialize()
-            self.vector_store.initialize()
-        else:
-            self.service.set_ontologies(self.ontologies)
+        self.db.initialize()
+        self.vector_store.initialize()
 
     def __eq__(self, other):
         if not isinstance(other, GraphDB):
@@ -65,29 +59,23 @@ class GraphDB(AbstractContextManager):
             return self.db == other.db
 
     def __enter__(self) -> GraphDB:
-        if not self.service:
-            self.db.initialize()
-            self.vector_store.initialize()
+        self.db.initialize()
+        self.vector_store.initialize()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
-        if self.service:
-            self.service.disconnect()
-        else:
-            self.db.save()
-            self.vector_store.save()
+        self.db.save()
+        self.vector_store.save()
 
     def __repr__(self) -> str:
         db_repr = repr(self.db)
         vector_store_repr = repr(self.vector_store)
         graph_generator_repr = repr(self.graph_generator)
-        service_repr = repr(self.service)
         return (
             f"Graph(\n"
             f"  db={db_repr}\n"
             f"  vector_store={vector_store_repr},\n"
             f"  graph_generator={graph_generator_repr}\n"
-            f"  service={service_repr}\n"
             f")"
         )
 
@@ -328,18 +316,7 @@ class GraphDB(AbstractContextManager):
         *,
         node_type: Optional[str] = None,
         delete_if_properties_not_match: Optional[bool] = False,
-        db_url: str = "",
     ) -> None:
-        if self.service:
-            self.service.add_node(
-                node.label,
-                json.loads(node.attributes)
-                if isinstance(node.attributes, str)
-                else (node.attributes),
-                db_url,
-            )
-            return
-
         if self.ontologies is None:
             if self.db.search_node(node_id=node.id) is None:
                 self.insert_node(node)
@@ -375,13 +352,7 @@ class GraphDB(AbstractContextManager):
         *,
         node_types: Optional[List[str]] = None,
         delete_if_properties_not_match: Optional[List[bool]] = None,
-        db_url: str = "",
     ) -> None:
-        if self.service:
-            for node in nodes:
-                self.add_node(node, db_url=db_url)
-            return
-
         if self.ontologies is not None:
             if node_types is None:
                 raise ValueError("No node types given for the ontology.")
@@ -441,11 +412,7 @@ class GraphDB(AbstractContextManager):
         for edge in edges:
             self.add_edge(edge)
 
-    def update_node(self, node: Node, *, db_url: str = "") -> None:
-        if self.service:
-            self.service.update_node(node, db_url)
-            return
-
+    def update_node(self, node: Node) -> None:
         node_data = self.db.search_node(node.id)
         if node_data is not None:
             embed_id_to_be_updated = self.db.fetch_node_embed_id(node.id)
@@ -464,21 +431,11 @@ class GraphDB(AbstractContextManager):
         else:
             self.add_node(node)
 
-    def update_nodes(self, nodes: List[Node], *, db_url: str = "") -> None:
+    def update_nodes(self, nodes: List[Node]) -> None:
         for node in nodes:
-            self.update_node(node, db_url=db_url)
+            self.update_node(node)
 
-    def remove_node(
-        self,
-        id: Union[str, int],
-        *,
-        db_url: str = "",
-        resource_type: str = "",
-    ) -> None:
-        if self.service:
-            self.service.remove_node(id, db_url, resource_type)
-            return
-
+    def remove_node(self, id: Union[str, int]) -> None:
         if self.db.search_node(id) is not None:
             ids = self.db.fetch_edge_embed_ids(id)
             self.vector_store.delete_node_embedding(self.db.fetch_node_embed_id(id))
@@ -489,23 +446,14 @@ class GraphDB(AbstractContextManager):
     def remove_nodes(
         self,
         ids: List[Any],
-        *,
-        db_url: str = "",
-        resource_types: List[str] = [],
     ) -> None:
-        for id, resource_type in zip(ids, resource_types):
-            self.remove_node(id, db_url=db_url, resource_type=resource_type)
+        for id in zip(ids):
+            self.remove_node(id)
 
     def search_node(
-        self,
-        node_id: str | int,
-        *,
-        db_url: str = "",
-        resource_type: str = "",
+        self, node_id: str | int, *, node_type: Optional[str] = None
     ) -> Any:
-        if self.service:
-            return self.service.search_node(node_id, db_url, resource_type)
-        return self.db.search_node(node_id)
+        return self.db.search_node(node_id, resource_type=node_type)
 
     def search_node_label(self, node_id: str | int) -> Any:
         return self.db.search_node_label(node_id)
