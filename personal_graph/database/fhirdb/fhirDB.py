@@ -22,7 +22,7 @@ def read_sql(sql_file: Path) -> str:
         return f.read()
 
 
-class FhirService(DB):
+class FhirDB(DB):
     def __init__(self, db_url: str):
         self.db_url = db_url
 
@@ -397,3 +397,4 @@ class FhirService(DB):
         raise NotImplementedError(
             "search_id_by_node_type method is not yet implemented"
         )
+
