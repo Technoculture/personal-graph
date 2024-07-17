@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS "transaction"(
 );
 
 CREATE TABLE IF NOT EXISTS "devicerequest"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -30,6 +31,7 @@ CREATE TABLE IF NOT EXISTS "devicerequest_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "servicerequest"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -55,6 +57,7 @@ CREATE TABLE IF NOT EXISTS "servicerequest_history"(
 
 
 CREATE TABLE IF NOT EXISTS "devicemetric"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -81,6 +84,7 @@ CREATE TABLE IF NOT EXISTS "devicemetric_history"(
 
 
 CREATE TABLE IF NOT EXISTS "careplan"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -102,6 +106,7 @@ CREATE TABLE IF NOT EXISTS "careplan_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "observation"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -123,6 +128,7 @@ CREATE TABLE IF NOT EXISTS "observation_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "enrollmentrequest"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -144,6 +150,7 @@ CREATE TABLE IF NOT EXISTS "enrollmentrequest_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "group"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -165,6 +172,7 @@ CREATE TABLE IF NOT EXISTS "group_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "messagedefinition"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -186,6 +194,7 @@ CREATE TABLE IF NOT EXISTS "messagedefinition_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "appointment"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -207,6 +216,7 @@ CREATE TABLE IF NOT EXISTS "appointment_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "biologicallyderivedproduct"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -228,6 +238,7 @@ CREATE TABLE IF NOT EXISTS "biologicallyderivedproduct_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "questionnaireresponse"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -249,6 +260,7 @@ CREATE TABLE IF NOT EXISTS "questionnaireresponse_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "effectevidencesynthesis"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -270,6 +282,7 @@ CREATE TABLE IF NOT EXISTS "effectevidencesynthesis_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "medicinalproductcontraindication"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -281,6 +294,7 @@ CREATE TABLE IF NOT EXISTS "medicinalproductcontraindication"(
 
 
 CREATE TABLE IF NOT EXISTS "episodeofcare"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -302,6 +316,7 @@ CREATE TABLE IF NOT EXISTS "episodeofcare_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "evidence"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -323,6 +338,7 @@ CREATE TABLE IF NOT EXISTS "evidence_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "substancepolymer"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -346,6 +362,7 @@ CREATE TABLE IF NOT EXISTS "substancepolymer_history"(
 
 
 CREATE TABLE IF NOT EXISTS "supplydelivery"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -367,6 +384,7 @@ CREATE TABLE IF NOT EXISTS "supplydelivery_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "substancenucleicacid"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -388,6 +406,7 @@ CREATE TABLE IF NOT EXISTS "substancenucleicacid_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "adverseevent"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -410,6 +429,7 @@ CREATE TABLE IF NOT EXISTS "adverseevent_history"(
 
 
 CREATE TABLE IF NOT EXISTS "endpoint"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -431,6 +451,7 @@ CREATE TABLE IF NOT EXISTS "endpoint_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "substancereferenceinformation"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -452,6 +473,7 @@ CREATE TABLE IF NOT EXISTS "substancereferenceinformation_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "substancesourcematerial"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -473,6 +495,7 @@ CREATE TABLE IF NOT EXISTS "substancesourcematerial_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "compartmentdefinition"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -494,6 +517,7 @@ CREATE TABLE IF NOT EXISTS "compartmentdefinition_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "detectedissue"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -516,6 +540,7 @@ CREATE TABLE IF NOT EXISTS "detectedissue_history"(
 
 
 CREATE TABLE IF NOT EXISTS "medicationadministration"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -537,6 +562,7 @@ CREATE TABLE IF NOT EXISTS "medicationadministration_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "evidencevariable"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -558,6 +584,7 @@ CREATE TABLE IF NOT EXISTS "evidencevariable_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "implementationguide"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -579,6 +606,7 @@ CREATE TABLE IF NOT EXISTS "implementationguide_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "goal"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -601,6 +629,7 @@ CREATE TABLE IF NOT EXISTS "goal_history"(
 
 
 CREATE TABLE IF NOT EXISTS "communication"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -622,6 +651,7 @@ CREATE TABLE IF NOT EXISTS "communication_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "schedule"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -643,6 +673,7 @@ CREATE TABLE IF NOT EXISTS "schedule_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "documentreference"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -665,6 +696,7 @@ CREATE TABLE IF NOT EXISTS "documentreference_history"(
 
 
 CREATE TABLE IF NOT EXISTS "organizationaffiliation"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -686,6 +718,7 @@ CREATE TABLE IF NOT EXISTS "organizationaffiliation_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "devicedefinition"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -707,6 +740,7 @@ CREATE TABLE IF NOT EXISTS "devicedefinition_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "coverage"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -728,6 +762,7 @@ CREATE TABLE IF NOT EXISTS "coverage_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "auditevent"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -759,6 +794,7 @@ CREATE TABLE IF NOT EXISTS "transaction"(
 );
 
 CREATE TABLE IF NOT EXISTS "messageheader"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -780,6 +816,7 @@ CREATE TABLE IF NOT EXISTS "messageheader_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "contract"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -801,6 +838,7 @@ CREATE TABLE IF NOT EXISTS "contract_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "testreport"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -822,6 +860,7 @@ CREATE TABLE IF NOT EXISTS "testreport_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "codesystem"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -843,6 +882,7 @@ CREATE TABLE IF NOT EXISTS "codesystem_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "plandefinition"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -864,6 +904,7 @@ CREATE TABLE IF NOT EXISTS "plandefinition_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "invoice"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -885,6 +926,7 @@ CREATE TABLE IF NOT EXISTS "invoice_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "claimresponse"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -906,6 +948,7 @@ CREATE TABLE IF NOT EXISTS "claimresponse_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "chargeitem"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -927,6 +970,7 @@ CREATE TABLE IF NOT EXISTS "chargeitem_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "coverageeligibilityresponse"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -948,6 +992,7 @@ CREATE TABLE IF NOT EXISTS "coverageeligibilityresponse_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "bodystructure"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -969,6 +1014,7 @@ CREATE TABLE IF NOT EXISTS "bodystructure_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "parameters"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -990,6 +1036,7 @@ CREATE TABLE IF NOT EXISTS "parameters_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "clinicalimpression"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1016,6 +1063,7 @@ CREATE TABLE IF NOT EXISTS "clinicalimpression_history"(
 
 
 CREATE TABLE IF NOT EXISTS "familymemberhistory"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1037,6 +1085,7 @@ CREATE TABLE IF NOT EXISTS "familymemberhistory_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "medicinalproductauthorization"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1058,6 +1107,7 @@ CREATE TABLE IF NOT EXISTS "medicinalproductauthorization_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "binary"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1079,6 +1129,7 @@ CREATE TABLE IF NOT EXISTS "binary_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "composition"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1100,6 +1151,7 @@ CREATE TABLE IF NOT EXISTS "composition_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "practitionerrole"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1121,6 +1173,7 @@ CREATE TABLE IF NOT EXISTS "practitionerrole_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "healthcareservice"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1142,6 +1195,7 @@ CREATE TABLE IF NOT EXISTS "healthcareservice_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "patient"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1163,6 +1217,7 @@ CREATE TABLE IF NOT EXISTS "patient_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "medicationdispense"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1184,6 +1239,7 @@ CREATE TABLE IF NOT EXISTS "medicationdispense_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "deviceusestatement"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1207,6 +1263,7 @@ CREATE TABLE IF NOT EXISTS "deviceusestatement_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "structuremap"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1228,6 +1285,7 @@ CREATE TABLE IF NOT EXISTS "structuremap_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "immunizationevaluation"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1249,6 +1307,7 @@ CREATE TABLE IF NOT EXISTS "immunizationevaluation_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "library"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1270,6 +1329,7 @@ CREATE TABLE IF NOT EXISTS "library_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "basic"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1291,6 +1351,7 @@ CREATE TABLE IF NOT EXISTS "basic_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "slot"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1312,6 +1373,7 @@ CREATE TABLE IF NOT EXISTS "slot_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "activitydefinition"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1333,6 +1395,7 @@ CREATE TABLE IF NOT EXISTS "activitydefinition_history"(
 );
 
 CREATE TABLE IF NOT EXISTS "medicinalproductinteraction"(
+    embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1354,6 +1417,7 @@ CREATE TABLE IF NOT EXISTS "medicinalproductinteraction_history"(
 );
 
  CREATE TABLE IF NOT EXISTS molecularsequence(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1375,6 +1439,7 @@ CREATE TABLE IF NOT EXISTS molecularsequence_history(
 );
 
 CREATE TABLE IF NOT EXISTS specimen(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1396,6 +1461,7 @@ CREATE TABLE IF NOT EXISTS specimen_history(
 );
 
 CREATE TABLE IF NOT EXISTS diagnosticreport(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1417,6 +1483,7 @@ CREATE TABLE IF NOT EXISTS diagnosticreport_history(
 );
 
 CREATE TABLE IF NOT EXISTS subscription(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1438,6 +1505,7 @@ CREATE TABLE IF NOT EXISTS subscription_history(
 );
 
 CREATE TABLE IF NOT EXISTS requestgroup(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1459,6 +1527,7 @@ CREATE TABLE IF NOT EXISTS requestgroup_history(
 );
 
 CREATE TABLE IF NOT EXISTS provenance(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1480,6 +1549,7 @@ CREATE TABLE IF NOT EXISTS provenance_history(
 );
 
 CREATE TABLE IF NOT EXISTS medicinalproduct(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1501,6 +1571,7 @@ CREATE TABLE IF NOT EXISTS medicinalproduct_history(
 );
 
 CREATE TABLE IF NOT EXISTS chargeitemdefinition(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1510,6 +1581,7 @@ CREATE TABLE IF NOT EXISTS chargeitemdefinition(
     FOREIGN KEY (status) REFERENCES resource_status(status)
 );
 CREATE TABLE IF NOT EXISTS chargeitemdefinition(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1531,6 +1603,7 @@ CREATE TABLE IF NOT EXISTS chargeitemdefinition_history(
 );
 
 CREATE TABLE IF NOT EXISTS practitioner(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1552,6 +1625,7 @@ CREATE TABLE IF NOT EXISTS practitioner_history(
 );
 
 CREATE TABLE IF NOT EXISTS medicinalproductpackaged(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1573,6 +1647,7 @@ CREATE TABLE IF NOT EXISTS medicinalproductpackaged_history(
 );
 
 CREATE TABLE IF NOT EXISTS flag(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1594,6 +1669,7 @@ CREATE TABLE IF NOT EXISTS flag_history(
 );
 
 CREATE TABLE IF NOT EXISTS explanationofbenefit(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1615,6 +1691,7 @@ CREATE TABLE IF NOT EXISTS explanationofbenefit_history(
 );
 
 CREATE TABLE IF NOT EXISTS linkage(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1636,6 +1713,7 @@ CREATE TABLE IF NOT EXISTS linkage_history(
 );
 
 CREATE TABLE IF NOT EXISTS operationoutcome(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1657,6 +1735,7 @@ CREATE TABLE IF NOT EXISTS operationoutcome_history(
 );
 
 CREATE TABLE IF NOT EXISTS medicinalproductpharmaceutical(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1680,6 +1759,7 @@ CREATE TABLE IF NOT EXISTS medicinalproductpharmaceutical_history(
 
 
 CREATE TABLE IF NOT EXISTS immunization(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1701,6 +1781,7 @@ CREATE TABLE IF NOT EXISTS immunization_history(
 );
 
 CREATE TABLE IF NOT EXISTS medicationknowledge(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1722,6 +1803,7 @@ CREATE TABLE IF NOT EXISTS medicationknowledge_history(
 );
 
 CREATE TABLE IF NOT EXISTS researchsubject(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1743,6 +1825,7 @@ CREATE TABLE IF NOT EXISTS researchsubject_history(
 );
 
 CREATE TABLE IF NOT EXISTS medicinalproductindication(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1764,6 +1847,7 @@ CREATE TABLE IF NOT EXISTS medicinalproductindication_history(
 );
 
 CREATE TABLE IF NOT EXISTS paymentnotice(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1785,6 +1869,7 @@ CREATE TABLE IF NOT EXISTS paymentnotice_history(
 );
 
 CREATE TABLE IF NOT EXISTS namingsystem(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1806,6 +1891,7 @@ CREATE TABLE IF NOT EXISTS namingsystem_history(
 );
 
 CREATE TABLE IF NOT EXISTS medicationstatement(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1827,6 +1913,7 @@ CREATE TABLE IF NOT EXISTS medicationstatement_history(
 );
 
 CREATE TABLE IF NOT EXISTS enrollmentresponse(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1848,6 +1935,7 @@ CREATE TABLE IF NOT EXISTS enrollmentresponse_history(
 );
 
 CREATE TABLE IF NOT EXISTS nutritionorder(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1869,6 +1957,7 @@ CREATE TABLE IF NOT EXISTS nutritionorder_history(
 );
 
 CREATE TABLE IF NOT EXISTS questionnaire(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1890,6 +1979,7 @@ CREATE TABLE IF NOT EXISTS questionnaire_history(
 );
 
 CREATE TABLE IF NOT EXISTS account(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1911,6 +2001,7 @@ CREATE TABLE IF NOT EXISTS account_history(
 );
 
 CREATE TABLE IF NOT EXISTS eventdefinition(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1932,6 +2023,7 @@ CREATE TABLE IF NOT EXISTS eventdefinition_history(
 );
 
 CREATE TABLE IF NOT EXISTS medicinalproductundesirableeffect(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1953,6 +2045,7 @@ CREATE TABLE IF NOT EXISTS medicinalproductundesirableeffect_history(
 );
 
 CREATE TABLE IF NOT EXISTS substancespecification(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1974,6 +2067,7 @@ CREATE TABLE IF NOT EXISTS substancespecification_history(
 );
 
 CREATE TABLE IF NOT EXISTS communicationrequest(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -1995,6 +2089,7 @@ CREATE TABLE IF NOT EXISTS communicationrequest_history(
 );
 
 CREATE TABLE IF NOT EXISTS specimendefinition(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2016,6 +2111,7 @@ CREATE TABLE IF NOT EXISTS specimendefinition_history(
 );
 
 CREATE TABLE IF NOT EXISTS verificationresult(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2037,6 +2133,7 @@ CREATE TABLE IF NOT EXISTS verificationresult_history(
 );
 
 CREATE TABLE IF NOT EXISTS documentmanifest(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2058,6 +2155,7 @@ CREATE TABLE IF NOT EXISTS documentmanifest_history(
 );
 
 CREATE TABLE IF NOT EXISTS task(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2079,6 +2177,7 @@ CREATE TABLE IF NOT EXISTS task_history(
 );
 
 CREATE TABLE IF NOT EXISTS riskevidencesynthesis(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2100,6 +2199,7 @@ CREATE TABLE IF NOT EXISTS riskevidencesynthesis_history(
 );
 
 CREATE TABLE IF NOT EXISTS valueset(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2121,6 +2221,7 @@ CREATE TABLE IF NOT EXISTS valueset_history(
 );
 
 CREATE TABLE IF NOT EXISTS claim(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2142,6 +2243,7 @@ CREATE TABLE IF NOT EXISTS claim_history(
 );
 
 CREATE TABLE IF NOT EXISTS insuranceplan(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2163,6 +2265,7 @@ CREATE TABLE IF NOT EXISTS insuranceplan_history(
 );
 
 CREATE TABLE IF NOT EXISTS examplescenario(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2184,6 +2287,7 @@ CREATE TABLE IF NOT EXISTS examplescenario_history(
 );
 
 CREATE TABLE IF NOT EXISTS researchstudy(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2205,6 +2309,7 @@ CREATE TABLE IF NOT EXISTS researchstudy_history(
 );
 
 CREATE TABLE IF NOT EXISTS medicationrequest(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2226,6 +2331,7 @@ CREATE TABLE IF NOT EXISTS medicationrequest_history(
 );
 
 CREATE TABLE IF NOT EXISTS measure(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2247,6 +2353,7 @@ CREATE TABLE IF NOT EXISTS measure_history(
 );
 
 CREATE TABLE IF NOT EXISTS list(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2278,6 +2385,7 @@ CREATE TABLE IF NOT EXISTS encounter_history(
 );
 
 CREATE TABLE IF NOT EXISTS capabilitystatement(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2300,6 +2408,7 @@ CREATE TABLE IF NOT EXISTS capabilitystatement_history(
 
 
 CREATE TABLE IF NOT EXISTS visionprescription(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2321,6 +2430,7 @@ CREATE TABLE IF NOT EXISTS visionprescription_history(
 );
 
 CREATE TABLE IF NOT EXISTS riskassessment(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2342,6 +2452,7 @@ CREATE TABLE IF NOT EXISTS riskassessment_history(
 );
 
 CREATE TABLE IF NOT EXISTS substanceprotein(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2363,6 +2474,7 @@ CREATE TABLE IF NOT EXISTS substanceprotein_history(
 );
 
 CREATE TABLE IF NOT EXISTS immunizationrecommendation(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2384,6 +2496,7 @@ CREATE TABLE IF NOT EXISTS immunizationrecommendation_history(
 );
 
 CREATE TABLE IF NOT EXISTS relatedperson(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2405,6 +2518,7 @@ CREATE TABLE IF NOT EXISTS relatedperson_history(
 );
 
 CREATE TABLE IF NOT EXISTS medication(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2426,6 +2540,7 @@ CREATE TABLE IF NOT EXISTS medication_history(
 );
 
 CREATE TABLE IF NOT EXISTS appointmentresponse(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2447,6 +2562,7 @@ CREATE TABLE IF NOT EXISTS appointmentresponse_history(
 );
 
 CREATE TABLE IF NOT EXISTS researchelementdefinition(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2469,6 +2585,7 @@ CREATE TABLE IF NOT EXISTS researchelementdefinition_history(
 
 
 CREATE TABLE IF NOT EXISTS substance(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2490,6 +2607,7 @@ CREATE TABLE IF NOT EXISTS substance_history(
 );
 
 CREATE TABLE IF NOT EXISTS paymentreconciliation(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2511,6 +2629,7 @@ CREATE TABLE IF NOT EXISTS paymentreconciliation_history(
 );
 
 CREATE TABLE IF NOT EXISTS conceptmap(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2532,6 +2651,7 @@ CREATE TABLE IF NOT EXISTS conceptmap_history(
 );
 
 CREATE TABLE IF NOT EXISTS person(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2553,6 +2673,7 @@ CREATE TABLE IF NOT EXISTS person_history(
 );
 
 CREATE TABLE IF NOT EXISTS condition(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2574,6 +2695,7 @@ CREATE TABLE IF NOT EXISTS condition_history(
 );
 
 CREATE TABLE IF NOT EXISTS careteam(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2595,6 +2717,7 @@ CREATE TABLE IF NOT EXISTS careteam_history(
 );
 
 CREATE TABLE IF NOT EXISTS catalogentry(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2617,6 +2740,7 @@ CREATE TABLE IF NOT EXISTS catalogentry_history(
 
 
 CREATE TABLE IF NOT EXISTS structuredefinition(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2638,6 +2762,7 @@ CREATE TABLE IF NOT EXISTS structuredefinition_history(
 );
 
 CREATE TABLE IF NOT EXISTS procedure(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2659,6 +2784,7 @@ CREATE TABLE IF NOT EXISTS procedure_history(
 );
 
 CREATE TABLE IF NOT EXISTS consent(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2680,6 +2806,7 @@ CREATE TABLE IF NOT EXISTS consent_history(
 );
 
 CREATE TABLE IF NOT EXISTS observationdefinition(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2701,6 +2828,7 @@ CREATE TABLE IF NOT EXISTS observationdefinition_history(
 );
 
 CREATE TABLE IF NOT EXISTS attribute(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2722,6 +2850,7 @@ CREATE TABLE IF NOT EXISTS attribute_history(
 );
 
 CREATE TABLE IF NOT EXISTS location(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2743,6 +2872,7 @@ CREATE TABLE IF NOT EXISTS location_history(
 );
 
 CREATE TABLE IF NOT EXISTS organization(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2764,6 +2894,7 @@ CREATE TABLE IF NOT EXISTS organization_history(
 );
 
 CREATE TABLE IF NOT EXISTS device(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2787,6 +2918,7 @@ CREATE TABLE IF NOT EXISTS device_history(
 );
 
 CREATE TABLE IF NOT EXISTS supplyrequest(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2808,6 +2940,7 @@ CREATE TABLE IF NOT EXISTS supplyrequest_history(
 );
 
 CREATE TABLE IF NOT EXISTS allergyintolerance(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2829,6 +2962,7 @@ CREATE TABLE IF NOT EXISTS allergyintolerance_history(
 );
 
 CREATE TABLE IF NOT EXISTS researchdefinition(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2850,6 +2984,7 @@ CREATE TABLE IF NOT EXISTS researchdefinition_history(
 );
 
 CREATE TABLE IF NOT EXISTS operationdefinition(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2871,6 +3006,7 @@ CREATE TABLE IF NOT EXISTS operationdefinition_history(
 );
 
 CREATE TABLE IF NOT EXISTS medicinalproductmanufactured(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2892,6 +3028,7 @@ CREATE TABLE IF NOT EXISTS medicinalproductmanufactured_history(
 );
 
 CREATE TABLE IF NOT EXISTS imagingstudy(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2913,6 +3050,7 @@ CREATE TABLE IF NOT EXISTS imagingstudy_history(
 );
 
 CREATE TABLE IF NOT EXISTS coverageeligibilityrequest(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2937,6 +3075,7 @@ CREATE TABLE IF NOT EXISTS coverageeligibilityrequest_history(
 
 
 CREATE TABLE IF NOT EXISTS medicinalproductingredient(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2958,6 +3097,7 @@ CREATE TABLE IF NOT EXISTS medicinalproductingredient_history(
 );
 
 CREATE TABLE IF NOT EXISTS guidanceresponse(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -2979,6 +3119,7 @@ CREATE TABLE IF NOT EXISTS guidanceresponse_history(
 );
 
 CREATE TABLE IF NOT EXISTS media(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -3000,6 +3141,7 @@ CREATE TABLE IF NOT EXISTS media_history(
 );
 
 CREATE TABLE IF NOT EXISTS measurereport(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -3021,6 +3163,7 @@ CREATE TABLE IF NOT EXISTS measurereport_history(
 );
 
 CREATE TABLE IF NOT EXISTS graphdefinition(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -3042,6 +3185,7 @@ CREATE TABLE IF NOT EXISTS graphdefinition_history(
 );
 
 CREATE TABLE IF NOT EXISTS terminologycapabilities(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -3063,6 +3207,7 @@ CREATE TABLE IF NOT EXISTS terminologycapabilities_history(
 );
 
 CREATE TABLE IF NOT EXISTS metadataresource(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT PRIMARY KEY,
     txid INTEGER NOT NULL,
     ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
@@ -3084,6 +3229,7 @@ CREATE TABLE IF NOT EXISTS metadataresource_history(
 );
 
 CREATE TABLE IF NOT EXISTS relations(
+    embed_id TEXT NOT NULL UNIQUE,
     id TEXT,
     source_id  TEXT,
     source_type TEXT,
@@ -3093,4 +3239,3 @@ CREATE TABLE IF NOT EXISTS relations(
     resource JSON NOT NULL,
     UNIQUE(source_id, source_type, target_id, target_type, resource) ON CONFLICT REPLACE
 );
-
