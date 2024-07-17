@@ -397,4 +397,3 @@ class FhirDB(DB):
         raise NotImplementedError(
             "search_id_by_node_type method is not yet implemented"
         )
-
