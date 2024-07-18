@@ -787,12 +787,6 @@ CREATE TABLE IF NOT EXISTS resource_status (
     status TEXT PRIMARY KEY
 );
 
-CREATE TABLE IF NOT EXISTS "transaction"(
-    id  INTEGER PRIMARY KEY AUTOINCREMENT,
-    ts TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
-    resource JSON
-);
-
 CREATE TABLE IF NOT EXISTS "messageheader"(
     embed_id TEXT NOT NULL UNIQUE,
     id  TEXT PRIMARY KEY,
