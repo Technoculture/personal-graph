@@ -18,7 +18,7 @@ CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
 
 @lru_cache(maxsize=None)
 def read_sql(sql_file: Path) -> str:
-    with open(Path(__file__).parent.resolve() / "fhir-schema" / sql_file) as f:
+    with open(Path(__file__).parent.resolve() / "fhir_schema" / sql_file) as f:
         return f.read()
 
 
@@ -77,56 +77,63 @@ class FhirDB(DB):
         def _add_node(cursor, connection):
             if self._validate_data(attribute):
                 resource_type = label.lower()
-                cursor.execute(
-                    f"""
-                            INSERT OR IGNORE INTO {resource_type}_history (id, txid, ts, resource_type, status, resource)
-                            SELECT id, ?, current_timestamp, resource_type, 'created', resource
-                            FROM {resource_type}
-                            WHERE id = ?
-                        """,
-                    (123, id),
-                )
+
+                count = cursor.execute(
+                    f"SELECT COALESCE(MAX(embed_id), 0) FROM {resource_type}"
+                ).fetchone()[0]
 
                 cursor.execute(
                     f"""
-                        INSERT OR IGNORE INTO {resource_type} (id, txid, ts, resource_type, status, resource)
-                        VALUES (?, ?, current_timestamp, ?, 'created', ?)
+                        INSERT OR IGNORE INTO {resource_type} (embed_id, id, txid, ts, resource_type, status, resource)
+                        VALUES (?, ?, ?, current_timestamp, ?, 'created', ?)
                         ON CONFLICT(id) DO UPDATE SET
                         txid = excluded.txid,
                         ts = excluded.ts,
                         status = 'recreated',
                         resource = excluded.resource
                     """,
-                    (id, 123, resource_type, json.dumps(attribute)),
+                    (int(count) + 1, id, 123, resource_type, json.dumps(attribute)),
+                )
+
+                cursor.execute(
+                    f"""
+                        INSERT OR IGNORE INTO {resource_type}_history (id, txid, ts, resource_type, status, resource)
+                        SELECT id, ?, current_timestamp, resource_type, 'created', resource
+                        FROM {resource_type}
+                        WHERE id = ?
+                    """,
+                    (123, id),
                 )
                 connection.commit()
 
         return self._atomic(_add_node)
 
-    def add_edge(self, source: Any, target: Any, label: str, attributes: Dict) -> None:
+    def add_edge(
+        self,
+        source: Any,
+        target: Any,
+        label: str,
+        attributes: Dict,
+        source_rt: Optional[str] = None,
+        target_rt: Optional[str] = None,
+    ) -> None:
         def _add_edge(cursor, connection):
             count = cursor.execute(
-                "SELECT COALESCE(MAX(id), 0) FROM relations"
+                "SELECT COALESCE(MAX(embed_id), 0) FROM relations"
             ).fetchone()[0]
 
             cursor.execute(
                 "INSERT INTO relations VALUES(?, ?, ?, ?, ?, ?, json(?))",
                 (
                     int(count) + 1,
-                    source.id,
-                    source.label,
-                    target.id,
-                    target.label,
+                    source,
+                    source_rt,
+                    target,
+                    target_rt,
                     label,
                     json.dumps(attributes),
                 ),
             )
-
-        if not self.search_node(source.id, resource_type=source.label):
-            return
-
-        if not self.search_node(target.id, resource_type=target.label):
-            return
 
         return self._atomic(_add_edge)
 
@@ -190,13 +197,13 @@ class FhirDB(DB):
 
         return self._atomic(_remove)
 
-    def search_node(self, node_id: Any, resource_type: Optional[str] = None) -> Any:
+    def search_node(self, node_id: Any, node_type: Optional[str] = None) -> Any:
         def _search_node(cursor, connection):
-            if not resource_type:
+            if not node_type:
                 raise ValueError("Resource type not provided.")
 
             node = cursor.execute(
-                f"SELECT * from {resource_type.lower()} WHERE id = ?", (node_id,)
+                f"SELECT * from {node_type.lower()} WHERE id = ?", (node_id,)
             )
             if node:
                 return node.fetchone()
@@ -204,21 +211,23 @@ class FhirDB(DB):
 
         return self._atomic(_search_node)
 
-    def search_edge(self, source: Any, target: Any, attributes: Dict):
+    def search_edge(
+        self,
+        source: Any,
+        target: Any,
+        attributes: Dict,
+        source_rt: Optional[str] = None,
+        target_rt: Optional[str] = None,
+        limit: int = 1,
+    ) -> Any:
         def _search_edge(cursor, connection):
-            edge = cursor.execute(
-                "SELECT id from relations WHERE source_id=? AND source_type=? AND target_id=? AND target_type=? AND resource = json(?)",
-                (
-                    source.id,
-                    source.label,
-                    target.id,
-                    target.label,
-                    json.dumps(attributes),
-                ),
+            result = cursor.execute(
+                "SELECT resource from relations where source_id=? AND source_type=? AND target_id = ? AND target_type=? AND resource=json(?) LIMIT ?",
+                (source, source_rt, target, target_rt, json.dumps(attributes), limit),
             ).fetchone()
 
-            if edge:
-                return edge[0]
+            if result:
+                return result[0]
 
             return None
 
