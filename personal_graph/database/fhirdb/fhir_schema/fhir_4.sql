@@ -3224,7 +3224,6 @@ CREATE TABLE IF NOT EXISTS metadataresource_history(
 
 CREATE TABLE IF NOT EXISTS relations(
     embed_id TEXT NOT NULL UNIQUE,
-    id TEXT,
     source_id  TEXT,
     source_type TEXT,
     target_id  TEXT UNIQUE,
