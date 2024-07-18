@@ -3,7 +3,6 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from personal_graph.database import TursoDB
 from personal_graph.vector_store import SQLiteVSS
 from personal_graph.database.db import CursorExecFunction
 
@@ -17,9 +16,6 @@ def read_sql(sql_file: Path) -> str:
 
 
 class FhirSQLiteVSS(SQLiteVSS):
-    def __init__(self, *, db: TursoDB):
-        self.db = db
-
     def initialize(self):
         def _init(cursor, connection):
             vector_schema = read_sql(Path("fhir_4_vector_schema.sql"))
@@ -39,23 +35,27 @@ class FhirSQLiteVSS(SQLiteVSS):
     def _add_embedding(self, id: Any, label: str, data: Dict) -> CursorExecFunction:
         def _insert(cursor, connection):
             set_data = self._set_id(id, label, data)
+            rt = label.lower()
 
-            count = (
+            count = cursor.execute(
+                f"""SELECT COALESCE(MAX(rowid), 0) FROM {rt}_embedding"""
+            ).fetchone()[0]
+
+            # To check whether status is recreated, if so then do not add the embedding
+            status = cursor.execute(
+                f"""SELECT status from {rt} WHERE id=?""", (id,)
+            ).fetchone()[0]
+
+            if status != "recreated":
                 cursor.execute(
-                    f"SELECT COALESCE(MAX(rowid), 0) FROM {label}_embedding"
-                ).fetchone()[0]
-                + 1
-            )
-
-            cursor.execute(
-                f"""INSERT INTO {label}_embedding(rowid, vector_nodes) VALUES (?,?);""",
-                (
-                    count,
-                    json.dumps(
-                        self.embedding_model.get_embedding(json.dumps(set_data))
+                    f"""INSERT INTO {rt}_embedding(rowid, vector_node) VALUES (?,?);""",
+                    (
+                        int(count) + 1,
+                        json.dumps(
+                            self.embedding_model.get_embedding(json.dumps(set_data))
+                        ),
                     ),
-                ),
-            )
+                )
             connection.commit()
 
         return _insert
@@ -83,7 +83,8 @@ class FhirSQLiteVSS(SQLiteVSS):
     def _remove_node(self, id: Any, resource_type: Optional[str] = None):
         def _delete_node_embedding(cursor, connection):
             cursor.execute(
-                f"""DELETE FROM {resource_type}_embedding where rowid = (?)""", (id[0],)
+                f"""DELETE FROM {resource_type.lower()}_embedding where rowid = (?)""",
+                (id[0],),
             )
 
         return _delete_node_embedding
