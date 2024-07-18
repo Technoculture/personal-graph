@@ -30,7 +30,7 @@ class FhirDB(DB):
         return self.db_url == other.db_url
 
     def __repr__(self) -> str:
-        return f"  FhirService(\n" f"  url={self.db_url},\n" f"  )"
+        return f"  FhirFB(\n" f"  url={self.db_url},\n" f"  )"
 
     def set_ontologies(self, ontologies: Optional[List[Any]] = None):
         if not ontologies:
@@ -39,7 +39,7 @@ class FhirDB(DB):
     def initialize(self):
         def _init(cursor, connection):
             schema_sql = read_sql(Path("fhir_4.sql"))
-            connection.executionscript(schema_sql)
+            connection.executescript(schema_sql)
             connection.commit()
 
         return self._atomic(_init)
