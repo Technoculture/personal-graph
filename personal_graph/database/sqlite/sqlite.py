@@ -502,7 +502,7 @@ class SQLite(DB):
     def remove_node(self, id: Any) -> None:
         self.atomic(self._remove_node(id))
 
-    def search_node(self, node_id: Any) -> Any:
+    def search_node(self, node_id: Any, node_type: Optional[str] = None) -> Any:
         return self.atomic(self._find_node(node_id))
 
     def search_node_label(self, node_id: Any, limit: Optional[int] = 1) -> Any:
