@@ -57,6 +57,12 @@ class GraphDB(AbstractContextManager):
         if isinstance(self.db, FhirDB):
             self.db.set_ontologies(self.ontologies)
 
+        if isinstance(self.vector_store, FhirSQLiteVSS):
+            if not isinstance(self.vector_store.db, TursoDB):
+                raise ValueError(
+                    "Database must be tursodb for storing fhir related data."
+                )
+
     def __eq__(self, other):
         if not isinstance(other, GraphDB):
             return "Not of GraphDB Type"
