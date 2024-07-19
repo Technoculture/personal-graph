@@ -13,12 +13,14 @@ from personal_graph.database.db import DB
 
 try:
     import libsql_experimental as libsql  # type: ignore
+
+    CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
+
 except ImportError:
     pass
 
 
 JSON_SCHEMA_FILE = os.path.join(os.path.dirname(__file__), "fhir_4.schema.json")
-CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
 
 
 @lru_cache(maxsize=None)
