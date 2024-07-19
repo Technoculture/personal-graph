@@ -460,7 +460,9 @@ class SQLite(DB):
 
         return self.atomic(_get_all_connections)
 
-    def fetch_node_embed_id(self, node_id: Any, limit: int = 1) -> None:
+    def fetch_node_embed_id(
+        self, node_id: Any, limit: int = 1, node_type: Optional[str] = None
+    ) -> None:
         return self.atomic(self._fetch_node_id(node_id, limit))
 
     def fetch_edge_embed_ids(self, id: Any, limit: int = 10):
@@ -499,10 +501,10 @@ class SQLite(DB):
         )
         self.atomic(upsert_node_func)
 
-    def remove_node(self, id: Any) -> None:
+    def remove_node(self, id: Any, node_type: Optional[str] = None) -> None:
         self.atomic(self._remove_node(id))
 
-    def search_node(self, node_id: Any, node_type: Optional[str] = None) -> Any:
+    def search_node(self, node_id: Any, *, node_type: Optional[str] = None) -> Any:
         return self.atomic(self._find_node(node_id))
 
     def search_node_label(self, node_id: Any, limit: Optional[int] = 1) -> Any:
@@ -632,7 +634,9 @@ class SQLite(DB):
         dot.render(dot_file, format=format)
         return dot
 
-    def fetch_ids_from_db(self, limit: Optional[int] = 10) -> List[str]:
+    def fetch_ids_from_db(
+        self, limit: Optional[int] = 10, node_type: Optional[str] = None
+    ) -> List[str]:
         def _fetch_nodes_from_db(cursor, connection):
             nodes = cursor.execute("SELECT id from nodes LIMIT ?", (limit,)).fetchall()
             ids = [id[0] for id in nodes]
