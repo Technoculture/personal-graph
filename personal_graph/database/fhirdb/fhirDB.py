@@ -140,24 +140,19 @@ class FhirDB(DB):
     def update_node(self, node: Node):
         def _update(cursor, connection):
             resource_type = node.label.lower()
+
             if not self._validate_data(node.attributes):
                 raise ValueError("Fhir Validation Error")
 
-            cursor.execute(
-                f"""
-                        INSERT OR IGNORE INTO {resource_type}_history (id, txid, ts, resource_type, status, resource)
-                        SELECT id, txid, current_timestamp, resource_type, 'updated', resource
-                        FROM {resource_type}
-                        WHERE id = ?
-                    """,
-                (node.id,),
-            )
+            count = cursor.execute(
+                f"SELECT COALESCE(MAX(embed_id), 0) FROM {resource_type}"
+            ).fetchone()[0]
 
             cursor.execute(
                 f"""
-                    INSERT OR IGNORE INTO {resource_type} (id, txid, ts, resource_type, status, resource)
+                    INSERT OR IGNORE INTO {resource_type}_history (id, txid, ts, resource_type, status, resource)
                     VALUES (?, ?, current_timestamp, ?, 'updated', ?)
-                    ON CONFLICT(id) DO UPDATE SET
+                    ON CONFLICT(id, txid) DO UPDATE SET
                     txid = excluded.txid,
                     ts = excluded.ts,
                     status = 'updated',
@@ -165,20 +160,48 @@ class FhirDB(DB):
                 """,
                 (node.id, 123, resource_type, json.dumps(node.attributes)),
             )
+
+            cursor.execute(
+                f"""
+                    INSERT OR IGNORE INTO {resource_type} (embed_id, id, txid, ts, resource_type, status, resource)
+                    VALUES (?, ?, ?, current_timestamp, ?, 'updated', ?)
+                    ON CONFLICT(id) DO UPDATE SET
+                    embed_id = excluded.embed_id,
+                    txid = excluded.txid,
+                    ts = excluded.ts,
+                    status = 'updated',
+                    resource = excluded.resource
+                """,
+                (
+                    int(count) + 1,
+                    node.id,
+                    123,
+                    resource_type,
+                    json.dumps(node.attributes),
+                ),
+            )
+
             connection.commit()
 
         return self._atomic(_update)
 
-    def remove_node(self, id: Any, resource_type: Optional[str] = None) -> None:
+    def remove_node(self, id: Any, node_type: Optional[str] = None) -> None:
         def _remove(cursor, connection):
-            if not resource_type:
+            if not node_type:
                 raise ValueError("Resource type not provided")
 
             cursor.execute(
                 f"""
-                INSERT OR IGNORE INTO {resource_type}_history (id, txid, ts, resource_type, status, resource)
+                    UPDATE {node_type}_history SET status='deleted' WHERE id=? AND txid=?
+                """,
+                (id, 123),
+            )
+
+            cursor.execute(
+                f"""
+                INSERT OR IGNORE INTO {node_type} (id, txid, ts, resource_type, status, resource)
                 SELECT id, txid, current_timestamp, resource_type, 'deleted', resource
-                FROM {resource_type}
+                FROM {node_type}
                 WHERE id = ?
                 """,
                 (id,),
@@ -186,7 +209,7 @@ class FhirDB(DB):
 
             cursor.execute(
                 f"""
-                    DELETE FROM {resource_type.lower()} WHERE id = ?
+                    DELETE FROM {node_type.lower()} WHERE id = ?
                 """,
                 (id,),
             )
@@ -197,16 +220,17 @@ class FhirDB(DB):
 
         return self._atomic(_remove)
 
-    def search_node(self, node_id: Any, node_type: Optional[str] = None) -> Any:
+    def search_node(self, node_id: Any, *, node_type: Optional[str] = None) -> Any:
         def _search_node(cursor, connection):
             if not node_type:
                 raise ValueError("Resource type not provided.")
 
             node = cursor.execute(
-                f"SELECT * from {node_type.lower()} WHERE id = ?", (node_id,)
-            )
+                f"SELECT resource from {node_type.lower()} WHERE id = ?", (node_id,)
+            ).fetchone()
+
             if node:
-                return node.fetchone()
+                return json.loads(node[0])
             return None
 
         return self._atomic(_search_node)
@@ -216,14 +240,19 @@ class FhirDB(DB):
         source: Any,
         target: Any,
         attributes: Dict,
-        source_rt: Optional[str] = None,
-        target_rt: Optional[str] = None,
         limit: int = 1,
     ) -> Any:
         def _search_edge(cursor, connection):
             result = cursor.execute(
-                "SELECT resource from relations where source_id=? AND source_type=? AND target_id = ? AND target_type=? AND resource=json(?) LIMIT ?",
-                (source, source_rt, target, target_rt, json.dumps(attributes), limit),
+                "SELECT embed_id from relations where source_id=? AND source_type=? AND target_id = ? AND target_type=? AND resource=json(?) LIMIT ?",
+                (
+                    source.id,
+                    source.label,
+                    target.id,
+                    target.label,
+                    json.dumps(attributes),
+                    limit,
+                ),
             ).fetchone()
 
             if result:
@@ -237,7 +266,7 @@ class FhirDB(DB):
         def _indegree_edges(cursor, connection):
             indegree = cursor.execute(
                 "SELECT source_id, source_type, resource from relations where target_id=?",
-                (target.id,),
+                (target,),
             )
 
             if not indegree:
@@ -251,7 +280,7 @@ class FhirDB(DB):
         def _outdegree_edges(cursor, connection):
             outdegree = cursor.execute(
                 "SELECT target_id, target_type, resource from relations where source_id=?",
-                (source.id,),
+                (source,),
             )
 
             if not outdegree:
@@ -262,14 +291,14 @@ class FhirDB(DB):
         return self._atomic(_outdegree_edges)
 
     def fetch_ids_from_db(
-        self, limit: Optional[int] = 10, resource_type: Optional[str] = None
+        self, limit: Optional[int] = 10, node_type: Optional[str] = None
     ) -> List[str]:
         def _fetch_ids_from_db(cursor, connection):
-            if not resource_type:
+            if not node_type:
                 raise ValueError("Resource type not provided.")
 
             nodes = cursor.execute(
-                f"SELECT id from {resource_type.lower()} LIMIT ?", (limit,)
+                f"SELECT id from {node_type.lower()} LIMIT ?", (limit,)
             ).fetchall()
             ids = [id[0] for id in nodes]
 
@@ -364,6 +393,29 @@ class FhirDB(DB):
 
         return self._atomic(_search_node_type)
 
+    def fetch_node_embed_id(
+        self, node_id: Any, limit: int = 1, node_type: Optional[str] = None
+    ):
+        def _fetch_embed_id(cursor, connection):
+            embed_id = cursor.execute(
+                f"SELECT embed_id from {node_type} WHERE id=? LIMIT ?", (node_id, limit)
+            ).fetchone()
+
+            return embed_id
+
+        return self._atomic(_fetch_embed_id)
+
+    def fetch_edge_embed_ids(self, id: Any, limit: int = 10):
+        def _fetch_edge_embed_id(cursor, connection):
+            embed_id = cursor.execute(
+                "SELECT embed_id from relations WHERE source_id=? OR target_id=? LIMIT ?",
+                (id, id, limit),
+            ).fetchall()
+
+            return embed_id
+
+        return self._atomic(_fetch_edge_embed_id)
+
     def search_similar_nodes(
         self, embed_ids, *, desc: Optional[bool] = False, sort_by: Optional[str] = ""
     ):
@@ -371,12 +423,6 @@ class FhirDB(DB):
 
     def search_similar_edges(self, embed_ids, *, desc: bool = False, sort_by: str = ""):
         raise NotImplementedError("search_similar_edges method is not yet implemented")
-
-    def fetch_node_embed_id(self, node_id: Any):
-        raise NotImplementedError("fetch_node_embed_ids method is not yet implemented")
-
-    def fetch_edge_embed_ids(self, id: Any):
-        raise NotImplementedError("fetch_edge_embed_ids method is not yet implemented")
 
     def find_nodes_by_label(self, label: str):
         raise NotImplementedError("find_nodes_by_label method is not yet implemented")
