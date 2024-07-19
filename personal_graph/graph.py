@@ -14,6 +14,7 @@ from owlready2 import Ontology  # type: ignore
 
 from personal_graph import OpenAIClient
 from personal_graph.database import TursoDB, SQLite
+from personal_graph.database.fhirdb.fhirDB import FhirDB
 from personal_graph.graph_generator import (
     OpenAITextToGraphParser,
     OllamaTextToGraphParser,
@@ -23,7 +24,7 @@ from personal_graph.helper import (
     get_type_name,
 )
 from personal_graph.models import Node, EdgeInput, KnowledgeGraph, Edge
-from personal_graph.vector_store import SQLiteVSS, VliteVSS
+from personal_graph.vector_store import SQLiteVSS, VliteVSS, FhirSQLiteVSS
 
 try:
     import fhir.resources as fhir  # type: ignore
@@ -37,8 +38,10 @@ class GraphDB(AbstractContextManager):
     def __init__(
         self,
         *,
-        vector_store: Union[SQLiteVSS, VliteVSS] = VliteVSS(collection="./vectors"),
-        database: Union[TursoDB, SQLite] = SQLite(use_in_memory=True),
+        vector_store: Union[SQLiteVSS, VliteVSS, FhirSQLiteVSS] = VliteVSS(
+            collection="./vectors"
+        ),
+        database: Union[TursoDB, SQLite, FhirDB] = SQLite(use_in_memory=True),
         graph_generator: Union[
             OpenAITextToGraphParser, OllamaTextToGraphParser
         ] = OpenAITextToGraphParser(llm_client=OpenAIClient()),
@@ -51,6 +54,8 @@ class GraphDB(AbstractContextManager):
 
         self.db.initialize()
         self.vector_store.initialize()
+        if isinstance(self.db, FhirDB):
+            self.db.set_ontologies(self.ontologies)
 
     def __eq__(self, other):
         if not isinstance(other, GraphDB):
@@ -322,6 +327,10 @@ class GraphDB(AbstractContextManager):
                 self.insert_node(node)
             return
 
+        if self.ontologies is not None and isinstance(self.db, FhirDB):
+            self.insert_node(node)
+            return
+
         valid_ontology_found = False
 
         for ontology in self.ontologies:
@@ -353,44 +362,52 @@ class GraphDB(AbstractContextManager):
         node_types: Optional[List[str]] = None,
         delete_if_properties_not_match: Optional[List[bool]] = None,
     ) -> None:
-        if self.ontologies is not None:
-            if node_types is None:
-                raise ValueError("No node types given for the ontology.")
-
-            if len(nodes) != len(node_types):
-                raise ValueError("The lengths of the input lists must be equal.")
-
-            if delete_if_properties_not_match is None:
-                delete_if_properties_not_match = [False] * len(nodes)
-
-            elif len(delete_if_properties_not_match) != len(nodes):
-                raise ValueError(
-                    "The length of delete_if_properties_not_match must match the length of nodes if provided."
-                )
-
-            for node, node_type, delete_flag in zip(
-                nodes, node_types, delete_if_properties_not_match
-            ):
-                self.add_node(
-                    node,
-                    node_type=node_type,
-                    delete_if_properties_not_match=delete_flag,
-                )
-        else:
+        if self.ontologies is None or (
+            self.ontologies is not None and isinstance(self.db, FhirDB)
+        ):
             for node in nodes:
                 self.add_node(node)
+            return
 
-    def add_edge(self, edge: EdgeInput) -> None:
-        attributes = (
-            json.loads(edge.attributes)
-            if isinstance(edge.attributes, str)
-            else edge.attributes
-        )
-        if (
-            self.db.search_edge(edge.source.id, edge.target.id, attributes) is None
-            and (self.db.search_node(edge.source.id) is not None)
-            and (self.db.search_node(edge.target.id) is not None)
+        if node_types is None:
+            raise ValueError("No node types given for the ontology.")
+
+        if len(nodes) != len(node_types):
+            raise ValueError("The lengths of the input lists must be equal.")
+
+        if delete_if_properties_not_match is None:
+            delete_if_properties_not_match = [False] * len(nodes)
+
+        elif len(delete_if_properties_not_match) != len(nodes):
+            raise ValueError(
+                "The length of delete_if_properties_not_match must match the length of nodes if provided."
+            )
+
+        for node, node_type, delete_flag in zip(
+            nodes, node_types, delete_if_properties_not_match
         ):
+            self.add_node(
+                node,
+                node_type=node_type,
+                delete_if_properties_not_match=delete_flag,
+            )
+
+    def insert_edge(
+        self,
+        edge: EdgeInput,
+    ):
+        if self.ontologies is not None and isinstance(self.db, FhirDB):
+            self.db.add_edge(
+                edge.source.id,
+                edge.target.id,
+                edge.label,
+                json.loads(edge.attributes)
+                if isinstance(edge.attributes, str)
+                else edge.attributes,
+                source_rt=edge.source.label,
+                target_rt=edge.target.label,
+            )
+        else:
             self.db.add_edge(
                 edge.source.id,
                 edge.target.id,
@@ -399,23 +416,52 @@ class GraphDB(AbstractContextManager):
                 if isinstance(edge.attributes, str)
                 else edge.attributes,
             )
-            self.vector_store.add_edge_embedding(
-                edge.source.id,
-                edge.target.id,
-                edge.label,
-                json.loads(edge.attributes)
-                if isinstance(edge.attributes, str)
-                else edge.attributes,
-            )
+
+        self.vector_store.add_edge_embedding(
+            edge.source.id,
+            edge.target.id,
+            edge.label,
+            json.loads(edge.attributes)
+            if isinstance(edge.attributes, str)
+            else edge.attributes,
+        )
+
+    def add_edge(self, edge: EdgeInput) -> None:
+        attributes = (
+            json.loads(edge.attributes)
+            if isinstance(edge.attributes, str)
+            else edge.attributes
+        )
+
+        if self.ontologies is not None and isinstance(self.db, FhirDB):
+            if (
+                self.db.search_edge(edge.source, edge.target, attributes) is None
+                and self.db.search_node(edge.source.id, node_type=edge.source.label)
+                is not None
+                and self.db.search_node(edge.target.id, node_type=edge.target.label)
+                is not None
+            ):
+                self.insert_edge(edge)
+                return
+        else:
+            if (
+                self.db.search_edge(edge.source.id, edge.target.id, attributes) is None
+                and (self.db.search_node(edge.source.id) is not None)
+                and (self.db.search_node(edge.target.id) is not None)
+            ):
+                self.insert_edge(edge)
+                return
 
     def add_edges(self, edges: List[EdgeInput]) -> None:
         for edge in edges:
             self.add_edge(edge)
 
     def update_node(self, node: Node) -> None:
-        node_data = self.db.search_node(node.id)
+        node_data = self.db.search_node(node.id, node_type=node.label)
         if node_data is not None:
-            embed_id_to_be_updated = self.db.fetch_node_embed_id(node.id)
+            embed_id_to_be_updated = self.db.fetch_node_embed_id(
+                node.id, node_type=node.label
+            )
 
             node_attributes = (
                 json.loads(node.attributes)
@@ -427,7 +473,13 @@ class GraphDB(AbstractContextManager):
             updated_data: Dict = {**node_data, **node_attributes}
 
             self.vector_store.add_node_embedding(node.id, node.label, updated_data)
-            self.vector_store.delete_node_embedding(embed_id_to_be_updated)
+
+            if isinstance(self.vector_store, FhirSQLiteVSS):
+                self.vector_store.delete_node_embedding(
+                    embed_id_to_be_updated, node_type=node.label
+                )
+            else:
+                self.vector_store.delete_node_embedding(embed_id_to_be_updated)
         else:
             self.add_node(node)
 
@@ -435,25 +487,43 @@ class GraphDB(AbstractContextManager):
         for node in nodes:
             self.update_node(node)
 
-    def remove_node(self, id: Union[str, int]) -> None:
-        if self.db.search_node(id) is not None:
+    def remove_node(
+        self, id: Union[str, int], *, node_type: Optional[str] = None
+    ) -> None:
+        if self.db.search_node(id, node_type=node_type) is not None:
             ids = self.db.fetch_edge_embed_ids(id)
-            self.vector_store.delete_node_embedding(self.db.fetch_node_embed_id(id))
+            if isinstance(self.vector_store, FhirSQLiteVSS):
+                self.vector_store.delete_node_embedding(
+                    self.db.fetch_node_embed_id(id, node_type=node_type),
+                    node_type=node_type,
+                )
+            else:
+                self.vector_store.delete_node_embedding(self.db.fetch_node_embed_id(id))
 
-            self.db.remove_node(id)
+            self.db.remove_node(id, node_type=node_type)
             self.vector_store.delete_edge_embedding(ids)
 
     def remove_nodes(
-        self,
-        ids: List[Any],
+        self, ids: List[Any], *, node_types: Optional[List[str]] = None
     ) -> None:
+        if self.ontologies is not None and isinstance(self.db, FhirDB):
+            if node_types is None:
+                raise ValueError("No node types given for the ontology.")
+
+            if len(node_types) != len(ids):
+                raise ValueError("node types must be equal to node ids.")
+
+            for id, nt in zip(ids, node_types):
+                self.remove_node(id, node_type=nt)
+            return
+
         for id in ids:
             self.remove_node(id)
 
     def search_node(
         self, node_id: str | int, *, node_type: Optional[str] = None
     ) -> Any:
-        return self.db.search_node(node_id)
+        return self.db.search_node(node_id, node_type=node_type)
 
     def search_node_label(self, node_id: str | int) -> Any:
         return self.db.search_node_label(node_id)
@@ -695,8 +765,8 @@ class GraphDB(AbstractContextManager):
     def visualize(self, file: str, id: List[str]) -> Digraph:
         return self.db.graphviz_visualize(file, id)
 
-    def fetch_ids_from_db(self) -> List[str]:
-        return self.db.fetch_ids_from_db()
+    def fetch_ids_from_db(self, *, node_type: Optional[str] = None) -> List[str]:
+        return self.db.fetch_ids_from_db(node_type=node_type)
 
     def search_indegree_edges(self, target: str) -> List[Any]:
         return self.db.search_indegree_edges(target)
