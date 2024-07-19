@@ -463,11 +463,18 @@ class GraphDB(AbstractContextManager):
             self.add_edge(edge)
 
     def update_node(self, node: Node) -> None:
-        node_data = self.db.search_node(node.id, node_type=node.label)
+        if isinstance(self.db, FhirDB):
+            node_data = self.db.search_node(node.id, node_type=node.label)
+        else:
+            node_data = self.db.search_node(node.id)
+
         if node_data is not None:
-            embed_id_to_be_updated = self.db.fetch_node_embed_id(
-                node.id, node_type=node.label
-            )
+            if isinstance(self.db, FhirDB):
+                embed_id_to_be_updated = self.db.fetch_node_embed_id(
+                    node.id, node_type=node.label
+                )
+            else:
+                embed_id_to_be_updated = self.db.fetch_node_embed_id(node.id)
 
             node_attributes = (
                 json.loads(node.attributes)
@@ -496,9 +503,16 @@ class GraphDB(AbstractContextManager):
     def remove_node(
         self, id: Union[str, int], *, node_type: Optional[str] = None
     ) -> None:
-        if self.db.search_node(id, node_type=node_type) is not None:
+        if isinstance(self.db, FhirDB):
+            node = self.db.search_node(id, node_type=node_type)
+        else:
+            node = self.db.search_node(id)
+
+        if node is not None:
             ids = self.db.fetch_edge_embed_ids(id)
-            if isinstance(self.vector_store, FhirSQLiteVSS):
+            if isinstance(self.vector_store, FhirSQLiteVSS) and isinstance(
+                self.db, FhirDB
+            ):
                 self.vector_store.delete_node_embedding(
                     self.db.fetch_node_embed_id(id, node_type=node_type),
                     node_type=node_type,
@@ -506,7 +520,11 @@ class GraphDB(AbstractContextManager):
             else:
                 self.vector_store.delete_node_embedding(self.db.fetch_node_embed_id(id))
 
-            self.db.remove_node(id, node_type=node_type)
+            if isinstance(self.db, FhirDB):
+                self.db.remove_node(id, node_type=node_type)
+            else:
+                self.db.remove_node(id)
+
             self.vector_store.delete_edge_embedding(ids)
 
     def remove_nodes(
@@ -529,7 +547,10 @@ class GraphDB(AbstractContextManager):
     def search_node(
         self, node_id: str | int, *, node_type: Optional[str] = None
     ) -> Any:
-        return self.db.search_node(node_id, node_type=node_type)
+        if isinstance(self.db, FhirDB):
+            return self.db.search_node(node_id, node_type=node_type)
+
+        return self.db.search_node(node_id)
 
     def search_node_label(self, node_id: str | int) -> Any:
         return self.db.search_node_label(node_id)

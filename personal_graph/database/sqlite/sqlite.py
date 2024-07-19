@@ -460,9 +460,7 @@ class SQLite(DB):
 
         return self.atomic(_get_all_connections)
 
-    def fetch_node_embed_id(
-        self, node_id: Any, limit: int = 1, node_type: Optional[str] = None
-    ) -> None:
+    def fetch_node_embed_id(self, node_id: Any, limit: int = 1):
         return self.atomic(self._fetch_node_id(node_id, limit))
 
     def fetch_edge_embed_ids(self, id: Any, limit: int = 10):
@@ -501,7 +499,7 @@ class SQLite(DB):
         )
         self.atomic(upsert_node_func)
 
-    def remove_node(self, id: Any, node_type: Optional[str] = None) -> None:
+    def remove_node(self, id: Any) -> None:
         self.atomic(self._remove_node(id))
 
     def search_node(self, node_id: Any, *, node_type: Optional[str] = None) -> Any:
