@@ -3,7 +3,6 @@ import os
 from functools import lru_cache
 from pathlib import Path
 
-import libsql_experimental as libsql  # type: ignore
 from typing import List, Any, Dict, Optional, Callable, Union
 
 from graphviz import Digraph  # type: ignore
@@ -11,6 +10,12 @@ from jsonschema import Draft7Validator, exceptions
 
 from personal_graph.models import Node, Edge
 from personal_graph.database.db import DB
+
+try:
+    import libsql_experimental as libsql  # type: ignore
+except ImportError:
+    pass
+
 
 JSON_SCHEMA_FILE = os.path.join(os.path.dirname(__file__), "fhir_4.schema.json")
 CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
