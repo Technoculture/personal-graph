@@ -118,6 +118,9 @@ class FhirDB(DB):
         target_rt: Optional[str] = None,
     ) -> None:
         def _add_edge(cursor, connection):
+            if not source_rt or not target_rt:
+                raise ValueError("source or target node types not given.")
+
             count = cursor.execute(
                 "SELECT COALESCE(MAX(embed_id), 0) FROM relations"
             ).fetchone()[0]
@@ -397,6 +400,9 @@ class FhirDB(DB):
         self, node_id: Any, limit: int = 1, node_type: Optional[str] = None
     ):
         def _fetch_embed_id(cursor, connection):
+            if not node_type:
+                raise ValueError("Resource type not provided.")
+
             embed_id = cursor.execute(
                 f"SELECT embed_id from {node_type} WHERE id=? LIMIT ?", (node_id, limit)
             ).fetchone()

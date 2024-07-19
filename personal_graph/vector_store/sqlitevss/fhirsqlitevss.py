@@ -126,6 +126,9 @@ class FhirSQLiteVSS(SQLiteVSS):
             self.db.atomic(self._add_edge_embedding(edge_data))
 
     def delete_node_embedding(self, id: Any, node_type: Optional[str] = None) -> None:
+        if not node_type:
+            raise ValueError("Resource type not provided.")
+
         self.db.atomic(self._remove_node(id, node_type=node_type))
 
     def delete_edge_embedding(self, ids: Any) -> None:
