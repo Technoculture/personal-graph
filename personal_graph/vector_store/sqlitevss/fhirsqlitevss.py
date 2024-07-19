@@ -80,10 +80,10 @@ class FhirSQLiteVSS(SQLiteVSS):
 
         return _insert_edge_embedding
 
-    def _remove_node(self, id: Any, resource_type: Optional[str] = None):
+    def _remove_node(self, id: Any, node_type: Optional[str] = None):
         def _delete_node_embedding(cursor, connection):
             cursor.execute(
-                f"""DELETE FROM {resource_type.lower()}_embedding where rowid = (?)""",
+                f"""DELETE FROM {node_type.lower()}_embedding where rowid = (?)""",
                 (id[0],),
             )
 
@@ -125,10 +125,8 @@ class FhirSQLiteVSS(SQLiteVSS):
             }
             self.db.atomic(self._add_edge_embedding(edge_data))
 
-    def delete_node_embedding(
-        self, id: Any, resource_type: Optional[str] = None
-    ) -> None:
-        self.db.atomic(self._remove_node(id, resource_type=resource_type))
+    def delete_node_embedding(self, id: Any, node_type: Optional[str] = None) -> None:
+        self.db.atomic(self._remove_node(id, node_type=node_type))
 
     def delete_edge_embedding(self, ids: Any) -> None:
         self.db.atomic(self._remove_edge(ids))
