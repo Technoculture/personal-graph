@@ -1,6 +1,8 @@
+import json
 import logging
 import os
 import pkgutil
+from datetime import date
 
 from pydantic_core import ValidationError
 import inspect
@@ -70,6 +72,12 @@ def get_type_name(prop_type):
     return prop_type.__name__
 
 
+def json_serializable(obj):
+    if isinstance(obj, date):
+        return obj.isoformat()
+    raise TypeError(f"Type {type(obj)} not serializable")
+
+
 def fhir_node(fhir_data) -> Node:
     """
     Helper function that will convert fhir data to Node Type
@@ -79,6 +87,8 @@ def fhir_node(fhir_data) -> Node:
 
     return Node(
         id=fhir_data.id,
-        attributes=fhir_data.__dict__,
+        attributes=json.loads(
+            json.dumps(fhir_data.dict(exclude_unset=True), default=json_serializable)
+        ),
         label=type(fhir_data).__name__,
     )
