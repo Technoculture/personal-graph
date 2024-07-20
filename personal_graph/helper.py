@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import pkgutil
@@ -7,6 +8,7 @@ import inspect
 from importlib import import_module
 from typing import get_origin, get_args
 
+from personal_graph.models import Node
 
 try:
     import fhir.resources as fhir  # type: ignore
@@ -67,3 +69,17 @@ def get_type_name(prop_type):
     if get_origin(prop_type) is list:
         return get_args(prop_type)[0].__name__
     return prop_type.__name__
+
+
+def fhir_node(fhir_data) -> Node:
+    """
+    Helper function that will convert fhir data to Node Type
+    @param fhir_data: Dict
+    @return: Node
+    """
+
+    return Node(
+        id=fhir_data.id,
+        attributes=json.dumps(fhir_data.__dict__),
+        label=type(fhir_data).__name__,
+    )
