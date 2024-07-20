@@ -80,6 +80,6 @@ def fhir_node(fhir_data) -> Node:
 
     return Node(
         id=fhir_data.id,
-        attributes=json.dumps(fhir_data.__dict__),
+        attributes=fhir_data.__dict__,
         label=type(fhir_data).__name__,
     )
