@@ -196,8 +196,6 @@ def main(args):
             logging.info("TRUE")
         assert graph == g2
 
-        graph.visualize_fhir()
-
         nodes_type_info = extract_classes_properties()
         graph.insert_from_fhir_json_bundle(
             Path("./sam.json"),
