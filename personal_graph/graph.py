@@ -793,7 +793,9 @@ class GraphDB(AbstractContextManager):
         return self.db.graphviz_visualize(file, id)
 
     def fetch_ids_from_db(self, *, node_type: Optional[str] = None) -> List[str]:
-        return self.db.fetch_ids_from_db(node_type=node_type)
+        if isinstance(self.db, FhirDB):
+            return self.db.fetch_ids_from_db(node_type=node_type)
+        return self.db.fetch_ids_from_db()
 
     def search_indegree_edges(self, target: str) -> List[Any]:
         return self.db.search_indegree_edges(target)

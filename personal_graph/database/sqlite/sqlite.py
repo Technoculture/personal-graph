@@ -502,7 +502,7 @@ class SQLite(DB):
     def remove_node(self, id: Any) -> None:
         self.atomic(self._remove_node(id))
 
-    def search_node(self, node_id: Any, *, node_type: Optional[str] = None) -> Any:
+    def search_node(self, node_id: Any) -> Any:
         return self.atomic(self._find_node(node_id))
 
     def search_node_label(self, node_id: Any, limit: Optional[int] = 1) -> Any:
@@ -632,9 +632,7 @@ class SQLite(DB):
         dot.render(dot_file, format=format)
         return dot
 
-    def fetch_ids_from_db(
-        self, limit: Optional[int] = 10, node_type: Optional[str] = None
-    ) -> List[str]:
+    def fetch_ids_from_db(self, limit: Optional[int] = 10) -> List[str]:
         def _fetch_nodes_from_db(cursor, connection):
             nodes = cursor.execute("SELECT id from nodes LIMIT ?", (limit,)).fetchall()
             ids = [id[0] for id in nodes]
