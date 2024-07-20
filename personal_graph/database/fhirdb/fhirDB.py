@@ -87,6 +87,20 @@ class FhirDB(DB):
                     f"SELECT COALESCE(MAX(embed_id), 0) FROM {resource_type}"
                 ).fetchone()[0]
 
+                txid = cursor.execute(
+                    f"SELECT COALESCE(MAX(txid), 0) FROM {resource_type}_history"
+                ).fetchone()[0]
+
+                cursor.execute(
+                    f"""
+                        INSERT OR IGNORE INTO {resource_type}_history (id, txid, ts, resource_type, status, resource)
+                        SELECT id, ?, current_timestamp, resource_type, 'created', resource
+                        FROM {resource_type}
+                        WHERE id = ?
+                    """,
+                    (int(txid) + 1, id),
+                )
+
                 cursor.execute(
                     f"""
                         INSERT OR IGNORE INTO {resource_type} (embed_id, id, txid, ts, resource_type, status, resource)
@@ -97,17 +111,13 @@ class FhirDB(DB):
                         status = 'recreated',
                         resource = excluded.resource
                     """,
-                    (int(count) + 1, id, 123, resource_type, json.dumps(attribute)),
-                )
-
-                cursor.execute(
-                    f"""
-                        INSERT OR IGNORE INTO {resource_type}_history (id, txid, ts, resource_type, status, resource)
-                        SELECT id, ?, current_timestamp, resource_type, 'created', resource
-                        FROM {resource_type}
-                        WHERE id = ?
-                    """,
-                    (123, id),
+                    (
+                        int(count) + 1,
+                        id,
+                        int(txid) + 1,
+                        resource_type,
+                        json.dumps(attribute),
+                    ),
                 )
                 connection.commit()
 
@@ -156,6 +166,10 @@ class FhirDB(DB):
                 f"SELECT COALESCE(MAX(embed_id), 0) FROM {resource_type}"
             ).fetchone()[0]
 
+            txid = cursor.execute(
+                f"SELECT COALESCE(MAX(txid), 0) FROM {resource_type}_history"
+            ).fetchone()[0]
+
             cursor.execute(
                 f"""
                     INSERT OR IGNORE INTO {resource_type}_history (id, txid, ts, resource_type, status, resource)
@@ -166,7 +180,7 @@ class FhirDB(DB):
                     status = 'updated',
                     resource = excluded.resource
                 """,
-                (node.id, 123, resource_type, json.dumps(node.attributes)),
+                (node.id, int(txid) + 1, resource_type, json.dumps(node.attributes)),
             )
 
             cursor.execute(
@@ -183,7 +197,7 @@ class FhirDB(DB):
                 (
                     int(count) + 1,
                     node.id,
-                    123,
+                    int(txid) + 1,
                     resource_type,
                     json.dumps(node.attributes),
                 ),
@@ -198,21 +212,18 @@ class FhirDB(DB):
             if not node_type:
                 raise ValueError("Resource type not provided")
 
-            cursor.execute(
-                f"""
-                    UPDATE {node_type}_history SET status='deleted' WHERE id=? AND txid=?
-                """,
-                (id, 123),
-            )
+            txid = cursor.execute(
+                f"SELECT COALESCE(MAX(txid), 0) FROM {node_type}_history"
+            ).fetchone()[0]
 
             cursor.execute(
                 f"""
-                INSERT OR IGNORE INTO {node_type} (id, txid, ts, resource_type, status, resource)
-                SELECT id, txid, current_timestamp, resource_type, 'deleted', resource
-                FROM {node_type}
-                WHERE id = ?
+                    INSERT OR IGNORE INTO {node_type}_history (id, txid, ts, resource_type, status, resource)
+                    SELECT id, ?, current_timestamp, resource_type, 'deleted', resource
+                    FROM {node_type}
+                    WHERE id = ?
                 """,
-                (id,),
+                (int(txid) + 1, id),
             )
 
             cursor.execute(
