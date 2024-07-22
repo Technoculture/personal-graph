@@ -41,7 +41,7 @@ class SQLite(DB):
     def __init__(
         self,
         *,
-        use_in_memory: bool = False,
+        use_in_memory: bool = True,
         local_path: Optional[str] = None,
         vector0_so_path: Optional[str] = None,
         vss0_so_path: Optional[str] = None,
@@ -61,7 +61,7 @@ class SQLite(DB):
         self.traverse_template = self.env.get_template("traverse.template")
 
     def __eq__(self, other):
-        return self.use_in_memory == other.use_in_memory
+        return self.local_path == other.local_path
 
     def __repr__(self):
         return (

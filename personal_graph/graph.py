@@ -101,26 +101,8 @@ class GraphDB(AbstractContextManager):
     ):
         use_direct_search = False
 
-        if isinstance(self.vector_store, VliteVSS):
+        if isinstance(self.vector_store, VliteVSS) or (self.vector_store.db == self.db):
             use_direct_search = True
-
-        elif isinstance(self.vector_store.db, TursoDB) and isinstance(self.db, TursoDB):
-            if (
-                self.vector_store.db.db_url == self.db.db_url
-                and self.vector_store.db.db_auth_token == self.db.db_auth_token
-            ):
-                use_direct_search = True
-
-        elif isinstance(self.vector_store.db, SQLite) and isinstance(self.db, SQLite):
-            if not isinstance(self.vector_store.db, TursoDB) and not isinstance(
-                self.db, TursoDB
-            ):
-                if (
-                    self.vector_store.db.local_path == self.db.local_path
-                    and self.vector_store.db.local_path is not None
-                    and self.db.local_path is not None
-                ):
-                    use_direct_search = True
 
         if use_direct_search:
             similar_nodes = self.vector_store.vector_search_node(
@@ -164,26 +146,8 @@ class GraphDB(AbstractContextManager):
     ):
         use_direct_search = False
 
-        if isinstance(self.vector_store, VliteVSS):
+        if isinstance(self.vector_store, VliteVSS) or (self.vector_store.db == self.db):
             use_direct_search = True
-
-        elif isinstance(self.vector_store.db, TursoDB) and isinstance(self.db, TursoDB):
-            if (
-                self.vector_store.db.db_url == self.db.db_url
-                and self.vector_store.db.db_auth_token == self.db.db_auth_token
-            ):
-                use_direct_search = True
-
-        elif isinstance(self.vector_store.db, SQLite) and isinstance(self.db, SQLite):
-            if not isinstance(self.vector_store.db, TursoDB) and not isinstance(
-                self.db, TursoDB
-            ):
-                if (
-                    self.vector_store.db.local_path == self.db.local_path
-                    and self.vector_store.db.local_path is not None
-                    and self.db.local_path is not None
-                ):
-                    use_direct_search = True
 
         if use_direct_search:
             similar_edges = self.vector_store.vector_search_edge(
