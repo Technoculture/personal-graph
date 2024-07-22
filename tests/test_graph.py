@@ -256,7 +256,10 @@ def test_invalid_fhir_resource_type(
     )
     with pytest.raises(ValueError) as excinfo:
         graph_with_fhir_ontology.add_node(node, node_type="CareTaker")
-    assert str(excinfo.value) == "Invalid FHIR resource data."
+    assert (
+        str(excinfo.value)
+        == "Node type or attributes does not match any of the provided ontologies."
+    )
 
 
 def test_add_nodes_with_ontology(

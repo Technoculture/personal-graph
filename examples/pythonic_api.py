@@ -1,6 +1,9 @@
 import argparse
 import os
 import logging
+from pathlib import Path
+
+from personal_graph.helper import extract_classes_properties
 from personal_graph.text import text_to_graph
 from personal_graph.visualizers import visualize_graph
 from personal_graph.ml import networkx_to_pg, pg_to_networkx
@@ -192,6 +195,13 @@ def main(args):
         if graph == g2:
             logging.info("TRUE")
         assert graph == g2
+
+        nodes_type_info = extract_classes_properties()
+        graph.insert_from_fhir_json_bundle(
+            Path("./sam.json"),
+            nodes_type_info,
+        )
+        pg_to_networkx(graph, post_visualize=True)
 
 
 if __name__ == "__main__":

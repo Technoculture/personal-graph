@@ -1,7 +1,7 @@
 import json
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, Union, List
+from typing import Any, Dict, Union
 
 from personal_graph.clients import (
     OpenAIEmbeddingClient,
@@ -89,30 +89,6 @@ class SQLiteVSS(VectorStore):
             connection.commit()
 
         return _insert
-
-    def _add_embeddings(self, nodes: List[Dict], labels: List[str], ids: List[Any]):
-        def insert_nodes_embeddings(cursor, connection):
-            count = (
-                cursor.execute(
-                    "SELECT COALESCE(MAX(rowid), 0) FROM nodes_embedding"
-                ).fetchone()[0]
-                + 1
-            )
-
-            for i, x in enumerate(zip(ids, labels, nodes)):
-                cursor.execute(
-                    read_sql(Path("insert-node-embedding.sql")),
-                    (
-                        count + i,
-                        json.dumps(
-                            self.embedding_model.get_embedding(
-                                json.dumps(self._set_id(x[0], x[1], x[2]))
-                            )
-                        ),
-                    ),
-                )
-
-        return insert_nodes_embeddings
 
     def _add_edge_embedding(self, data: Dict):
         def _insert_edge_embedding(cursor, connection):

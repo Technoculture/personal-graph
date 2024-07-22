@@ -6,7 +6,7 @@ from graphviz import Digraph  # type: ignore
 from matplotlib import pyplot as plt
 
 from personal_graph import GraphDB
-from personal_graph import KnowledgeGraph, Node, Edge, EdgeInput
+from personal_graph.models import KnowledgeGraph, Node, Edge, EdgeInput
 
 
 def pg_to_networkx(graph: GraphDB, *, post_visualize: bool = False):
@@ -42,16 +42,19 @@ def pg_to_networkx(graph: GraphDB, *, post_visualize: bool = False):
             edge_data["label"] = edge_label
             G.add_edge(source_id, target_id, **edge_data)
 
+    node_labels = {}
     for node_id in node_ids:
         node_data = graph.search_node(node_id)
         if "label" not in node_data.keys():
             node_data["label"] = graph.db.search_node_label(node_id)
 
         G.add_node(node_id, **node_data)
+        node_label = node_data["label"]
+        node_labels[node_id] = node_label[0]
 
     if post_visualize:
         # Visualizing the NetworkX Graph
-        plt.figure(figsize=(20, 20), dpi=100)  # Increase the figure size and resolution
+        plt.figure(figsize=(30, 30), dpi=200)  # Increase the figure size and resolution
         pos = nx.spring_layout(
             G, scale=6
         )  # Use spring layout for better node positioning
@@ -60,12 +63,14 @@ def pg_to_networkx(graph: GraphDB, *, post_visualize: bool = False):
             G,
             pos,
             with_labels=True,
+            labels=node_labels,
+            font_size=9,
             nodelist=G.nodes(),
             edgelist=G.edges(),
-            node_size=600,
+            node_size=800,
             node_color="skyblue",
             edge_color="gray",
-            width=1.5,
+            width=2,
         )
         nx.draw_networkx_edge_labels(
             G, pos, edge_labels=nx.get_edge_attributes(G, "label")

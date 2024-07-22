@@ -49,7 +49,9 @@ class TursoDB(SQLite):
         self.traverse_template = self.env.get_template("traverse.template")
 
     def __eq__(self, other):
-        return self.db_url == other.db_url
+        if hasattr(other, "db_url"):
+            return self.db_url == other.db_url
+        return False
 
     def __repr__(self):
         return (

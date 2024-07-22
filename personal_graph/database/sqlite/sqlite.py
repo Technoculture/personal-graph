@@ -41,7 +41,7 @@ class SQLite(DB):
     def __init__(
         self,
         *,
-        use_in_memory: bool = False,
+        use_in_memory: bool = True,
         local_path: Optional[str] = None,
         vector0_so_path: Optional[str] = None,
         vss0_so_path: Optional[str] = None,
@@ -61,7 +61,7 @@ class SQLite(DB):
         self.traverse_template = self.env.get_template("traverse.template")
 
     def __eq__(self, other):
-        return self.use_in_memory == other.use_in_memory
+        return self.local_path == other.local_path
 
     def __repr__(self):
         return (
@@ -460,7 +460,7 @@ class SQLite(DB):
 
         return self.atomic(_get_all_connections)
 
-    def fetch_node_embed_id(self, node_id: Any, limit: int = 1) -> None:
+    def fetch_node_embed_id(self, node_id: Any, limit: int = 1):
         return self.atomic(self._fetch_node_id(node_id, limit))
 
     def fetch_edge_embed_ids(self, id: Any, limit: int = 10):
@@ -524,6 +524,18 @@ class SQLite(DB):
             return node_type
 
         return self.atomic(_search_node_type)
+
+    def search_id_by_node_type(self, node_type: str):
+        def _find_node_type_id(cursor, connection):
+            node_id = cursor.execute(
+                "SELECT id from nodes where label=?", (node_type,)
+            ).fetchone()
+            if node_id is not None:
+                return node_id[0]
+            else:
+                return None
+
+        return self.atomic(_find_node_type_id)
 
     def traverse(
         self, source: Any, target: Optional[Any] = None, with_bodies: bool = False
