@@ -29,6 +29,12 @@ setup(
         "vlite>=0.2.7",
         "ollama>=0.2.0",
         "owlready2>=0.46",
+        "plotly>=5.22.0",
+        "nbformat>=5.10.4",
+        "nbclient>=0.10.0",
+        "types-requests>=2.32.0.20240622",
+        "jsonschema>=4.23.0",
+        "types-jsonschema>=4.23.0.20240712",
     ],
     extras_require={
         "dev": [
@@ -36,6 +42,7 @@ setup(
             "ruff>=0.3.2",
             "mypy>=1.9.0",
             "fhir-resources>=7.1.0",
+            "libsql-experimental>=0.0.34",
         ],
         "scrollable-textbox": ["streamlit-scrollable-textbox"],
         "turso": ["libsql-experimental"],
