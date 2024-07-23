@@ -133,3 +133,39 @@ class FhirSQLiteVSS(SQLiteVSS):
 
     def delete_edge_embedding(self, ids: Any) -> None:
         self.db.atomic(self._remove_edge(ids))
+
+    def vector_search_edge_from_multi_db(
+        self, data: Dict, *, threshold: float = 0.9, limit: int = 1
+    ):
+        raise NotImplementedError(
+            "vector_search_edge_from_multi_db method is not yet implemented"
+        )
+
+    def vector_search_node_from_multi_db(
+        self, data: Dict, *, threshold: float = 0.9, limit: int = 1
+    ):
+        raise NotImplementedError(
+            "vector_search_node_from_multi_db method is not yet implemented"
+        )
+
+    def vector_search_edge(
+        self,
+        data: Dict,
+        *,
+        threshold: float = 0.9,
+        descending: bool = False,
+        limit: int = 1,
+        sort_by: str = "",
+    ):
+        raise NotImplementedError("vector_search_edge method is not yet implemented")
+
+    def vector_search_node(
+        self,
+        data: Dict,
+        *,
+        threshold: float = 0.9,
+        descending: bool = False,
+        limit: int = 1,
+        sort_by: str = "",
+    ):
+        raise NotImplementedError("vector_search_node method is not yet implemented")
