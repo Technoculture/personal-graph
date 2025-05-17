@@ -16,6 +16,8 @@ from personal_graph.models import (
 from personal_graph.database import (
     SQLite as SQLite,
     TursoDB as TursoDB,
+    Postgres as Postgres,
+    FhirDB as FhirDB,
 )
 from personal_graph.vector_store import (
     SQLiteVSS as SQLiteVSS,
@@ -32,7 +34,7 @@ class GraphDB(AbstractContextManager):
         self,
         *,
         vector_store: SQLiteVSS | VliteVSS = ...,
-        database: TursoDB | SQLite = ...,
+        database: TursoDB | SQLite | FhirDB | Postgres = ...,
         graph_generator: OpenAITextToGraphParser = ...,
         ontologies: Optional[List[Union[Ontology, Any]]],
     ) -> None: ...

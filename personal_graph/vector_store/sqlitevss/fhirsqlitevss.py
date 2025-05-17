@@ -30,7 +30,7 @@ class FhirSQLiteVSS(SQLiteVSS):
         return self.db.save()
 
     def __repr__(self) -> str:
-        return f"FhirSQLiteVSS(\n" f"  db={self.db}\n" f"  )"
+        return f"FhirSQLiteVSS(\n  db={self.db}\n  )"
 
     def _add_embedding(self, id: Any, label: str, data: Dict) -> CursorExecFunction:
         def _insert(cursor, connection):

@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 from owlready2 import Ontology  # type: ignore
 
 from personal_graph import OpenAIClient
-from personal_graph.database import TursoDB, SQLite
+from personal_graph.database import TursoDB, SQLite, Postgres
 from personal_graph.database.fhirdb.fhirDB import FhirDB
 from personal_graph.graph_generator import (
     OpenAITextToGraphParser,
@@ -41,7 +41,7 @@ class GraphDB(AbstractContextManager):
         vector_store: Union[SQLiteVSS, VliteVSS, FhirSQLiteVSS] = VliteVSS(
             collection="./vectors"
         ),
-        database: Union[TursoDB, SQLite, FhirDB] = SQLite(use_in_memory=True),
+        database: Union[TursoDB, SQLite, FhirDB, Postgres] = SQLite(use_in_memory=True),
         graph_generator: Union[
             OpenAITextToGraphParser, OllamaTextToGraphParser
         ] = OpenAITextToGraphParser(llm_client=OpenAIClient()),
