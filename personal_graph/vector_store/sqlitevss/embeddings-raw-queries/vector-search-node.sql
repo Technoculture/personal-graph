@@ -17,4 +17,5 @@ ORDER BY
   END DESC,
   CASE
     WHEN ? != "" AND ? IS FALSE THEN json_extract(nodes.attributes, '$.' || ?) ELSE NULL
-  END ASC;
+  END ASC
+LIMIT ?;
