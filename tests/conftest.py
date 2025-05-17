@@ -15,9 +15,14 @@ from personal_graph import (
 
 @pytest.fixture
 def mock_db_connection_and_cursor():
-    with patch("personal_graph.database.SQLite.atomic") as mock_connect:
-        mock_connection = mock_connect.return_value
+    with patch("personal_graph.database.SQLite.atomic") as mock_atomic:
+        mock_connection = mock_atomic.return_value
         mock_cursor = mock_connection.cursor.return_value
+
+        def _side_effect(fn):
+            return fn(mock_cursor, mock_connection)
+
+        mock_atomic.side_effect = _side_effect
         yield mock_connection, mock_cursor
 
 
@@ -29,6 +34,12 @@ def embedding_model():
 @pytest.fixture
 def mock_find_node():
     with patch("personal_graph.database.SQLite._find_node") as mock_find_node:
+        def _dummy(identifier):
+            def inner(cursor, connection):
+                return {"id": identifier}
+            return inner
+
+        mock_find_node.side_effect = _dummy
         yield mock_find_node
 
 
