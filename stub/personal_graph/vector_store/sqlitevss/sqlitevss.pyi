@@ -7,6 +7,12 @@ from personal_graph.vector_store import (
     VectorStore as VectorStore,
 )
 from typing import Any, Dict, Union
+from enum import Enum
+
+
+class Ordering(Enum):
+    ASC: str
+    DESC: str
 
 def read_sql(sql_file: Path) -> str: ...
 

@@ -2,6 +2,7 @@ import json
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, Union
+from enum import Enum
 
 from personal_graph.clients import (
     OpenAIEmbeddingClient,
@@ -20,6 +21,13 @@ def read_sql(sql_file: Path) -> str:
         Path(__file__).parent.resolve() / "embeddings-raw-queries" / sql_file
     ) as f:
         return f.read()
+
+
+class Ordering(Enum):
+    """Sorting direction options for SQL queries."""
+
+    ASC = "ASC"
+    DESC = "DESC"
 
 
 class SQLiteVSS(VectorStore):
@@ -165,6 +173,21 @@ class SQLiteVSS(VectorStore):
         limit: int = 1,
         sort_by: str = "",
     ):
+        """Return nodes similar to *data* ordered by the given options.
+
+        Parameters
+        ----------
+        data:
+            Dictionary to embed and search against existing vectors.
+        threshold:
+            Maximum allowed distance for a result. ``None`` disables the filter.
+        descending:
+            If ``True`` results are ordered in descending order.
+        limit:
+            Maximum number of records returned.
+        sort_by:
+            Node attribute used for ordering. Defaults to no attribute sorting.
+        """
         def _search_node(cursor, connection):
             embed_json = json.dumps(
                 self.embedding_model.get_embedding(json.dumps(data))
@@ -181,6 +204,7 @@ class SQLiteVSS(VectorStore):
                     sort_by,
                     descending,
                     sort_by,
+                    limit,
                 ),
             ).fetchall()
 
@@ -188,9 +212,8 @@ class SQLiteVSS(VectorStore):
                 return None
 
             if threshold is not None:
-                return [node for node in nodes if node[4] < threshold][:limit]
-            else:
-                return nodes[:limit]
+                return [node for node in nodes if node[4] < threshold]
+            return nodes
 
         return self.db.atomic(_search_node)
 
@@ -205,26 +228,41 @@ class SQLiteVSS(VectorStore):
         limit: int = 1,
         sort_by: str = "",
     ):
+        """Return edges similar to *data* ordered by the given options.
+
+        Parameters
+        ----------
+        data:
+            Dictionary to embed and search against existing vectors.
+        threshold:
+            Maximum allowed distance for a result. ``None`` disables the filter.
+        descending:
+            If ``True`` results are ordered in descending order.
+        limit:
+            Maximum number of records returned.
+        sort_by:
+            Edge attribute used for ordering. Currently unused.
+        """
         def _search_edge(cursor, connection):
             embed = json.dumps(self.embedding_model.get_embedding(json.dumps(data)))
             if descending:
                 edges = cursor.execute(
-                    read_sql(Path("vector-search-edge-desc.sql")), (embed, limit)
+                    read_sql(Path("vector-search-edge-desc.sql")),
+                    (embed, limit, limit),
                 ).fetchall()
 
             else:
                 edges = cursor.execute(
-                    read_sql(Path("vector-search-edge.sql")), (embed, limit)
+                    read_sql(Path("vector-search-edge.sql")),
+                    (embed, limit, limit),
                 ).fetchall()
 
             if not edges:
                 return None
 
             if threshold is not None:
-                filtered_results = [edge for edge in edges if edge[5] < threshold]
-                return filtered_results[:limit]
-            else:
-                return edges[:limit]
+                return [edge for edge in edges if edge[5] < threshold]
+            return edges
 
         return self.db.atomic(_search_edge)
 
