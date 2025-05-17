@@ -455,6 +455,9 @@ class FhirDB(DB):
     def fetch_node_id(self, id: Any):
         raise NotImplementedError("fetch_node_id method is not yet implemented")
 
+    def fetch_node_ids(self, ids: List[Any]) -> List[Any]:
+        raise NotImplementedError("fetch_node_ids method is not yet implemented")
+
     def graphviz_visualize(
         self,
         dot_file: Optional[str] = None,

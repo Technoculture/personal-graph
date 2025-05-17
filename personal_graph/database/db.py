@@ -101,6 +101,11 @@ class DB(ABC):
         pass
 
     @abstractmethod
+    def fetch_node_ids(self, ids: List[Any]) -> List[Any]:
+        """Fetch multiple node IDs for the provided embed identifiers"""
+        pass
+
+    @abstractmethod
     def find_nodes_by_label(self, label: str):
         """Find nodes by their label"""
         pass

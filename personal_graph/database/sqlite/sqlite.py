@@ -560,6 +560,16 @@ class SQLite(DB):
 
         return self.atomic(_get_id)
 
+    def fetch_node_ids(self, ids: List[Any]):
+        def _get_ids(cursor, connection):
+            if not ids:
+                return []
+            placeholders = ",".join(["?"] * len(ids))
+            query = f"SELECT embed_id, id from nodes where embed_id IN ({placeholders})"
+            return cursor.execute(query, ids).fetchall()
+
+        return self.atomic(_get_ids)
+
     def find_nodes_by_label(self, label: str, limit: Optional[int] = 1):
         def search_node_like(cursor, connection):
             nodes = cursor.execute(
