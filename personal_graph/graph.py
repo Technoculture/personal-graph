@@ -426,6 +426,103 @@ class GraphDB(AbstractContextManager):
         for edge in edges:
             self.add_edge(edge)
 
+    def insert_nodes_bulk(
+        self,
+        nodes: List[Node],
+        *,
+        cursor: Optional[Any] = None,
+        connection: Optional[Any] = None,
+    ) -> None:
+        def _insert(cur, conn):
+            for node in nodes:
+                attributes = (
+                    json.loads(node.attributes)
+                    if isinstance(node.attributes, str)
+                    else node.attributes
+                )
+
+                if hasattr(self.db, "_insert_node"):
+                    self.db._insert_node(cur, conn, node.id, node.label, attributes)
+                else:
+                    self.db.add_node(node.label, attributes, node.id)
+
+                if hasattr(self.vector_store, "_add_embedding"):
+                    self.vector_store._add_embedding(node.id, node.label, attributes)(
+                        cur, conn
+                    )
+                else:
+                    self.vector_store.add_node_embedding(
+                        node.id, node.label, attributes
+                    )
+
+        if cursor is not None and connection is not None:
+            _insert(cursor, connection)
+        else:
+            if hasattr(self.db, "atomic"):
+                self.db.atomic(_insert)
+            elif hasattr(self.db, "_atomic"):
+                self.db._atomic(_insert)
+            else:
+                for node in nodes:
+                    self.insert_node(node)
+
+    def insert_edges_bulk(
+        self,
+        edges: List[EdgeInput],
+        *,
+        cursor: Optional[Any] = None,
+        connection: Optional[Any] = None,
+    ) -> None:
+        def _insert(cur, conn):
+            for edge in edges:
+                attributes = (
+                    json.loads(edge.attributes)
+                    if isinstance(edge.attributes, str)
+                    else edge.attributes
+                )
+
+                if hasattr(self.db, "_connect_nodes"):
+                    self.db._connect_nodes(
+                        edge.source.id,
+                        edge.target.id,
+                        edge.label,
+                        attributes,
+                    )(cur, conn)
+                else:
+                    self.db.add_edge(
+                        edge.source.id,
+                        edge.target.id,
+                        edge.label,
+                        attributes,
+                    )
+
+                if hasattr(self.vector_store, "_add_edge_embedding"):
+                    data = {
+                        "source_id": edge.source.id,
+                        "target_id": edge.target.id,
+                        "label": edge.label,
+                        "attributes": json.dumps(attributes),
+                    }
+                    self.vector_store._add_edge_embedding(data)(cur, conn)
+                else:
+                    self.vector_store.add_edge_embedding(
+                        edge.source.id,
+                        edge.target.id,
+                        edge.label,
+                        attributes,
+                    )
+
+        if cursor is not None and connection is not None:
+            _insert(cursor, connection)
+        else:
+            if hasattr(self.db, "atomic"):
+                self.db.atomic(_insert)
+            elif hasattr(self.db, "_atomic"):
+                self.db._atomic(_insert)
+            else:
+                for edge in edges:
+                    self.insert_edge(edge)
+
     def update_node(self, node: Node) -> None:
         if isinstance(self.db, FhirDB):
             node_data = self.db.search_node(node.id, node_type=node.label)
@@ -530,31 +627,56 @@ class GraphDB(AbstractContextManager):
         try:
             for node in kg.nodes:
                 uuid_dict[node.id] = str(uuid.uuid4())
-                self.db.add_node(
-                    node.label,
-                    {"body": node.attributes},
-                    uuid_dict[node.id],
-                )
 
-                self.vector_store.add_node_embedding(
-                    uuid_dict[node.id], node.label, {"body": node.attributes}
+            nodes_to_insert = [
+                Node(
+                    id=uuid_dict[n.id],
+                    label=n.label,
+                    attributes={"body": n.attributes},
                 )
+                for n in kg.nodes
+            ]
 
-            for edge in kg.edges:
-                self.db.add_edge(
-                    uuid_dict[edge.source],
-                    uuid_dict[edge.target],
-                    edge.label,
-                    {"body": edge.attributes},
+            def _node_label(nid: Any) -> str:
+                for n in kg.nodes:
+                    if n.id == nid:
+                        return n.label
+                return ""
+
+            edges_to_insert = [
+                EdgeInput(
+                    source=Node(
+                        id=uuid_dict[e.source],
+                        label=_node_label(e.source),
+                        attributes={},
+                    ),
+                    target=Node(
+                        id=uuid_dict[e.target],
+                        label=_node_label(e.target),
+                        attributes={},
+                    ),
+                    label=e.label,
+                    attributes={"body": e.attributes},
                 )
-                self.vector_store.add_edge_embedding(
-                    uuid_dict[edge.source],
-                    uuid_dict[edge.target],
-                    edge.label,
-                    {"body": edge.attributes},
-                )
+                for e in kg.edges
+            ]
+
+            def _insert(cur, conn):
+                self.insert_nodes_bulk(nodes_to_insert, cursor=cur, connection=conn)
+                self.insert_edges_bulk(edges_to_insert, cursor=cur, connection=conn)
+
+            if hasattr(self.db, "atomic"):
+                self.db.atomic(_insert)
+            elif hasattr(self.db, "_atomic"):
+                self.db._atomic(_insert)
+            else:
+                for n in nodes_to_insert:
+                    self.insert_node(n)
+                for e in edges_to_insert:
+                    self.insert_edge(e)
         except KeyError:
             return KnowledgeGraph()
+
         return kg
 
     def search_from_graph(
@@ -783,10 +905,14 @@ class GraphDB(AbstractContextManager):
         node_type: Optional[str] = None,
         delete_if_properties_not_match: Optional[bool] = False,
     ) -> None:
+        node_attributes = (
+            attributes if self.ontologies is not None else json.dumps(attributes)
+        )
+
         node = Node(
             id=str(uuid.uuid4()),
             label=text,
-            attributes=json.dumps(attributes),
+            attributes=node_attributes,
         )
         if self.ontologies is not None:
             self.add_node(

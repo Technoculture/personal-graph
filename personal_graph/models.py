@@ -51,5 +51,5 @@ class EdgeInput(BaseModel):
 
 
 class KnowledgeGraph(BaseModel):
-    nodes: List[Node] = Field(..., default_factory=list)
-    edges: List[Edge] = Field(..., default_factory=list)
+    nodes: List[Node] = Field(default_factory=list)
+    edges: List[Edge] = Field(default_factory=list)

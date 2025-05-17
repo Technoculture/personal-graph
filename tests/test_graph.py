@@ -4,6 +4,7 @@ Unit test for high level apis
 
 import networkx as nx  # type: ignore
 import pytest
+from unittest.mock import patch
 from fhir.resources import fhirtypes  # type: ignore
 
 from personal_graph import GraphDB, Node, EdgeInput, KnowledgeGraph
@@ -85,6 +86,28 @@ def test_add_edges(graph, mock_db_connection_and_cursor):
     assert graph.add_edges([edge1, edge2, edge3]) is None
 
 
+def test_insert_nodes_bulk(graph, mock_db_connection_and_cursor):
+    nodes = [
+        Node(id=10, label="Person", attributes={"name": "Amy"}),
+        Node(id=11, label="Person", attributes={"name": "Bob"}),
+    ]
+
+    assert graph.insert_nodes_bulk(nodes) is None
+
+
+def test_insert_edges_bulk(graph, mock_db_connection_and_cursor):
+    n1 = Node(id=12, label="A", attributes={})
+    n2 = Node(id=13, label="B", attributes={})
+    n3 = Node(id=14, label="C", attributes={})
+
+    e1 = EdgeInput(source=n1, target=n2, label="l1", attributes={})
+    e2 = EdgeInput(source=n2, target=n3, label="l2", attributes={})
+
+    graph.insert_nodes_bulk([n1, n2, n3])
+
+    assert graph.insert_edges_bulk([e1, e2]) is None
+
+
 def test_update_node(graph, mock_db_connection_and_cursor):
     node = Node(id=1, attributes={"name": "Alice", "age": "30"}, label="relative")
 
@@ -128,7 +151,14 @@ def test_insert(
 
     query = "Alice has suffocation at night"
     kg = text_to_graph(query)
-    result = graph.insert_graph(kg)
+    with patch.object(GraphDB, "insert_nodes_bulk") as ins_nodes, patch.object(
+        GraphDB, "insert_edges_bulk"
+    ) as ins_edges:
+        ins_nodes.return_value = None
+        ins_edges.return_value = None
+        result = graph.insert_graph(kg)
+        ins_nodes.assert_called_once()
+        ins_edges.assert_called_once()
     assert result == mock_generate_graph
 
 

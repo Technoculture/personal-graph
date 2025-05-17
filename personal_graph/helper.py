@@ -21,7 +21,8 @@ def validate_fhir_resource(resource_type, resource_data):
     """Validate if the provided data conforms to a FHIR resource schema."""
     try:
         if resource_type:
-            # Resource data must be a json_dict
+            if hasattr(fhir, "VALID_RESOURCES") and resource_type not in fhir.VALID_RESOURCES:
+                return False
             fhir.construct_fhir_element(resource_type, resource_data)
             return True
 
