@@ -192,11 +192,25 @@ graph_generator=OllamaTextToGraphParser(llm_client=phi3)
 print(graph_generator) # Should print the InstructorGraphGenerator 
 
 with GraphDB(
-    database=storage_db, 
-    vector_store=vector_store, 
+    database=storage_db,
+    vector_store=vector_store,
     graph_generator=graph_generator
   ) as db:
     print(db)
+```
+
+### Memory Manager
+
+For a lighter interface around `GraphDB`, use `MemoryManager` to store and
+recall short text events. A runnable example is available at
+`examples/memory_manager_example.py`.
+
+```python
+from personal_graph.memory import MemoryManager
+
+with MemoryManager() as memory:
+    memory.store_event("Alice bought apples", {"source": "diary"})
+    print(memory.recall("apples"))
 ```
 
 ### PersonalGraph to PyG, then back to PersonalGraph
