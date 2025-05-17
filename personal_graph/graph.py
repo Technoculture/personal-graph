@@ -651,6 +651,29 @@ class GraphDB(AbstractContextManager):
     def merge_by_similarity(self, *, threshold: float = 0.9) -> None:
         node_ids = self.db.fetch_ids_from_db()
 
+        incoming_cache: Dict[str, List[Tuple[Any, Any, Dict]]] = {}
+        outgoing_cache: Dict[str, List[Tuple[Any, Any, Dict]]] = {}
+
+        for nid in node_ids:
+            indegree = self.db.search_indegree_edges(nid)
+            outdegree = self.db.search_outdegree_edges(nid)
+            incoming_cache[nid] = [
+                (
+                    src,
+                    label,
+                    json.loads(attrs) if isinstance(attrs, str) else attrs,
+                )
+                for src, label, attrs in indegree
+            ]
+            outgoing_cache[nid] = [
+                (
+                    tgt,
+                    label,
+                    json.loads(attrs) if isinstance(attrs, str) else attrs,
+                )
+                for tgt, label, attrs in outdegree
+            ]
+
         for node_id in node_ids:
             node = self.db.search_node(node_id)
             if node is None:
@@ -670,14 +693,15 @@ class GraphDB(AbstractContextManager):
                 if similar_node_id is None or similar_node_id == node_id:
                     continue
 
-                in_degree_ids = self.db.search_indegree_edges(similar_node_id)
-                out_degree_ids = self.db.search_outdegree_edges(similar_node_id)
+                in_degree_ids = incoming_cache.get(similar_node_id, [])
+                out_degree_ids = outgoing_cache.get(similar_node_id, [])
 
                 concatenated_attributes: Dict = {}
                 concatenated_labels = ""
 
                 for data in in_degree_ids:
-                    for key, value in json.loads(data[2]).items():
+                    src, lbl, attrs = data
+                    for key, value in attrs.items():
                         if key in concatenated_attributes:
                             # If the key already exists, update its value
                             concatenated_attributes[key] += value
@@ -685,26 +709,27 @@ class GraphDB(AbstractContextManager):
                             # If the key doesn't exist, add a new key-value pair
                             concatenated_attributes[key] = value
 
-                    concatenated_labels += data[1] + ","
+                    concatenated_labels += lbl + ","
 
-                    self.db.add_edge(data[0], node_id, data[1], data[2])
+                    self.db.add_edge(src, node_id, lbl, attrs)
                     self.vector_store.add_edge_embedding(
-                        data[0], node_id, data[1], data[2]
+                        src, node_id, lbl, attrs
                     )
 
                 for data in out_degree_ids:
-                    for key, value in json.loads(data[2]).items():
+                    tgt, lbl, attrs = data
+                    for key, value in attrs.items():
                         if key in concatenated_attributes:
                             # If the key already exists, update its value
                             concatenated_attributes[key] += value
                         else:
                             # If the key doesn't exist, add a new key-value pair
                             concatenated_attributes[key] = value
-                    concatenated_labels += data[1] + ","
+                    concatenated_labels += lbl + ","
 
-                    self.db.add_edge(node_id, data[0], data[1], data[2])
+                    self.db.add_edge(node_id, tgt, lbl, attrs)
                     self.vector_store.add_edge_embedding(
-                        node_id, data[0], data[1], data[2]
+                        node_id, tgt, lbl, attrs
                     )
 
                     updated_attributes = node if node else {}
