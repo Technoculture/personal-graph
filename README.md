@@ -45,7 +45,7 @@ graph.insert_graph(g)
 
 # Retrieve relevant information from the graph
 query = "Who is Alice?"
-results = graph.search(query)
+results = graph.search(query, limit=2)
 print(results)
 
 # Use the retrieved information to answer questions
@@ -53,7 +53,7 @@ print(f"Question: {query}")
 print(f"Answer: Alice is Bob's sister.")
 
 query = "Where does Bob work?"
-results = graph.search(query)
+results = graph.search(query, limit=2)
 print(results)
 print(f"Question: {query}")
 print(f"Answer: Bob works at Google.")
@@ -146,6 +146,9 @@ db = GraphDB() # storage_db is in-memory sqlite, vector_db is in vlite
 turbo = dspy.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 retriever = PersonalRM(graph=db, k=2)
 dspy.settings.configure(lm=turbo, rm=retriever)
+
+# Retrieve a single passage using the retriever
+single_result = retriever.forward("How is Jack related to James?", k=1)
 
 
 class GenerateAnswer(dspy.Signature):

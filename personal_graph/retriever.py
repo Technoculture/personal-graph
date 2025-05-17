@@ -16,24 +16,25 @@ class PersonalRM(dspy.Retrieve):
         self.k = k
         self.graph = graph
 
-    def _retrieve_passages(self, queries: List[str]) -> List[Node]:
+    def _retrieve_passages(self, queries: List[str], k: Optional[int] = None) -> List[Node]:
         passages: List[Node] = []
 
         if not queries:
             return passages
 
+        limit = k if k is not None else self.k
+
         for query in queries:
-            kg = self.graph.search_from_graph(query)
+            kg = self.graph.search_from_graph(query, limit=limit)
             passages.extend(kg.nodes)
         return passages
 
     def forward(
         self, query_or_queries: Union[str, List[str]], k: Optional[int] = None, **kwargs
     ) -> List[dspy.Prediction]:
-        # TODO: Use the value of k
         if not isinstance(query_or_queries, list):
             query_or_queries = [query_or_queries]
-        passages = self._retrieve_passages(query_or_queries)
+        passages = self._retrieve_passages(query_or_queries, k)
         predictions = [
             dspy.Prediction(context=p, long_text=p.attributes) for p in passages
         ]
