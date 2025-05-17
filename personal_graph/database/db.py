@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
+import sqlite3
 from typing import Any, Callable, Dict, Optional, List, Union
 from graphviz import Digraph  # type: ignore
 
 from personal_graph.models import Node, Edge
 
 # CursorExecFunction = Callable[[libsql.Cursor, libsql.Connection], Any]
-CursorExecFunction = Callable[[Any, Any], Any]  # TODO: Constraint the type
+CursorExecFunction = Callable[[sqlite3.Cursor, sqlite3.Connection], Any]
 
 
 class DB(ABC):
