@@ -10,9 +10,7 @@ from personal_graph.models import Node, Edge
 from jinja2 import BaseLoader, Environment, select_autoescape
 
 from personal_graph.visualizers import _as_dot_node, _as_dot_label
-from personal_graph.database.db import DB
-
-CursorExecFunction = Callable[[sqlite3.Cursor, sqlite3.Connection], Any]
+from personal_graph.database.db import DB, CursorExecFunction
 
 
 @lru_cache(maxsize=None)
@@ -606,7 +604,7 @@ class SQLite(DB):
         for i in ids:
             if i not in visited:
                 node = self.search_node(i)  # type: ignore
-                if node is []:
+                if node == []:
                     continue
 
                 name, label = _as_dot_node(
