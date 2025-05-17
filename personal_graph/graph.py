@@ -723,33 +723,47 @@ class GraphDB(AbstractContextManager):
     def find_nodes_like(self, label: str, *, threshold: float = 0.9) -> List[Node]:
         nodes = self.db.find_nodes_by_label(label)
 
-        similar_rows = []
-        for id, text, attribute in nodes:
+        similar_rows: List[Node] = []
+        candidate_results = []
+        candidate_embed_ids: List[Any] = []
+
+        for _, text, _ in nodes:
             similar_nodes = self._similarity_search_node(
                 json.dumps(text), threshold=threshold
             )
 
-            if len(similar_nodes) < 1:
+            if not similar_nodes:
                 continue
 
-            for rowid in similar_nodes:
-                if isinstance(self.vector_store, VliteVSS):
-                    fetched_node_id = self.db.fetch_node_id(rowid[0].rstrip("_0"))
-                else:
-                    fetched_node_id = self.db.fetch_node_id(rowid[0])
+            candidate_results.extend(similar_nodes)
+            for row in similar_nodes:
+                embed_id = row[0].rstrip("_0") if isinstance(self.vector_store, VliteVSS) else row[0]
+                candidate_embed_ids.append(embed_id)
 
-                if fetched_node_id is None:
+        if not candidate_embed_ids:
+            return similar_rows
+
+        fetched_ids_map = {}
+        if hasattr(self.db, "fetch_node_ids"):
+            for embed_id, node_id in self.db.fetch_node_ids(candidate_embed_ids):
+                fetched_ids_map[str(embed_id)] = node_id
+
+        for rowid, *_ in candidate_results:
+            embed_id = rowid.rstrip("_0") if isinstance(self.vector_store, VliteVSS) else rowid
+            node_id = fetched_ids_map.get(str(embed_id))
+            if node_id is None:
+                fetched = self.db.fetch_node_id(embed_id)
+                if fetched is None:
                     continue
+                node_id = fetched[0]
 
-                node_data = self.db.search_node(fetched_node_id[0])
-                node_label = self.db.search_node_label(fetched_node_id[0])
+            node_data = self.db.search_node(node_id)
+            node_label = self.db.search_node_label(node_id)
 
-                if node_data in similar_rows:
-                    continue
-                node = Node(
-                    id=node_data["id"], label=node_label[0], attributes=node_data
-                )
-                similar_rows.append(node)
+            if node_data in [n.attributes for n in similar_rows]:
+                continue
+            node = Node(id=node_data["id"], label=node_label[0], attributes=node_data)
+            similar_rows.append(node)
 
         return similar_rows
 
