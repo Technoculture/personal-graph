@@ -362,6 +362,9 @@ class GraphDB(AbstractContextManager):
                 delete_if_properties_not_match=delete_flag,
             )
 
+        if hasattr(self.vector_store, "flush"):
+            self.vector_store.flush()
+
     def insert_edge(
         self,
         edge: EdgeInput,
@@ -426,6 +429,9 @@ class GraphDB(AbstractContextManager):
         for edge in edges:
             self.add_edge(edge)
 
+        if hasattr(self.vector_store, "flush"):
+            self.vector_store.flush()
+
     def update_node(self, node: Node) -> None:
         if isinstance(self.db, FhirDB):
             node_data = self.db.search_node(node.id, node_type=node.label)
@@ -463,6 +469,9 @@ class GraphDB(AbstractContextManager):
     def update_nodes(self, nodes: List[Node]) -> None:
         for node in nodes:
             self.update_node(node)
+
+        if hasattr(self.vector_store, "flush"):
+            self.vector_store.flush()
 
     def remove_node(
         self, id: Union[str, int], *, node_type: Optional[str] = None

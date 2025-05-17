@@ -26,6 +26,10 @@ class VliteVSS(VectorStore):
     def save(self):
         self.vlite.save()
 
+    def flush(self) -> None:
+        """Persist buffered embeddings to disk."""
+        self.vlite.save()
+
     def add_node_embedding(self, id: Any, label: str, attribute: Dict):
         count = self.vlite.count() + 1
         attribute.update({"label": label, "embed_id": count})
@@ -34,7 +38,6 @@ class VliteVSS(VectorStore):
             data={"text": json.dumps(attribute)},
             metadata={"embed_id": count},
         )
-        self.vlite.save()
 
     def add_edge_embedding(
         self, source: Any, target: Any, label: str, attributes: Dict
@@ -44,7 +47,6 @@ class VliteVSS(VectorStore):
             {"source": source, "target": target, "label": label, "embed_id": count}
         )
         self.vlite.add({"text": json.dumps(attributes)}, metadata={"embed_id": count})
-        self.vlite.save()
 
     def add_edge_embeddings(
         self,
