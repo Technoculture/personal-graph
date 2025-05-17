@@ -4,6 +4,7 @@ Unit test for high level apis
 
 import networkx as nx  # type: ignore
 import pytest
+from unittest.mock import Mock
 from fhir.resources import fhirtypes  # type: ignore
 
 from personal_graph import GraphDB, Node, EdgeInput, KnowledgeGraph
@@ -318,3 +319,23 @@ def test_insert_with_ontology(graph_with_fhir_ontology, mock_db_connection_and_c
     assert (
         graph_with_fhir_ontology.insert(text, attributes, node_type="CarePlan") is None
     )
+
+
+def test_merge_by_similarity_cache(graph, mock_db_connection_and_cursor):
+    graph.db.fetch_ids_from_db = Mock(return_value=[1, 2])
+    graph.db.search_node = Mock(return_value={"id": 1})
+    graph._similarity_search_node = Mock(return_value=[(0, 2)])
+
+    graph.db.search_indegree_edges = Mock(return_value=[("a", "in", "{}")])
+    graph.db.search_outdegree_edges = Mock(return_value=[("b", "out", "{}")])
+    graph.db.add_edge = Mock()
+    graph.vector_store.add_edge_embedding = Mock()
+    graph.update_node = Mock()
+    graph.remove_node = Mock()
+
+    graph.merge_by_similarity()
+
+    assert graph.db.search_indegree_edges.call_count == 2
+    assert graph.db.search_outdegree_edges.call_count == 2
+    graph.db.add_edge.assert_called()
+    graph.remove_node.assert_called_with(2)
