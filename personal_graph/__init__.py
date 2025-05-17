@@ -9,6 +9,7 @@ from personal_graph.visualizers import graphviz_visualize_bodies
 from personal_graph.embeddings import OpenAIEmbeddingsModel
 from personal_graph.graph import GraphDB
 from personal_graph.models import Node, Edge, EdgeInput, KnowledgeGraph
+from personal_graph.memory import MemoryManager
 
 __all__ = [
     "GraphDB",
@@ -23,4 +24,5 @@ __all__ = [
     "LiteLLMClient",
     "OllamaEmbeddingClient",
     "OllamaClient",
+    "MemoryManager",
 ]
