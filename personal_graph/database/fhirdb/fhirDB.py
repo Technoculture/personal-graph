@@ -35,7 +35,7 @@ class FhirDB(DB):
         return self.db_url == other.db_url
 
     def __repr__(self) -> str:
-        return f"  FhirFB(\n" f"  url={self.db_url},\n" f"  )"
+        return f"  FhirFB(\n  url={self.db_url},\n  )"
 
     def set_ontologies(self, ontologies: Optional[List[Any]] = None):
         if not ontologies:
