@@ -1,0 +1,59 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/pg-core",
+    "crates/pg-storage",
+    "crates/pg-vector",
+    "crates/pg-graph",
+    "crates/pg-server",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+rust-version = "1.75"
+
+[workspace.dependencies]
+# Core
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+bytes = "1"
+uuid = { version = "1", features = ["v4", "serde"] }
+
+# Async
+tokio = { version = "1", features = ["full"] }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# API
+tonic = "0.12"
+prost = "0.13"
+axum = "0.8"
+tower = "0.5"
+
+# Storage
+crc32fast = "1"
+memmap2 = "0.9"
+parking_lot = "0.12"
+crossbeam = "0.8"
+
+# Vector
+rand = "0.8"
+ordered-float = { version = "4", features = ["serde"] }
+simdeez = "1"
+
+# Internal crates
+pg-core = { path = "crates/pg-core" }
+pg-storage = { path = "crates/pg-storage" }
+pg-vector = { path = "crates/pg-vector" }
+pg-graph = { path = "crates/pg-graph" }
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3
+strip = true

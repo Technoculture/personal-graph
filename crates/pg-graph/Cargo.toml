@@ -1,0 +1,20 @@
+[package]
+name = "pg-graph"
+description = "Graph engine for personal-graph"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+pg-core = { workspace = true }
+pg-storage = { workspace = true }
+pg-vector = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+uuid = { workspace = true }
+parking_lot = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3"

@@ -1,0 +1,20 @@
+[package]
+name = "pg-server"
+description = "API server for personal-graph"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+pg-core = { workspace = true }
+pg-graph = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+axum = { workspace = true }
+tower = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+uuid = { workspace = true }
+anyhow = "1"

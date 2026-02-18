@@ -1,0 +1,22 @@
+[package]
+name = "pg-storage"
+description = "Custom storage engine for personal-graph"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+pg-core = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+bytes = { workspace = true }
+crc32fast = { workspace = true }
+memmap2 = { workspace = true }
+parking_lot = { workspace = true }
+crossbeam = { workspace = true }
+uuid = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3"
