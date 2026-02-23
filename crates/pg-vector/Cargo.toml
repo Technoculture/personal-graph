@@ -1,0 +1,20 @@
+[package]
+name = "pg-vector"
+description = "HNSW vector index for personal-graph"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+pg-core = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+parking_lot = { workspace = true }
+rand = { workspace = true }
+ordered-float = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+rand = { workspace = true }
+tempfile = "3"
