@@ -404,6 +404,153 @@ impl VectorIndex for HnswIndex {
     }
 }
 
+// ── Persistence ──────────────────────────────────────────────────────────────
+
+const MAGIC: &[u8; 8] = b"HNSWIDX1";
+
+fn rd_u8(r: &mut impl std::io::Read) -> Result<u8> {
+    let mut b = [0u8; 1];
+    r.read_exact(&mut b)?;
+    Ok(b[0])
+}
+fn rd_u32(r: &mut impl std::io::Read) -> Result<u32> {
+    let mut b = [0u8; 4];
+    r.read_exact(&mut b)?;
+    Ok(u32::from_le_bytes(b))
+}
+fn rd_f32(r: &mut impl std::io::Read) -> Result<f32> {
+    let mut b = [0u8; 4];
+    r.read_exact(&mut b)?;
+    Ok(f32::from_le_bytes(b))
+}
+fn rd_f64(r: &mut impl std::io::Read) -> Result<f64> {
+    let mut b = [0u8; 8];
+    r.read_exact(&mut b)?;
+    Ok(f64::from_le_bytes(b))
+}
+
+impl HnswIndex {
+    /// Persist the index to a binary file at `path`.
+    ///
+    /// ## Wire format (all little-endian)
+    /// ```text
+    /// magic[8] | version:u32 | dims:u32 | m:u32 | m_max0:u32
+    /// ef_construction:u32 | ef_search:u32 | ml:f64 | metric:u8
+    /// ep_valid:u8 | entry_point:u32 | max_layer:u32 | node_count:u32
+    /// --- per node ---
+    /// id:[u8;16] | live:u8 | dims×f32
+    /// layer_count:u32 | --- per layer --- neighbor_count:u32 | neighbor_count×u32
+    /// ```
+    pub fn save(&self, path: impl AsRef<std::path::Path>) -> Result<()> {
+        use std::io::{BufWriter, Write};
+        let file = std::fs::File::create(path)?;
+        let mut w = BufWriter::new(file);
+
+        w.write_all(MAGIC)?;
+        w.write_all(&1u32.to_le_bytes())?; // version
+
+        w.write_all(&(self.dimensions as u32).to_le_bytes())?;
+        w.write_all(&(self.config.m as u32).to_le_bytes())?;
+        w.write_all(&(self.config.m_max0 as u32).to_le_bytes())?;
+        w.write_all(&(self.config.ef_construction as u32).to_le_bytes())?;
+        w.write_all(&(self.config.ef_search as u32).to_le_bytes())?;
+        w.write_all(&self.config.ml.to_le_bytes())?;
+        let metric_byte: u8 = match self.config.metric {
+            DistanceMetric::L2 => 0,
+            DistanceMetric::Cosine => 1,
+            DistanceMetric::InnerProduct => 2,
+        };
+        w.write_all(&[metric_byte])?;
+
+        match self.entry_point {
+            None    => { w.write_all(&[0u8])?; w.write_all(&0u32.to_le_bytes())?; }
+            Some(e) => { w.write_all(&[1u8])?; w.write_all(&e.to_le_bytes())?; }
+        }
+        w.write_all(&(self.max_layer as u32).to_le_bytes())?;
+        w.write_all(&(self.nodes.len() as u32).to_le_bytes())?;
+
+        let live_set: HashSet<InternalId> = self.id_to_internal.values().copied().collect();
+
+        for (i, node) in self.nodes.iter().enumerate() {
+            w.write_all(&node.id.to_bytes())?; // [u8; 16] LE u128
+            w.write_all(&[live_set.contains(&(i as InternalId)) as u8])?;
+            for &v in &node.vector { w.write_all(&v.to_le_bytes())?; }
+            w.write_all(&(node.neighbors.len() as u32).to_le_bytes())?;
+            for layer in &node.neighbors {
+                w.write_all(&(layer.len() as u32).to_le_bytes())?;
+                for &n in layer { w.write_all(&n.to_le_bytes())?; }
+            }
+        }
+
+        w.flush()?;
+        Ok(())
+    }
+
+    /// Restore an index from a file written by [`HnswIndex::save`].
+    pub fn load(path: impl AsRef<std::path::Path>) -> Result<Self> {
+        use std::io::{BufReader, Read};
+        let file = std::fs::File::open(path)?;
+        let mut r = BufReader::new(file);
+
+        let mut magic = [0u8; 8];
+        r.read_exact(&mut magic)?;
+        if &magic != MAGIC {
+            return Err(Error::Storage("invalid HNSW index magic".into()));
+        }
+        let _version = rd_u32(&mut r)?;
+
+        let dimensions      = rd_u32(&mut r)? as usize;
+        let m               = rd_u32(&mut r)? as usize;
+        let m_max0          = rd_u32(&mut r)? as usize;
+        let ef_construction = rd_u32(&mut r)? as usize;
+        let ef_search       = rd_u32(&mut r)? as usize;
+        let ml              = rd_f64(&mut r)?;
+        let metric = match rd_u8(&mut r)? {
+            0 => DistanceMetric::L2,
+            1 => DistanceMetric::Cosine,
+            _ => DistanceMetric::InnerProduct,
+        };
+        let config = HnswConfig { m, m_max0, ef_construction, ef_search, metric, ml };
+
+        let ep_valid    = rd_u8(&mut r)?;
+        let ep_raw      = rd_u32(&mut r)?;
+        let entry_point = if ep_valid == 1 { Some(ep_raw) } else { None };
+        let max_layer   = rd_u32(&mut r)? as usize;
+        let node_count  = rd_u32(&mut r)? as usize;
+
+        let mut nodes = Vec::with_capacity(node_count);
+        let mut id_to_internal: HashMap<u128, InternalId> = HashMap::with_capacity(node_count);
+
+        for i in 0..node_count {
+            let mut id_bytes = [0u8; 16];
+            r.read_exact(&mut id_bytes)?;
+            let node_id = NodeId::from_bytes(id_bytes);
+            let raw_id  = node_id.as_u128();
+
+            let live = rd_u8(&mut r)?;
+            if live == 1 {
+                id_to_internal.insert(raw_id, i as InternalId);
+            }
+
+            let mut vector = Vec::with_capacity(dimensions);
+            for _ in 0..dimensions { vector.push(rd_f32(&mut r)?); }
+
+            let layer_count = rd_u32(&mut r)? as usize;
+            let mut neighbors = Vec::with_capacity(layer_count);
+            for _ in 0..layer_count {
+                let nc = rd_u32(&mut r)? as usize;
+                let mut layer = Vec::with_capacity(nc);
+                for _ in 0..nc { layer.push(rd_u32(&mut r)?); }
+                neighbors.push(layer);
+            }
+
+            nodes.push(HnswNode { id: node_id, vector, neighbors });
+        }
+
+        Ok(HnswIndex { config, dimensions, nodes, id_to_internal, entry_point, max_layer })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -507,5 +654,40 @@ mod tests {
 
         // The exact match should be in top-5
         assert!(results.iter().any(|(id, _)| *id == ids[42]));
+    }
+
+    #[test]
+    fn save_and_load_roundtrip() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("hnsw.bin");
+
+        let dims = 8;
+        let mut original = HnswIndex::with_defaults(dims);
+        let mut ids = Vec::new();
+
+        for i in 0..30 {
+            let id = NodeId::new();
+            ids.push(id);
+            original.insert(id, &make_vector(dims, i as f32)).unwrap();
+        }
+
+        // Remove one to test lazy-deletion survives reload
+        original.remove(ids[5]).unwrap();
+
+        original.save(&path).unwrap();
+        let loaded = HnswIndex::load(&path).unwrap();
+
+        // Same dimensions and live count
+        assert_eq!(loaded.dimensions(), dims);
+        assert_eq!(loaded.len(), original.len());
+
+        // Removed id should still not appear
+        let results = loaded.search(&make_vector(dims, 5.0), 30).unwrap();
+        assert!(!results.iter().any(|(id, _)| *id == ids[5]));
+
+        // Search quality preserved — exact match for query at index 10
+        let query = make_vector(dims, 10.0);
+        let results = loaded.search(&query, 5).unwrap();
+        assert!(results.iter().any(|(id, _)| *id == ids[10]));
     }
 }

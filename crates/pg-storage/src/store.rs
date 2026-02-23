@@ -5,6 +5,8 @@
 
 use crate::btree::{EdgeIndex, LabelIndex, Location, NodeIndex};
 use crate::buffer::BufferPool;
+use crate::compaction::{compact_store, CompactionStats};
+use crate::mvcc::TxManager;
 use crate::page::{Page, PageType};
 use crate::wal::{PageId, RecordType, Wal};
 use pg_core::error::Result;
@@ -34,6 +36,8 @@ struct EdgeCell {
 pub struct GraphStore {
     buffer: BufferPool,
     wal: Wal,
+    /// MVCC transaction manager — tracks active transactions and snapshots.
+    pub tx_manager: TxManager,
     node_index: NodeIndex,
     edge_index: EdgeIndex,
     label_index: LabelIndex,
@@ -60,6 +64,7 @@ impl GraphStore {
         let mut store = GraphStore {
             buffer,
             wal,
+            tx_manager: TxManager::new(),
             node_index: NodeIndex::new(),
             edge_index: EdgeIndex::new(),
             label_index: LabelIndex::new(),
@@ -154,6 +159,26 @@ impl GraphStore {
         self.wal.sync()?;
         self.wal.truncate()?;
         Ok(())
+    }
+
+    /// Run a compaction pass: remove dead (MVCC-deleted) cells from all pages,
+    /// then rebuild in-memory indexes to reflect the new physical layout.
+    ///
+    /// Should be called when there are no active writer transactions, though it
+    /// is safe to call at any time — live cells are never touched.
+    pub fn compact(&mut self) -> Result<CompactionStats> {
+        let min_active = self.tx_manager.min_active();
+        let stats = compact_store(&self.buffer, &mut self.wal, min_active)?;
+        if stats.pages_modified > 0 {
+            // Physical cell offsets changed — rebuild in-memory indexes.
+            self.node_index = NodeIndex::new();
+            self.edge_index = EdgeIndex::new();
+            self.label_index = LabelIndex::new();
+            self.current_node_page = None;
+            self.current_edge_page = None;
+            self.rebuild_indexes()?;
+        }
+        Ok(stats)
     }
 
     fn read_node_at(&self, loc: Location) -> Result<Node> {

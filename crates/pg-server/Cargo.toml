@@ -6,8 +6,9 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
-pg-core = { workspace = true }
-pg-graph = { workspace = true }
+pg-core   = { workspace = true }
+pg-graph  = { workspace = true }
+pg-cypher = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }

@@ -3,7 +3,7 @@ use crate::property::PropertyMap;
 use serde::{Deserialize, Serialize};
 
 /// The payload stored for each node in the graph.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct NodeData {
     /// Semantic label (e.g., "Person", "Concept", "Event").
     pub label: String,
@@ -12,14 +12,14 @@ pub struct NodeData {
 }
 
 /// A node with its identity resolved.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Node {
     pub id: NodeId,
     pub data: NodeData,
 }
 
 /// The payload stored for each edge.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct EdgeData {
     /// Relationship type (e.g., "knows", "contains", "instance_of").
     pub label: String,
@@ -28,7 +28,7 @@ pub struct EdgeData {
 }
 
 /// A fully resolved edge.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Edge {
     pub source: NodeId,
     pub target: NodeId,

@@ -9,6 +9,7 @@ use axum::{
 use pg_core::graph::{Edge, Node};
 use pg_core::id::NodeId;
 use pg_core::property::PropertyMap;
+use pg_cypher::{CypherEngine, Parser, QueryResult};
 use serde::{Deserialize, Serialize};
 
 use crate::SharedGraph;
@@ -29,6 +30,7 @@ pub fn router(state: SharedGraph) -> Router {
         .route("/search/vector", post(search_vector))
         .route("/search/path", post(search_path))
         .route("/stats", get(stats))
+        .route("/query", post(cypher_query))
         .with_state(state)
 }
 
@@ -383,4 +385,28 @@ async fn stats(State(graph): State<SharedGraph>) -> Result<Json<StatsResponse>, 
         edge_count: g.edge_count().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?,
         vector_count: g.vector_count(),
     }))
+}
+
+// ── Cypher query endpoint ─────────────────────────────────────────────────────
+
+#[derive(Deserialize)]
+struct CypherQueryRequest {
+    query: String,
+}
+
+async fn cypher_query(
+    State(graph): State<SharedGraph>,
+    Json(req): Json<CypherQueryRequest>,
+) -> Result<Json<QueryResult>, (StatusCode, String)> {
+    let ast = Parser::new(&req.query)
+        .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?
+        .parse()
+        .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
+
+    let mut g = graph.lock().await;
+    let result = CypherEngine::new(&mut g)
+        .execute(&ast)
+        .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
+
+    Ok(Json(result))
 }

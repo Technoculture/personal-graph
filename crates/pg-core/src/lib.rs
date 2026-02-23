@@ -6,6 +6,7 @@
 pub mod error;
 pub mod graph;
 pub mod id;
+pub mod mvcc;
 pub mod property;
 pub mod traits;
 

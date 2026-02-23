@@ -17,3 +17,4 @@ tracing = { workspace = true }
 
 [dev-dependencies]
 rand = { workspace = true }
+tempfile = "3"

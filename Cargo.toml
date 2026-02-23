@@ -5,6 +5,7 @@ members = [
     "crates/pg-storage",
     "crates/pg-vector",
     "crates/pg-graph",
+    "crates/pg-cypher",
     "crates/pg-server",
 ]
 
@@ -47,10 +48,11 @@ ordered-float = { version = "4", features = ["serde"] }
 simdeez = "1"
 
 # Internal crates
-pg-core = { path = "crates/pg-core" }
+pg-core    = { path = "crates/pg-core" }
 pg-storage = { path = "crates/pg-storage" }
-pg-vector = { path = "crates/pg-vector" }
-pg-graph = { path = "crates/pg-graph" }
+pg-vector  = { path = "crates/pg-vector" }
+pg-graph   = { path = "crates/pg-graph" }
+pg-cypher  = { path = "crates/pg-cypher" }
 
 [profile.release]
 lto = true
